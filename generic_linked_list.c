@@ -86,7 +86,7 @@ void remove_from_end(List *list) {
 }
 
 
-void insert(List *list, void *data, void (*compare)(void *)) {
+void insert(List *list, void *data, int (*compare)(void *, void *)) {
   Node *n = malloc(sizeof(Node));
   n->data = malloc(list->node_size);
   n->prev= NULL;
@@ -107,7 +107,7 @@ void insert(List *list, void *data, void (*compare)(void *)) {
     if ((*compare)(temp->data, data) < 0) {
       continue;
     } else if ((*compare)(temp->data, data) >= 0) {
-      if (num_nodes == 1) {
+      if (list->num_nodes == 1) {
         temp->prev = n;
         n->next = temp;
         list->head = n;
@@ -136,7 +136,7 @@ void insert(List *list, void *data, void (*compare)(void *)) {
 }
 
 
-Node* find(List *list, void* data, void (*compare)(void *)) {
+Node* find(List *list, void* data, int (*compare)(void *, void *)) {
   Node *temp = list->head;
 
   while (temp != NULL) {

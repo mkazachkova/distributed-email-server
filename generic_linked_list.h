@@ -29,8 +29,8 @@ void create_list(List *list, size_t data_size);
 void add_to_end(List *list, void *data);
 void remove_from_beginning(List *list);
 void remove_from_end(List *list);
-void insert(List *list, void *data, void (*fptr)(void *));
-Node* find(List *list, void* data, void (*fptr)(void *));
+void insert(List *list, void *data, int (*fptr)(void *, void *));
+Node* find(List *list, void* data, int (*fptr)(void *, void *));
 
 
 // Accessor methods
