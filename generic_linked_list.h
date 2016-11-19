@@ -5,6 +5,10 @@ Distributed Systems: Final Project
 December 9, 2016
 */
 
+#include <stdio.h>
+#include <stddef.h>
+#include <stdint.h>
+
 // Node struct 
 typedef struct node {
   void* data;
