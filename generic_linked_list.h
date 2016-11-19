@@ -24,7 +24,7 @@ typedef struct {
 } List;
 
 // List manipulation methods
-void create_list(List *list, size_t data_size, void (*fptr)(void *));
+void create_list(List *list, size_t data_size);
 void add_to_end(List *list, void *data);
 void remove_from_beginning(List *list);
 void remove_from_end(List *list);

@@ -1,4 +1,5 @@
 *~
 *.o
 *.out
+test
 generic_linked_list
