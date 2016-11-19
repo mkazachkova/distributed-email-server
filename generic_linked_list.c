@@ -6,6 +6,7 @@ December 9, 2016
 */
 
 #include <assert.h>
+#include <stdlib.h>
 #include "generic_linked_list.h"
 
 void create_list(List *list, size_t data_size) {
@@ -18,7 +19,7 @@ void create_list(List *list, size_t data_size) {
 
 void add_to_end(List *list, void *data) {
   Node *n = malloc(sizeof(Node));
-  n->data = malloc(list->n);
+  n->data = malloc(list->node_size);
   n->prev= NULL;
   n->next = NULL;
 

@@ -7,6 +7,7 @@ December 9, 2016
 
 #include <stdio.h>
 #include <stddef.h>
+#include <string.h>
 #include <stdint.h>
 
 // Node struct 
