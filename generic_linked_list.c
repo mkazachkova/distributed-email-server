@@ -104,9 +104,9 @@ void insert(List *list, void *data, void (*compare)(void *)) {
 
   Node *temp = list->head;
   while (temp != NULL) {
-    if ((*compare)(n->data, data) < 0) {
+    if ((*compare)(temp->data, data) < 0) {
       continue;
-    } else if ((*compare)(n->data, data) >= 0) {
+    } else if ((*compare)(temp->data, data) >= 0) {
       if (num_nodes == 1) {
         temp->prev = n;
         n->next = temp;
@@ -123,6 +123,7 @@ void insert(List *list, void *data, void (*compare)(void *)) {
         return;
       }
     }
+    temp = temp->next;
   }
 
   //reached end of list but haven't inserted yet
@@ -135,7 +136,17 @@ void insert(List *list, void *data, void (*compare)(void *)) {
 }
 
 
-Node* find(List *list, void* data, void (*fptr)(void *)) {
+Node* find(List *list, void* data, void (*compare)(void *)) {
+  Node *temp = list->head;
+
+  while (temp != NULL) {
+    if ((*compare)(temp->data, data) == 0) {
+      return temp;
+    }
+    temp = temp->next;
+  }
+
+  //node not found
   return NULL;
 }
 
