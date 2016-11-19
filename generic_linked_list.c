@@ -81,7 +81,7 @@ void remove_from_end(List *list) {
   }
 
   free(n);
-  list->num_nodes++;
+  list->num_nodes--;
   return;
 }
 
