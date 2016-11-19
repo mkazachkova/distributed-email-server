@@ -86,7 +86,51 @@ void remove_from_end(List *list) {
 }
 
 
-void insert(List *list, void *data, void (*fptr)(void *)) {
+void insert(List *list, void *data, void (*compare)(void *)) {
+  Node *n = malloc(sizeof(Node));
+  n->data = malloc(list->node_size);
+  n->prev= NULL;
+  n->next = NULL; 
+
+  memcpy(n->data, data, list->node_size);
+
+  //Accounts for inserting into empty list
+  if (list->num_nodes == 0) {
+    list->head = n;
+    list->tail = n;
+    list->num_nodes++;
+    return;
+  }
+
+  Node *temp = list->head;
+  while (temp != NULL) {
+    if ((*compare)(n->data, data) < 0) {
+      continue;
+    } else if ((*compare)(n->data, data) >= 0) {
+      if (num_nodes == 1) {
+        temp->prev = n;
+        n->next = temp;
+        list->head = n;
+        list->num_nodes++;
+        return;
+      } else {
+        //general case
+        n->prev = temp->prev;
+        temp->prev->next = n;
+        n->next = temp;
+        temp->prev = n;
+        list->num_nodes++;
+        return;
+      }
+    }
+  }
+
+  //reached end of list but haven't inserted yet
+  //case in which node is greater than all values in list
+  list->tail->next = n; 
+  n->prev = list->tail; 
+  list->tail = n;       
+  list->num_nodes++;
   return;
 }
 
@@ -110,5 +154,12 @@ void print_list(List *list, void (*fptr)(void *)) {
 
 
 void print_list_backwards(List *list, void (*fptr)(void *)) {
+  Node* temp = list->tail;
+
+  while (temp != NULL) {
+    (*fptr)(temp->data);
+    temp = temp->prev;    
+  }
+
   return;
 }
