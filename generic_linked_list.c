@@ -17,6 +17,7 @@ void create_list(List *list, size_t data_size) {
   return;
 }
 
+
 void add_to_end(List *list, void *data) {
   Node *n = malloc(sizeof(Node));
   n->data = malloc(list->node_size);
@@ -38,6 +39,7 @@ void add_to_end(List *list, void *data) {
 
   return;
 }
+
 
 void remove_from_beginning(List *list) {
   if (list->num_nodes == 0) {
@@ -61,6 +63,7 @@ void remove_from_beginning(List *list) {
   return;
 }
 
+
 void remove_from_end(List *list) {
   if (list->num_nodes == 0) {
     printf("You cannot remove from an empty list!\n");
@@ -82,18 +85,29 @@ void remove_from_end(List *list) {
   return;
 }
 
+
 void insert(List *list, void *data, void (*fptr)(void *)) {
   return;
 }
+
 
 Node* find(List *list, void* data, void (*fptr)(void *)) {
   return NULL;
 }
 
+
 // Accessor methods
 void print_list(List *list, void (*fptr)(void *)) {
+  Node* temp = list->head;
+
+  while (temp != NULL) {
+    (*fptr)(temp->data);
+    temp = temp->next;
+  }
+
   return;
 }
+
 
 void print_list_backwards(List *list, void (*fptr)(void *)) {
   return;
