@@ -1,0 +1,4 @@
+-if receive update (read, delete) for email that we don't have yet we put an empty node
+where the email should be with null data (so that we don't print it) and then when we
+get the email we can just fill the data in the null node
+-server shouldn't be doing any printing; sends information to client and client prints the information

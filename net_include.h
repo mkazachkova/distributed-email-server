@@ -21,6 +21,8 @@ December 9, 2016
 #include <limits.h>
 #include <time.h>
 
+#include "generic_linked_list.h"
+
 #define PORT            10050
 
 // ******************* VARIABLES ******************* //
