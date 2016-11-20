@@ -30,7 +30,7 @@
 //If email does exist, set the the read bool to true. If already true, then can set it to true again without anything going wrong
 
 
-//Case: receive type 3 update (delete)
+//CASE: receive type 3 update (delete)
 //first, check if user whose mailbox you'll be modifiying actually exists or not
 //if user doesn't exist, create new user object with name of user. Then, create a new node in the linked list of emails for that user
 //with null data. Set the delete bool equal to true for that specific email
@@ -101,3 +101,18 @@
 
 
 /**********WHEN MEMBERSHIP CHANGES**********/
+//use anti entropy. boom. done
+
+//we attach a 1d array with what we (as a server) know from every other server to every update that we send. When a server receives this
+//they add it to their 2d array of what all servers know from all other servers.
+
+//When there is a merge each server involved in the merge multicasts out a struct (merge_matrix) containing its own 2d matrix.
+
+//When you receive one of these merge_matrix structs you iterate through it and compare each cell to the corresponding cell
+//in your own 2d array. You take the max of the values and stre that as the cell in your 2d array. You must wait until you receive however many
+//servers there are in the new partition worth of these merge_matrix structs. Ignore the merge_matrix struct you receive from yourself.
+
+//once your 2d array is loaded with all of the new information, you must only consider the servers that you are in a partition with
+//currently as possible sources of information (this is the vertical side of the array). You look at each column and find the max value (only
+//considering the processes that are in the partition). The process with the max value is responsible for sending the updates to all other processes
+//in the partition
