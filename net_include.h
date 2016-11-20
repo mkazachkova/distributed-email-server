@@ -35,13 +35,16 @@ typedef struct email {
   char[MAX_MESS_LEN] message;
   bool read;
   bool deleted;
+  TimeStamp timestamp;
 } Email;
 
 typedef struct update {
-  int type; //1 is a new email, 2 is an email read, 3 is an email deleted
+  int type; //1 is a new email, 2 is an email read, 3 is an email deleted 4 is new user created
   TimeStamp timestamp;
   //more stuff to come
-  
+  Email email;                    //used for new emails
+  char[MAX_NAME_LEN] user_name;   //used for new user created
+  TimeStamp timestamp_of_email;   //used for email read or email deleted
 } Update;
 
 typedef struct timestamp {

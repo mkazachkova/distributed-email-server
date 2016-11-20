@@ -1,5 +1,4 @@
 CC = gcc
-
 CFLAGS = -g  -pedantic -D_GNU_SOURCE
 
 bin: test

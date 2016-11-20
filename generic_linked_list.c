@@ -107,6 +107,7 @@ void insert(List *list, void *data, int (*compare)(void *, void *)) {
     if ((*compare)(temp->data, data) < 0) {
       //do nothing
     } else if ((*compare)(temp->data, data) >= 0) {
+      //One node: insert before
       if (list->num_nodes == 1) {
         temp->prev = n;
         n->next = temp;
@@ -114,13 +115,14 @@ void insert(List *list, void *data, int (*compare)(void *, void *)) {
         list->num_nodes++;
         return;
       } else {
-        //general case
+        //insert at head
         if (temp->prev == NULL) {
           n->next = temp;
           temp->prev = n;
           list->head = n;
           list->num_nodes++;
           return;
+        //general case
         } else {
           n->prev = temp->prev;
           temp->prev->next = n;
@@ -129,11 +131,10 @@ void insert(List *list, void *data, int (*compare)(void *, void *)) {
           list->num_nodes++;
           return;
         }
-      }
-     
+      }     
     }
-    temp = temp->next;
-   
+    
+    temp = temp->next;   
   }
 
   //reached end of list but haven't inserted yet
