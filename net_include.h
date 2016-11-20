@@ -28,6 +28,7 @@ December 9, 2016
 // ******************* VARIABLES ******************* //
 #define MAX_NAME_LEN    50
 #define MAX_MESS_LEN    1000
+#define NUM_SERVERS     5
 
 // **************** DATA STRUCTURES **************** //
 typedef struct email {
@@ -53,7 +54,14 @@ typedef struct update {
   Email               email;              //used for new emails
   char[MAX_NAME_LEN]  user_name;          //used for new user created
   TimeStamp           timestamp_of_email; //used for email read or email deleted
+  int[NUM_SERVERS]    updates_array;
 } Update;
+
+typedef struct mergematrix {
+  int machine_index;                      //index from which it came
+  int[NUM_SERVERS][NUM_SERVERS] matrix;   //the 2-dimensional 5 x 5 reconciliation matrix
+} MergeMatrix;
+
 
 typedef struct timestamp {
   int                 counter;
