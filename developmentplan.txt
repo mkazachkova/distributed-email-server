@@ -1,0 +1,2 @@
+1. Get program working without merges and partitions. (December 2)
+1. Introduce  merges and partitions. (December 3, 4)
