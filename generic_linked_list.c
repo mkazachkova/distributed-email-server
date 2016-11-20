@@ -105,8 +105,9 @@ void insert(List *list, void *data, int (*compare)(void *, void *)) {
   Node *temp = list->head;
   while (temp != NULL) {
     if ((*compare)(temp->data, data) < 0) {
-      continue;
+      //do nothing
     } else if ((*compare)(temp->data, data) >= 0) {
+      //One node: insert before
       if (list->num_nodes == 1) {
         temp->prev = n;
         n->next = temp;
@@ -114,16 +115,26 @@ void insert(List *list, void *data, int (*compare)(void *, void *)) {
         list->num_nodes++;
         return;
       } else {
+        //insert at head
+        if (temp->prev == NULL) {
+          n->next = temp;
+          temp->prev = n;
+          list->head = n;
+          list->num_nodes++;
+          return;
         //general case
-        n->prev = temp->prev;
-        temp->prev->next = n;
-        n->next = temp;
-        temp->prev = n;
-        list->num_nodes++;
-        return;
-      }
+        } else {
+          n->prev = temp->prev;
+          temp->prev->next = n;
+          n->next = temp;
+          temp->prev = n;
+          list->num_nodes++;
+          return;
+        }
+      }     
     }
-    temp = temp->next;
+    
+    temp = temp->next;   
   }
 
   //reached end of list but haven't inserted yet
@@ -138,14 +149,12 @@ void insert(List *list, void *data, int (*compare)(void *, void *)) {
 
 Node* find(List *list, void* data, int (*compare)(void *, void *)) {
   Node *temp = list->head;
-
   while (temp != NULL) {
     if ((*compare)(temp->data, data) == 0) {
       return temp;
     }
     temp = temp->next;
   }
-
   //node not found
   return NULL;
 }
@@ -159,7 +168,7 @@ void print_list(List *list, void (*fptr)(void *)) {
     (*fptr)(temp->data);
     temp = temp->next;
   }
-
+  printf("\n");
   return;
 }
 
@@ -171,6 +180,6 @@ void print_list_backwards(List *list, void (*fptr)(void *)) {
     (*fptr)(temp->data);
     temp = temp->prev;    
   }
-
+  printf("\n");
   return;
 }
