@@ -1,4 +1,4 @@
-D                            Distributed Systems Final Project
+                            Distributed Systems Final Project
                             =================================
 
 The goal of the final project is to produce a distributed software system that 

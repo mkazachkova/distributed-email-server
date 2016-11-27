@@ -5,8 +5,12 @@ Mariya Kazachkova (mkazach1@jhu.edu)
 December 9, 2016  
 
 ## Premise  
+We aim to write a fault-tolerant distributed mail service for users over a network of computers that is resilient to network partitions and merges. It provides a client with the ability to connect ot a server, send emails to users, list headers of received mail, read messages, delete messages, and print membership of servers in the server's current network component.  
 
 ## Files Included  
+*  
+*  
+*  
 
 ## To Run  
 
@@ -98,7 +102,11 @@ typedef struct {
 The generic linked list contains function pointers which "outsource" comparisons, printing, etc. to specific node types.  
 
 ## Algorithm Description  
+### Client-Side
+
+### Server-Side
 
 ## Discussion  
 
 ## Final Thoughts  
+
