@@ -9,6 +9,7 @@ December 9, 2016
 #include <stdlib.h>
 #include "generic_linked_list.h"
 
+
 void create_list(List *list, size_t data_size) {
   list->num_nodes = 0;
   list->node_size = data_size;

@@ -62,7 +62,6 @@ typedef struct mergematrix {
   int[NUM_SERVERS][NUM_SERVERS] matrix;   //the 2-dimensional 5 x 5 reconciliation matrix
 } MergeMatrix;
 
-
 typedef struct timestamp {
   int                 counter;
   int                 machine_index;
