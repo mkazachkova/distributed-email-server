@@ -1,44 +1,12 @@
 /*
- * The Spread Toolkit.
- *     
- * The contents of this file are subject to the Spread Open-Source
- * License, Version 1.0 (the ``License''); you may not use
- * this file except in compliance with the License.  You may obtain a
- * copy of the License at:
- *
- * http://www.spread.org/license/
- *
- * or in the file ``license.txt'' found in this distribution.
- *
- * Software distributed under the License is distributed on an AS IS basis, 
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License 
- * for the specific language governing rights and limitations under the 
- * License.
- *
- * The Creators of Spread are:
- *  Yair Amir, Michal Miskin-Amir, Jonathan Stanton, John Schultz.
- *
- *  Copyright (C) 1993-2009 Spread Concepts LLC <info@spreadconcepts.com>
- *
- *  All Rights Reserved.
- *
- * Major Contributor(s):
- * ---------------
- *    Ryan Caudy           rcaudy@gmail.com - contributions to process groups.
- *    Claudiu Danilov      claudiu@acm.org - scalable wide area support.
- *    Cristina Nita-Rotaru crisn@cs.purdue.edu - group communication security.
- *    Theo Schlossnagle    jesus@omniti.com - Perl, autoconf, old skiplist.
- *    Dan Schoenblum       dansch@cnds.jhu.edu - Java interface.
- *
- */
+Sarah Sukardi
+Mariya Kazachkova
+Distributed Systems: Final Project
+December 9, 2016
+*/
 
 #include "sp.h"
 #include "net_include.h"
-
-#include <sys/types.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 
 #define int32u unsigned int
 
@@ -77,24 +45,25 @@ int main(int argc, char *argv[]) {
   test_timeout.usec = 0;
 
   Usage(argc, argv);
-  if (!SP_version( &mver, &miver, &pver)) {
+
+  if (!SP_version(&mver, &miver, &pver)) {
     printf("main: Illegal variables passed to SP_version()\n");
     Bye();
   }
   
   printf("Spread library version is %d.%d.%d\n", mver, miver, pver);
 
-  ret = SP_connect_timeout( Spread_name, User, 0, 1, &Mbox, Private_group, test_timeout );
+  ret = SP_connect_timeout(Spread_name, User, 0, 1, &Mbox, Private_group, test_timeout);
   if(ret != ACCEPT_SESSION) {
-    SP_error( ret );
+    SP_error(ret);
     Bye();
   }
 
   printf("User: connected to %s with private group %s\n", Spread_name, Private_group );
 
   E_init();
-  E_attach_fd( 0, READ_FD, User_command, 0, NULL, LOW_PRIORITY );
-  E_attach_fd( Mbox, READ_FD, Read_message, 0, NULL, HIGH_PRIORITY );
+  E_attach_fd(0, READ_FD, User_command, 0, NULL, LOW_PRIORITY);
+  E_attach_fd(Mbox, READ_FD, Read_message, 0, NULL, HIGH_PRIORITY);
   Print_menu();
 
   printf("\nUser> ");
@@ -124,7 +93,7 @@ static void Print_menu() {
   fflush(stdout);
 }
 
-
+//Prints the menu
 static void User_command() {
   char  command[130];
   char  mess[MAX_MESSLEN];
