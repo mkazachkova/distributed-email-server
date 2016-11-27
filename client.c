@@ -32,8 +32,11 @@ static void Print_help();
 static void Bye();
 
 //Variables that I (Sarah) added
-int                 curr_server;
-char[MAX_NAME_LEN]  curr_user;
+static int                curr_server;
+static char[MAX_NAME_LEN] curr_user;
+static bool               logged_in = false;
+static bool               connected_to_server = false; 
+
 
 
 int main(int argc, char *argv[]) {
@@ -170,7 +173,7 @@ static void User_command() {
         break;
       }
 
-      printf("enter message: ");
+      printf("nter message: ");
       mess_len = 0;
       while (mess_len < MAX_MESSLEN) {
         if (fgets(&mess[mess_len], 200, stdin) == NULL) {
@@ -293,17 +296,28 @@ static void Read_message() {
     exit(0);
   }
 
+  //Regular type of message received (non-membership)
   if (Is_regular_mess(service_type)) {
     mess[ret] = 0;
-    if     ( Is_unreliable_mess( service_type ) ) printf("received UNRELIABLE ");
-    else if( Is_reliable_mess(   service_type ) ) printf("received RELIABLE ");
-    else if( Is_fifo_mess(       service_type ) ) printf("received FIFO ");
-    else if( Is_causal_mess(     service_type ) ) printf("received CAUSAL ");
-    else if( Is_agreed_mess(     service_type ) ) printf("received AGREED ");
-    else if( Is_safe_mess(       service_type ) ) printf("received SAFE ");
+    
+    //for debugging 
+    if      (Is_unreliable_mess(service_type)) printf("received UNRELIABLE\n");
+    else if (Is_reliable_mess(  service_type)) printf("received RELIABLE\n");
+    else if (Is_fifo_mess(      service_type)) printf("received FIFO\n");
+    else if (Is_causal_mess(    service_type)) printf("received CAUSAL\n");
+    else if (Is_agreed_mess(    service_type)) printf("received AGREED\n");
+    else if (Is_safe_mess(      service_type)) printf("received SAFE\n");
+
     printf("message from %s, of type %d, (endian %d) to %d groups \n(%d bytes): %s\n",
       sender, mess_type, endian_mismatch, num_groups, ret, mess );
-  } else if( Is_membership_mess( service_type ) ) {
+
+    //TODO: process messages received
+
+
+
+
+  //Change of membership detected
+  } else if (Is_membership_mess(service_type)) {
     ret = SP_get_memb_info( mess, service_type, &memb_info );
     if (ret < 0) {
       printf("BUG: membership message does not have valid body\n");
@@ -311,7 +325,7 @@ static void Read_message() {
       exit( 1 );
     }
 
-    if ( Is_reg_memb_mess( service_type ) ) {
+    if (Is_reg_memb_mess(service_type)) {
       printf("Received REGULAR membership for group %s with %d members, where I am member %d:\n",
         sender, num_groups, mess_type );
 
