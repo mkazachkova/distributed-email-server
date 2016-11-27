@@ -11,11 +11,11 @@ test: test_linkedlist
 	./test_linkedlist
 	@echo "All tests passed."
 
-test_linkedlist: test.o generic_linked_list.o
-	$(CC) $(CFLAGS) -O -o test test.o generic_linked_list.o
+test_linkedlist: test_linkedlist.o generic_linked_list.o
+	$(CC) $(CFLAGS) -O -o test_linkedlist test_linkedlist.o generic_linked_list.o
 
-test.o: test.c generic_linked_list.h
-	$(CC) $(CFLAGS) -O -c test.c
+test_linkedlist.o: test_linkedlist.c generic_linked_list.h
+	$(CC) $(CFLAGS) -O -c test_linkedlist.c
 
 generic_linked_list.o: generic_linked_list.c generic_linked_list.h
 	$(CC) $(CFLAGS) -c generic_linked_list.c
@@ -24,4 +24,4 @@ generic_linked_list.o: generic_linked_list.c generic_linked_list.h
 # $(CC) -o mcast mcast.o recv_dbg.o
 
 clean:
-	rm -f generic_linked_list server client *.out *.o *~
+	rm -f generic_linked_list test_linkedlist server client *.out *.o *~
