@@ -33,6 +33,7 @@
  */
 
 #include "sp.h"
+#include "net_include.h"
 
 #include <sys/types.h>
 #include <stdio.h>
@@ -61,6 +62,11 @@ static void Read_message();
 static void Usage( int argc, char *argv[] );
 static void Print_help();
 static void Bye();
+
+//Variables that I (Sarah) added
+int                 curr_server;
+char[MAX_NAME_LEN]  curr_user;
+
 
 int main(int argc, char *argv[]) {
   int     ret;
@@ -100,6 +106,25 @@ int main(int argc, char *argv[]) {
   return(0);
 }
 
+static void Print_menu() {
+  printf("\n");
+  printf("==========\n");
+  printf("User Menu:\n");
+  printf("----------\n");
+  printf("\n");
+  printf("\tu <username> -- login as a user\n");
+  printf("\tc <#>        -- connect to a specific mail server\n");
+  printf("\tl            -- list headers of received mail\n");
+  printf("\tm            -- mail a message to a user\n");
+  printf("\td <#>        -- delete a message\n");
+  printf("\tr <#>        -- read a message\n");
+  printf("\tv            -- print membership identities\n");
+  printf("\n");
+  printf("\tq -- quit\n");
+  fflush(stdout);
+}
+
+
 static void User_command() {
   char  command[130];
   char  mess[MAX_MESSLEN];
@@ -119,7 +144,8 @@ static void User_command() {
   }
 
   switch(command[0]) {
-    case 'j':
+    //Login with a username
+    case 'u':
       ret = sscanf( &command[2], "%s", group );
       if (ret < 1) {
         printf(" invalid group \n");
@@ -129,8 +155,8 @@ static void User_command() {
       if (ret < 0) SP_error( ret );
       break;
 
-
-    case 'l':
+    //Connect to a specific mail server
+    case 'c':
       ret = sscanf( &command[2], "%s", group );
       if (ret < 1) {
         printf(" invalid group \n");
@@ -140,8 +166,8 @@ static void User_command() {
       if (ret < 0) SP_error( ret );
       break;
 
-
-    case 's':
+    //List the headers of received mail
+    case 'l':
       num_groups = sscanf(&command[2], "%s%s%s%s%s%s%s%s%s%s", 
             groups[0], groups[1], groups[2], groups[3], groups[4],
             groups[5], groups[6], groups[7], groups[8], groups[9] );
@@ -164,7 +190,7 @@ static void User_command() {
       Num_sent++;
       break;
 
-
+    //Mail a message to a user
     case 'm':
       num_groups = sscanf(&command[2], "%s%s%s%s%s%s%s%s%s%s", 
             groups[0], groups[1], groups[2], groups[3], groups[4],
@@ -197,8 +223,8 @@ static void User_command() {
       Num_sent++;
       break;
 
-
-    case 'b':
+    //Delete a mail message
+    case 'd':
       ret = sscanf( &command[2], "%s", group );
       if (ret != 1) {
         strcpy( group, "dummy_group_name" );
@@ -231,28 +257,18 @@ static void User_command() {
       }
       break;
 
-
+    //Read a received mail message
     case 'r':
       Read_message();
       break;
 
-
+    //Print the membership of the mail servers in the current mail server's network component
     case 'p':
       ret = SP_poll( Mbox );
       printf("Polling sais: %d\n", ret );
       break;
 
-
-    case 'e':
-      E_attach_fd( Mbox, READ_FD, Read_message, 0, NULL, HIGH_PRIORITY );
-      break;
-
-
-    case 'd':
-      E_detach_fd( Mbox, READ_FD );
-      break;
-
-
+    //Exit the program
     case 'q':
       Bye();
       break;
@@ -268,31 +284,6 @@ static void User_command() {
   fflush(stdout);
 
 }
-
-static void Print_menu() {
-  printf("\n");
-  printf("==========\n");
-  printf("User Menu:\n");
-  printf("----------\n");
-  printf("\n");
-  printf("\tj <group> -- join a group\n");
-  printf("\tl <group> -- leave a group\n");
-  printf("\n");
-  printf("\ts <group> -- send a message\n");
-  printf("\tm <group> -- send a multiline message to group. Terminate with empty line\n");
-  printf("\tb <group> -- send a burst of messages\n");
-  printf("\n");
-  printf("\tr -- receive a message (stuck) \n");
-  printf("\tp -- poll for a message \n");
-  printf("\te -- enable asynchonous read (default)\n");
-  printf("\td -- disable asynchronous read \n");
-  printf("\n");
-  printf("\tq -- quit\n");
-  fflush(stdout);
-}
-
-/* FIXME: The user.c code does not use memcpy()s to avoid bus errors when
- *        dereferencing a pointer into a potentially misaligned buffer */
 
 static void Read_message() {
 
@@ -361,42 +352,45 @@ static void Read_message() {
 
       printf("grp id is %d %d %d\n",memb_info.gid.id[0], memb_info.gid.id[1], memb_info.gid.id[2] );
 
-      if( Is_caused_join_mess( service_type ) ) {
-        printf("Due to the JOIN of %s\n", memb_info.changed_member );
-      } else if( Is_caused_leave_mess( service_type ) ){
-        printf("Due to the LEAVE of %s\n", memb_info.changed_member );
-      } else if( Is_caused_disconnect_mess( service_type ) ){
-        printf("Due to the DISCONNECT of %s\n", memb_info.changed_member );
-      } else if( Is_caused_network_mess( service_type ) ){
+      if (Is_caused_join_mess(service_type)) {
+        printf("Due to the JOIN of %s\n", memb_info.changed_member);
+      } else if (Is_caused_leave_mess( service_type)) {
+        printf("Due to the LEAVE of %s\n", memb_info.changed_member);
+      } else if (Is_caused_disconnect_mess( service_type)) {
+        printf("Due to the DISCONNECT of %s\n", memb_info.changed_member);
+      } else if (Is_caused_network_mess( service_type)) {
         printf("Due to NETWORK change with %u VS sets\n", memb_info.num_vs_sets);
-        num_vs_sets = SP_get_vs_sets_info( mess, &vssets[0], MAX_VSSETS, &my_vsset_index );
+        num_vs_sets = SP_get_vs_sets_info( mess, &vssets[0], MAX_VSSETS, &my_vsset_index);
         if (num_vs_sets < 0) {
           printf("BUG: membership message has more then %d vs sets. Recompile with larger MAX_VSSETS\n", MAX_VSSETS);
-          SP_error( num_vs_sets );
-          exit( 1 );
+          SP_error(num_vs_sets);
+          exit(1);
         }
+
 
         for (i = 0; i < num_vs_sets; i++) {
           printf("%s VS set %d has %u members:\n",
-                 (i  == my_vsset_index) ?
-                 ("LOCAL") : ("OTHER"), i, vssets[i].num_members );
+                 (i == my_vsset_index) ? "LOCAL" : "OTHER", i, vssets[i].num_members);
           ret = SP_get_vs_set_members(mess, &vssets[i], members, MAX_MEMBERS);
           if (ret < 0) {
             printf("VS Set has more then %d members. Recompile with larger MAX_MEMBERS\n", MAX_MEMBERS);
-            SP_error( ret );
-            exit( 1 );
+            SP_error(ret);
+            exit(1);
           }
-          for( j = 0; j < vssets[i].num_members; j++ )
-                  printf("\t%s\n", members[j] );
+          for (j = 0; j < vssets[i].num_members; j++) {
+            printf("\t%s\n", members[j] );
+          }
         }
       }
 
-    } else if( Is_transition_mess(   service_type ) ) {
-      printf("received TRANSITIONAL membership for group %s\n", sender );
-    } else if( Is_caused_leave_mess( service_type ) ){
-      printf("received membership message that left group %s\n", sender );
-    } else printf("received incorrecty membership message of type 0x%x\n", service_type );
-  } else if ( Is_reject_mess( service_type ) ) {
+    } else if (Is_transition_mess(service_type)) {
+      printf("received TRANSITIONAL membership for group %s\n", sender);
+    } else if (Is_caused_leave_mess(service_type)) {
+      printf("received membership message that left group %s\n", sender);
+    } else {
+      printf("received incorrect membership message of type 0x%x\n", service_type);
+    }
+  } else if (Is_reject_mess(service_type)) {
     printf("REJECTED message from %s, of servicetype 0x%x messtype %d, (endian %d) to %d groups \n(%d bytes): %s\n",
       sender, service_type, mess_type, endian_mismatch, num_groups, ret, mess );
   } else {
@@ -408,26 +402,23 @@ static void Read_message() {
   fflush(stdout);
 }
 
+//Takes in command-line args for spread name and user
 static void Usage(int argc, char *argv[]) {
-  sprintf( User, "user" );
-  sprintf( Spread_name, "4803");
+  sprintf(User, "user");
+  sprintf(Spread_name, "4803");
 
   while (--argc > 0) {
     argv++;
 
-    if(!strncmp( *argv, "-u", 2)) {
-      if (argc < 2) {
-        Print_help();
-      }
+    if(!strncmp(*argv, "-u", 2)) { //if the next 2 characters are equal to -u (is what it means)
+      if (argc < 2) { Print_help(); } //apparently invalid amt. of args
       strcpy(User, argv[1]);
       argc--; argv++;
-    } else if (!strncmp( *argv, "-r", 2)) {
+    } else if (!strncmp(*argv, "-r", 2)) {
       strcpy(User, "");
-    } else if (!strncmp( *argv, "-s", 2)) {
-      if (argc < 2) {
-        Print_help();
-      }
-      strcpy( Spread_name, argv[1] ); 
+    } else if (!strncmp(*argv, "-s", 2)) {
+      if (argc < 2) { Print_help(); }
+      strcpy(Spread_name, argv[1]); 
       argc--; argv++;
     } else {
       Print_help();
@@ -439,7 +430,7 @@ static void Print_help() {
   printf( "Usage: spuser\n%s\n%s\n%s\n",
     "\t[-u <user name>]  : unique (in this machine) user name",
     "\t[-s <address>]    : either port or port@machine",
-    "\t[-r ]    : use random user name");
+    "\t[-r ]             : use random user name");
   exit( 0 );
 }
 
