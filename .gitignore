@@ -2,4 +2,6 @@
 *.o
 *.out
 test
-generic_linked_list
+server
+client
+test_linkedlist
