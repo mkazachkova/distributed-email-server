@@ -114,7 +114,7 @@ December 9, 2016
 
 #define int32u unsigned int
 
-static char         User[80];
+//static char         User[80];
 static char         Spread_name[80];
 
 static char         Private_group[MAX_GROUP_NAME];
@@ -128,14 +128,20 @@ static int          To_exit = 0;
 #define MAX_VSSETS  10
 #define MAX_MEMBERS 100
 
+int main() {
+  return 0;
+}
+
+
+/*
 static void Print_menu();
 static void User_command();
 static void Read_message();
 static void Usage( int argc, char *argv[] );
 static void Print_help();
 static void Bye();
-
-
+*/
+/*
 int main(int argc, char *argv[]) {
   int     ret;
   int     mver, miver, pver;
@@ -308,4 +314,27 @@ static void Bye() {
   printf("\nBye.\n");
   SP_disconnect( Mbox );
   exit( 0 );
+}
+*/
+
+int compareEmail(void* temp1, void* temp2) {
+  Email *one = (Email*) temp1;
+  Email *two = (Email*) temp2;
+  
+  if (one->emailInfo.timestamp.counter < two->emailInfo.timestamp.counter) {
+    return -1;
+  } else if (one->emailInfo.timestamp.counter > two->emailInfo.timestamp.counter) {
+    return 1;
+  } else {
+    //they are equal; use machine index for tie breaker
+    if (one->emailInfo.timestamp.machine_index < two->emailInfo.timestamp.machine_index) {
+      return -1;
+    } else if(one->emailInfo.timestamp.machine_index > two->emailInfo.timestamp.machine_index) {
+      return 1;
+    } else {
+      printf("Error: should not be here\n");
+      return 0;
+    }
+  }
+  
 }

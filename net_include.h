@@ -31,19 +31,30 @@ December 9, 2016
 #define NUM_SERVERS     5
 
 // **************** DATA STRUCTURES **************** //
+
+
+
+typedef struct timestamp {
+  int                 counter;
+  int                 machine_index;
+  int                 message_index;
+} TimeStamp;
+
+
+typedef struct emailinfo {
+  char  to_field[MAX_NAME_LEN];
+  char  from_field[MAX_NAME_LEN];
+  char  subject[MAX_NAME_LEN];
+  char  message[MAX_MESS_LEN];  
+  TimeStamp           timestamp;
+} EmailInfo;
+
 typedef struct email {
   EmailInfo           emailInfo;
   bool                read;
   bool                deleted;
 } Email;
 
-typedef struct emailinfo {
-  char[MAX_NAME_LEN]  to_field;
-  char[MAX_NAME_LEN]  from_field;
-  char[MAX_NAME_LEN]  subject;
-  char[MAX_MESS_LEN]  message;  
-  TimeStamp           timestamp;
-} EmailInfo;
 
 typedef struct update {
   int                 type;               // 1 is a new email, 
@@ -52,24 +63,18 @@ typedef struct update {
                                           // 4 is new user created
   TimeStamp           timestamp;
   Email               email;              //used for new emails
-  char[MAX_NAME_LEN]  user_name;          //used for new user created
+  char  user_name[MAX_NAME_LEN];          //used for new user created
   TimeStamp           timestamp_of_email; //used for email read or email deleted
-  int[NUM_SERVERS]    updates_array;
+  int    updates_array[NUM_SERVERS];
 } Update;
 
 typedef struct mergematrix {
   int machine_index;                      //index from which it came
-  int[NUM_SERVERS][NUM_SERVERS] matrix;   //the 2-dimensional 5 x 5 reconciliation matrix
+  int matrix[NUM_SERVERS][NUM_SERVERS];   //the 2-dimensional 5 x 5 reconciliation matrix
 } MergeMatrix;
 
-typedef struct timestamp {
-  int                 counter;
-  int                 machine_index;
-  int                 message_index;
-} TimeStamp;
-
 typedef struct user {
-  char[MAX_NAME_LEN]  name;
+  char  name[MAX_NAME_LEN];
   List                *email_list;
 } User;
 

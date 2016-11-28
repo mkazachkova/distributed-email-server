@@ -4,7 +4,7 @@ CFLAGS = -g -Wall -pedantic -D_GNU_SOURCE
 CPPFLAGS=-I. -I/home/cs437/exercises/ex3/include
 SP_LIBRARY_DIR=/home/cs437/exercises/ex3
 
-bin: client server
+bin: server
 
 .c.o:
 	$(CC) $(CFLAGS) $(CPPFLAGS) -c $<
@@ -13,7 +13,7 @@ client: $(SP_LIBRARY_DIR)/libspread-core.a client.o generic_linked_list.o
 	$(LD) -o $@ client.o generic_linked_list.o $(SP_LIBRARY_DIR)/libspread-core.a -ldl -lm -lrt -lnsl $(SP_LIBRARY_DIR)/libspread-util.a
 
 server: $(SP_LIBRARY_DIR)/libspread-core.a server.o generic_linked_list.o
-	$(LD) -o $@ class_user.o generic_linked_list.o $(SP_LIBRARY_DIR)/libspread-core.a -ldl -lm -lrt -lnsl $(SP_LIBRARY_DIR)/libspread-util.a
+	$(LD) -o $@ server.o generic_linked_list.o $(SP_LIBRARY_DIR)/libspread-core.a -ldl -lm -lrt -lnsl $(SP_LIBRARY_DIR)/libspread-util.a
 
 test: test_linkedlist
 	@echo "Running tests..."
