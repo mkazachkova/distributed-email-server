@@ -40,4 +40,4 @@ generic_linked_list.o: generic_linked_list.c generic_linked_list.h
 # $(CC) -o mcast mcast.o recv_dbg.o
 
 clean:
-	rm -f generic_linked_list ./test_linkedlist server client *.out *.o *~
+	rm -f generic_linked_list ./test_linkedlist ./test_servermethods server client *.out *.o *~
