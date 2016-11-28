@@ -1,0 +1,1 @@
+- person logs into client as the same user and connects to the same server... make sure that it still works correctly

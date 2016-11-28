@@ -5,3 +5,8 @@ get the email we can just fill the data in the null node
 -can we attach the updates array to each update? 
 -when we update the 2d arrays after a merge every server sends its own 2d array to every other process. To process this matrix, when we receive it
 we compare each cell with our own matrix and set the larger of the two values to our own (check that this is actually okay to do)??
+
+- can we assume that membership changes happen semifrequently? Would it be better to check for and delete up to what every one has ever time an update is received? how about every n updates? what about just every time there is a change in membership?
+- so when we are chaing membership, and updating our view of what someone we just joined with has, is it ok to just put teh max value of values in our new partition, or should we have like some kind of confirmation that is sent?
+- so we only send the 2d matrix instead of just our items (during a merge) so we know what we can safely delete up to? or is there another use for sending the entire 2d matrix?
+-
