@@ -209,7 +209,7 @@ int main(int argc, char *argv[]) {
   printf("%d\n", service_type);
 
 
-  if (Is_membership_mess(service_type)) {
+  if ( Is_caused_join_mess(service_type)) {
     printf("we have received a membership message\n");
   }
 
@@ -220,7 +220,7 @@ int main(int argc, char *argv[]) {
   printf("this is ret: %d\n", ret);
   printf("%d\n", service_type);
 
-  if (Is_membership_mess(service_type)) {
+  if  (Is_caused_join_mess(service_type)) {
     printf("we have received a membership message\n");
   }
   
