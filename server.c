@@ -112,9 +112,12 @@ December 9, 2016
 
 
 
+
+
+
 #define int32u unsigned int
 
-//static char         User[80];
+static char         Server[80];
 static char         Spread_name[80];
 
 static char         Private_group[MAX_GROUP_NAME];
@@ -122,11 +125,55 @@ static mailbox      Mbox;
 static int          Num_sent;
 static unsigned int Previous_len;
 
+static char     group[80] = "ssukard1mkazach1_2"; 
+
+int             my_machine_index;
+int             num_machines;
+
 static int          To_exit = 0;
+
+int     ret;
+int     mver, miver, pver;
+sp_time test_timeout;
+
+
 
 #define MAX_MESSLEN 102400
 #define MAX_VSSETS  10
 #define MAX_MEMBERS 100
+
+int main(int argc, char *argv[]) {
+
+  my_machine_index =  atoi(argv[1]) - 1; //subtract 1 for correct indexing
+  num_machines =      atoi(argv[2]);
+
+  sprintf(Server, "user_mk_ss");
+  sprintf(Spread_name, "10050");
+
+  if (!SP_version(&mver, &miver, &pver)) {
+    printf("main: Illegal variables passed to SP_version()\n");
+    //Bye();
+  }
+
+  printf("Spread library version is %d.%d.%d\n", mver, miver, pver);
+
+
+  ret = SP_connect_timeout(Spread_name, Server, 0, 1, &Mbox, Private_group, test_timeout);
+  if (ret != ACCEPT_SESSION) {
+    SP_error(ret);
+    //Bye();
+  }
+
+  printf("Server: connected to %s with private group %s\n", Spread_name, Private_group);
+
+  ret = SP_join(Mbox, group);
+  if (ret < 0) {
+    SP_error(ret);
+  }
+  
+  
+}
+
 
 
 /*
@@ -312,6 +359,10 @@ static void Bye() {
   exit( 0 );
 }
 */
+
+/*
+
+
 int compareEmail(void* temp1, void* temp2);
 void printEmail(void *n);
 
@@ -397,3 +448,4 @@ void printEmail(void *n) {
   printf("counter is: %d, machine index is: %d, message index is: %d\n",
          e->emailInfo.timestamp.counter,  e->emailInfo.timestamp.machine_index,  e->emailInfo.timestamp.message_index);  
 }
+*/
