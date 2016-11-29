@@ -127,6 +127,9 @@ static unsigned int Previous_len;
 
 static char     group[80] = "ssukard1mkazach1_2"; 
 
+
+char server_own_group[80] = "ssukard1mkazach1_server_";
+
 int             my_machine_index;
 int             num_machines;
 
@@ -147,6 +150,16 @@ int main(int argc, char *argv[]) {
   my_machine_index =  atoi(argv[1]) - 1; //subtract 1 for correct indexing
   num_machines =      atoi(argv[2]);
 
+  char my_machine_index_str[20];
+  
+  sprintf(my_machine_index_str, "%d", my_machine_index + 1);
+  
+
+  strcat(server_own_group, my_machine_index_str);
+  
+  printf("%s\n", server_own_group);
+
+  
   sprintf(Server, "user_mk_ss");
   sprintf(Spread_name, "10050");
 
@@ -170,6 +183,53 @@ int main(int argc, char *argv[]) {
   if (ret < 0) {
     SP_error(ret);
   }
+
+
+
+  ret = SP_join(Mbox, server_own_group);
+  if (ret < 0) {
+    SP_error(ret);
+  }
+
+  printf("connected\n");
+
+
+  static  char  mess[MAX_MESSLEN];
+  int   service_type;
+  char  sender[MAX_GROUP_NAME];
+  int   num_groups;
+  char  target_groups[MAX_MEMBERS][MAX_GROUP_NAME];
+  int16 mess_type;
+  int   endian_mismatch;
+
+  int ret = SP_receive(Mbox, &service_type, sender, 100, &num_groups, target_groups,
+             &mess_type, &endian_mismatch, sizeof(mess), mess);
+
+  printf("this is ret: %d\n", ret);
+  printf("%d\n", service_type);
+
+
+  if (Is_membership_mess(service_type)) {
+    printf("we have received a membership message\n");
+  }
+
+  
+  ret = SP_receive(Mbox, &service_type, sender, 100, &num_groups, target_groups,
+                       &mess_type, &endian_mismatch, sizeof(mess), mess);
+
+  printf("this is ret: %d\n", ret);
+  printf("%d\n", service_type);
+
+  if (Is_membership_mess(service_type)) {
+    printf("we have received a membership message\n");
+  }
+  
+  
+  ret = SP_receive(Mbox, &service_type, sender, 100, &num_groups, target_groups,
+                       &mess_type, &endian_mismatch, sizeof(mess), mess);
+
+  printf("this is ret: %d\n", ret);
+  printf("%d\n", service_type);
   
   
 }
