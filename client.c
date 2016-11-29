@@ -10,7 +10,7 @@ December 9, 2016
 
 #define int32u unsigned int
 
-static char         User[80];
+static char         Client_name[80];
 static char         Spread_name[80];
 
 static char         Private_group[MAX_GROUP_NAME];
@@ -33,7 +33,7 @@ static void Bye();
 
 //Variables that I (Sarah) added
 static int                curr_server;
-static char[MAX_NAME_LEN] curr_user;
+static char curr_user[MAX_NAME_LEN];
 static bool               logged_in = false;
 static bool               connected_to_server = false; 
 
@@ -56,13 +56,13 @@ int main(int argc, char *argv[]) {
   
   printf("Spread library version is %d.%d.%d\n", mver, miver, pver);
 
-  ret = SP_connect_timeout(Spread_name, User, 0, 1, &Mbox, Private_group, test_timeout);
+  ret = SP_connect_timeout(Spread_name, Client_name, 0, 1, &Mbox, Private_group, test_timeout);
   if(ret != ACCEPT_SESSION) {
     SP_error(ret);
     Bye();
   }
 
-  printf("User: connected to %s with private group %s\n", Spread_name, Private_group );
+  printf("Client: connected to %s with private group %s\n", Spread_name, Private_group );
 
   E_init();
   E_attach_fd(0, READ_FD, User_command, 0, NULL, LOW_PRIORITY);
@@ -134,7 +134,7 @@ static void User_command() {
         printf(" invalid group \n");
         break;
       }
-      ret = SP_leave( Mbox, group );
+      ret = SP_join( Mbox, group );
       if (ret < 0) SP_error( ret );
       break;
 
@@ -387,18 +387,18 @@ static void Read_message() {
 
 //Takes in command-line args for spread name and user
 static void Usage(int argc, char *argv[]) {
-  sprintf(User, "user");
-  sprintf(Spread_name, "4803");
+  sprintf(Client_name, "user_mk_ss");
+  sprintf(Spread_name, "10050");
 
   while (--argc > 0) {
     argv++;
 
     if(!strncmp(*argv, "-u", 2)) { //if the next 2 characters are equal to -u (is what it means)
       if (argc < 2) { Print_help(); } //apparently invalid amt. of args
-      strcpy(User, argv[1]);
+      strcpy(Client_name, argv[1]);
       argc--; argv++;
     } else if (!strncmp(*argv, "-r", 2)) {
-      strcpy(User, "");
+      strcpy(Client_name, "");
     } else if (!strncmp(*argv, "-s", 2)) {
       if (argc < 2) { Print_help(); }
       strcpy(Spread_name, argv[1]); 

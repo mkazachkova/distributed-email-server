@@ -4,7 +4,7 @@ CFLAGS = -g -Wall -pedantic -D_GNU_SOURCE
 CPPFLAGS=-I. -I/home/cs437/exercises/ex3/include
 SP_LIBRARY_DIR=/home/cs437/exercises/ex3
 
-bin: server
+bin: client server
 
 .c.o:
 	$(CC) $(CFLAGS) $(CPPFLAGS) -c $<
