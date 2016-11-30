@@ -32,9 +32,8 @@ static void Print_help();
 static void Bye();
 
 //Variables that I (Sarah) added
-static int  curr_server;
+static int  curr_server = -1;
 static char curr_user[MAX_NAME_LEN];
-static bool logged_in = false;
 static bool connected_to_server = false;
 static char hardcoded_server_names[NUM_SERVERS][MAX_NAME_LEN];
 
@@ -48,12 +47,12 @@ int main(int argc, char *argv[]) {
 
   //Initialize hardcoded server names
   for (int i = 0; i < NUM_SERVERS; i++) {
-    char curr_server_num[MAX_NAME_LEN];
+    char temp_server_num[MAX_NAME_LEN];
     strcpy(hardcoded_server_names[i], "ssukard1mkazach1_server_");
-    sprintf(curr_server_num, "%d", i + 10);
-    strcat(hardcoded_server_names[i], curr_server_num);
+    sprintf(temp_server_num, "%d", i + 10);
+    strcat(hardcoded_server_names[i], temp_server_num);
 
-    printf("%s\n"); // for debug
+    printf("%s\n", hardcoded_server_names[i]); // for debug
   }
 
   Usage(argc, argv);
@@ -139,14 +138,19 @@ static void User_command() {
     //Connect to a specific mail server
     case 'c':
       ret = sscanf(&command[2], "%s", group);
-      int server_to_be_used = atoi(group) - 1;
+      curr_server = atoi(group) - 1;
       
       if (ret < 1) {
         printf(" invalid group \n");
         break;
       }
+
+      int mess_len = strlen(group);
+      SP_multicast(Mbox, AGREED_MESS, group, 2, mess_len, group);
+      /*
       ret = SP_join(Mbox, hardcoded_server_names[server_to_be_used]);
-      if (ret < 0) SP_error(ret);
+      if (ret < 0) SP_error(ret); 
+      */
       break;
 
     //List the headers of received mail
@@ -184,7 +188,7 @@ static void User_command() {
         break;
       }
 
-      printf("nter message: ");
+      printf("Enter message: ");
       mess_len = 0;
       while (mess_len < MAX_MESSLEN) {
         if (fgets(&mess[mess_len], 200, stdin) == NULL) {
