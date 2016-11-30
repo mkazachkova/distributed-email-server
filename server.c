@@ -228,8 +228,10 @@ int main(int argc, char *argv[]) {
   ret = SP_receive(Mbox, &service_type, sender, 100, &num_groups, target_groups,
                        &mess_type, &endian_mismatch, sizeof(mess), mess);
 
-  printf("this is ret: %d\n", ret);
-  printf("%d\n", service_type);
+  printf("This is ret:  %d\n", ret);
+  printf("This is mess: %s\n", mess);
+  // printf("this is ret: %d\n", ret);
+  //printf("%d\n", service_type);
   
   
 }
