@@ -32,12 +32,11 @@ static void Print_help();
 static void Bye();
 
 //Variables that I (Sarah) added
-static int                curr_server;
+static int  curr_server;
 static char curr_user[MAX_NAME_LEN];
-static bool               logged_in = false;
-static bool               connected_to_server = false; 
-
-
+static bool logged_in = false;
+static bool connected_to_server = false;
+static char hardcoded_server_names[NUM_SERVERS][MAX_NAME_LEN];
 
 int main(int argc, char *argv[]) {
   int     ret;
@@ -46,6 +45,16 @@ int main(int argc, char *argv[]) {
 
   test_timeout.sec = 5;
   test_timeout.usec = 0;
+
+  //Initialize hardcoded server names
+  for (int i = 0; i < NUM_SERVERS; i++) {
+    char curr_server_num[MAX_NAME_LEN];
+    hardcoded_server_names[i] = "ssukard1mkazach1_server_";
+    sprintf(curr_server_num, "%d", i + 10);
+    strcat(hardcoded_server_names[i], curr_server_num);
+
+    printf("%s\n"); // for debug
+  }
 
   Usage(argc, argv);
 
@@ -129,13 +138,15 @@ static void User_command() {
 
     //Connect to a specific mail server
     case 'c':
-      ret = sscanf( &command[2], "%s", group );
+      ret = sscanf(&command[2], "%s", group);
+      int server_to_be_used = atoi(group) - 1;
+      
       if (ret < 1) {
         printf(" invalid group \n");
         break;
       }
-      ret = SP_join( Mbox, group );
-      if (ret < 0) SP_error( ret );
+      ret = SP_join(Mbox, hardcoded_server_names[server_to_be_used]);
+      if (ret < 0) SP_error(ret);
       break;
 
     //List the headers of received mail
