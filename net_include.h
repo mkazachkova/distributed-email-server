@@ -58,10 +58,10 @@ typedef struct email {
 
 
 typedef struct update {
-  int                 type;               // 1 is a new email, 
-                                          // 2 is an email read, 
-                                          // 3 is an email deleted,
-                                          // 4 is new user created
+  int                 type;               // 10 is a new email, 
+                                          // 11 is an email read, 
+                                          // 12 is an email deleted,
+                                          // 13 is new user created
   TimeStamp           timestamp;
   Email               email;              //used for new emails
   char  user_name[MAX_NAME_LEN];          //used for new user created
@@ -70,6 +70,7 @@ typedef struct update {
 } Update;
 
 typedef struct mergematrix {
+  int type; //20 is for the matrix
   int machine_index;                      //index from which it came
   int matrix[NUM_SERVERS][NUM_SERVERS];   //the 2-dimensional 5 x 5 reconciliation matrix
 } MergeMatrix;
