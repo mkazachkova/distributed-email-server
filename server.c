@@ -258,14 +258,14 @@ static void Respond_To_Message() {
   
   int *type = (int*) tmp_buf;
   InfoForServer *info;
-  info = (InfoForServer*)tmp_buf;
-  printf("This is the username: %s\n", info->user_name);
-  printf("type: %d\n", *type);
-  switch(10) {
+  //info = (InfoForServer*)tmp_buf;
+  //printf("This is the username: %s\n", info->user_name);
+  //printf("type: %d\n", *type);
+  switch(*type) {
   case 2:
-    //    info = malloc(sizeof(InfoForServer));
-    //info = (InfoForServer*)tmp_buf;
-    //printf("This is the username: %s\n", info->user_name);
+    //info = malloc(sizeof(InfoForServer));
+    info = (InfoForServer*)tmp_buf;
+    printf("This is the username: %s\n", info->user_name);
     break;
   case 3:
     break;
