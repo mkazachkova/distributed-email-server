@@ -49,7 +49,7 @@ int main(int argc, char *argv[]) {
   //Initialize hardcoded server names
   for (int i = 0; i < NUM_SERVERS; i++) {
     char curr_server_num[MAX_NAME_LEN];
-    hardcoded_server_names[i] = "ssukard1mkazach1_server_";
+    strcpy(hardcoded_server_names[i], "ssukard1mkazach1_server_");
     sprintf(curr_server_num, "%d", i + 10);
     strcat(hardcoded_server_names[i], curr_server_num);
 
