@@ -20,6 +20,7 @@ December 9, 2016
 #include <string.h>
 #include <limits.h>
 #include <time.h>
+#include <assert.h>
 
 #include "generic_linked_list.h"
 

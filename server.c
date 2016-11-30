@@ -224,15 +224,16 @@ int main(int argc, char *argv[]) {
     printf("we have received a membership message\n");
   }
   
-  
+  InfoForServer *info = malloc(sizeof(InfoForServer));
   ret = SP_receive(Mbox, &service_type, sender, 100, &num_groups, target_groups,
-                       &mess_type, &endian_mismatch, sizeof(mess), mess);
+                   &mess_type, &endian_mismatch, sizeof(InfoForServer), (char*)info);
 
   printf("This is ret:  %d\n", ret);
-  printf("This is mess: %s\n", mess);
+  // printf("This is mess: %s\n", mess);
   // printf("this is ret: %d\n", ret);
   //printf("%d\n", service_type);
-  
+  assert(info->type == 2);
+  printf("This is the username: %s\n", info->user_name);
   
 }
 

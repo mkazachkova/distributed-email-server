@@ -147,8 +147,12 @@ static void User_command() {
 
       int mess_len = strlen(hardcoded_server_names[curr_server]);
       printf("Message of length %d with contents %s\n", mess_len, hardcoded_server_names[curr_server]);
+
+      InfoForServer *info = malloc(sizeof(InfoForServer));
+      info->type = 2; //for new user
+      sprintf(info->user_name, "%s","YAIR"); //to be changed when we implement getting the user name
       
-      SP_multicast(Mbox, AGREED_MESS, hardcoded_server_names[curr_server], 2, mess_len, hardcoded_server_names[curr_server]);
+      SP_multicast(Mbox, AGREED_MESS, hardcoded_server_names[curr_server], 2, sizeof(InfoForServer), (char*)info);
       
       /*
       ret = SP_join(Mbox, hardcoded_server_names[server_to_be_used]);
