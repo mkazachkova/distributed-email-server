@@ -145,6 +145,10 @@ sp_time test_timeout;
 #define MAX_VSSETS  10
 #define MAX_MEMBERS 100
 
+
+static void Respond_To_Message();
+
+
 int main(int argc, char *argv[]) {
 
   my_machine_index =  atoi(argv[1]) - 1; //subtract 1 for correct indexing
@@ -193,7 +197,19 @@ int main(int argc, char *argv[]) {
 
   printf("connected\n");
 
+  E_init();
+  E_attach_fd( Mbox, READ_FD, Respond_To_Message, 0, NULL, LOW_PRIORITY );
 
+  fflush(stdout);
+  E_handle_events();
+  
+  
+}
+
+
+
+static void Respond_To_Message() {
+  
   static  char  mess[MAX_MESSLEN];
   int   service_type;
   char  sender[MAX_GROUP_NAME];
@@ -234,10 +250,8 @@ int main(int argc, char *argv[]) {
   //printf("%d\n", service_type);
   assert(info->type == 2);
   printf("This is the username: %s\n", info->user_name);
-  
+
 }
-
-
 
 /*
 static void Print_menu();
