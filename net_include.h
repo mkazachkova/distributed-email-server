@@ -79,3 +79,10 @@ typedef struct user {
 } User;
 
 
+typedef struct info_for_server {
+  int type; //2->new user, 3->list headers, 4->mail message to user, 5->delete message, 6->read message, 7->print membership
+  char user_name[MAX_NAME_LEN]; // for new user (?)
+  Email email;
+  int message_to_delete;
+  int message_to_read;
+} InfoForServer;
