@@ -240,17 +240,58 @@ static void Respond_To_Message() {
     printf("we have received a membership message\n");
   }
   
-  InfoForServer *info = malloc(sizeof(InfoForServer));
-  ret = SP_receive(Mbox, &service_type, sender, 100, &num_groups, target_groups,
-                   &mess_type, &endian_mismatch, sizeof(InfoForServer), (char*)info);
+  //InfoForServer *info = malloc(sizeof(InfoForServer));
+  //ret = SP_receive(Mbox, &service_type, sender, 100, &num_groups, target_groups,
+  //               &mess_type, &endian_mismatch, sizeof(InfoForServer), (char*)info);
 
-  printf("This is ret:  %d\n", ret);
+  //printf("This is ret:  %d\n", ret);
   // printf("This is mess: %s\n", mess);
   // printf("this is ret: %d\n", ret);
   //printf("%d\n", service_type);
-  assert(info->type == 2);
-  printf("This is the username: %s\n", info->user_name);
+  //assert(info->type == 2);
+  //printf("This is the username: %s\n", info->user_name);
 
+  char *tmp_buf = malloc(MAX_PACKET_LEN);
+  ret = SP_receive(Mbox, &service_type, sender, 100, &num_groups, target_groups,
+                   &mess_type, &endian_mismatch, sizeof(tmp_buf), (char*)tmp_buf);
+  
+  int *type = (int*) tmp_buf;
+  InfoForServer *info;
+
+  switch(*type) {
+  case 2:
+    info = malloc(sizeof(InfoForServer));
+    info = (InfoForServer*)tmp_buf;
+    printf("This is the username: %s\n", info->user_name);
+    break;
+  case 3:
+    break;
+  case 4:
+    break;
+  case 5:
+    break;
+  case 6:
+    break;
+  case 7:
+    break;
+  case 10:
+    break;
+  case 11:
+    break;
+  case 12:
+    break;
+  case 13:
+    break;
+  case 20:
+    break;
+  default:
+    printf("Unkown type. Double check what you are sending\n");
+    exit(1);
+  }
+
+
+
+  
 }
 
 /*
