@@ -240,7 +240,7 @@ static void Respond_To_Message() {
     printf("we have received a membership message\n");
   }
   
-  //InfoForServer *info = malloc(sizeof(InfoForServer));
+  //  InfoForServer *info = malloc(sizeof(InfoForServer));
   //ret = SP_receive(Mbox, &service_type, sender, 100, &num_groups, target_groups,
   //               &mess_type, &endian_mismatch, sizeof(InfoForServer), (char*)info);
 
@@ -251,18 +251,21 @@ static void Respond_To_Message() {
   //assert(info->type == 2);
   //printf("This is the username: %s\n", info->user_name);
 
+  
   char *tmp_buf = malloc(MAX_PACKET_LEN);
   ret = SP_receive(Mbox, &service_type, sender, 100, &num_groups, target_groups,
-                   &mess_type, &endian_mismatch, sizeof(tmp_buf), (char*)tmp_buf);
+                   &mess_type, &endian_mismatch, MAX_PACKET_LEN, (char*)tmp_buf);
   
   int *type = (int*) tmp_buf;
   InfoForServer *info;
-
-  switch(*type) {
+  info = (InfoForServer*)tmp_buf;
+  printf("This is the username: %s\n", info->user_name);
+  printf("type: %d\n", *type);
+  switch(10) {
   case 2:
-    info = malloc(sizeof(InfoForServer));
-    info = (InfoForServer*)tmp_buf;
-    printf("This is the username: %s\n", info->user_name);
+    //    info = malloc(sizeof(InfoForServer));
+    //info = (InfoForServer*)tmp_buf;
+    //printf("This is the username: %s\n", info->user_name);
     break;
   case 3:
     break;
