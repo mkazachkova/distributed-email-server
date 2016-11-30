@@ -257,43 +257,36 @@ static void Respond_To_Message() {
                    &mess_type, &endian_mismatch, MAX_PACKET_LEN, (char*)tmp_buf);
   
   int *type = (int*) tmp_buf;
-  InfoForServer *info;
-  //info = (InfoForServer*)tmp_buf;
-  //printf("This is the username: %s\n", info->user_name);
-  //printf("type: %d\n", *type);
-  switch(*type) {
-  case 2:
-    //info = malloc(sizeof(InfoForServer));
-    info = (InfoForServer*)tmp_buf;
-    printf("This is the username: %s\n", info->user_name);
-    break;
-  case 3:
-    break;
-  case 4:
-    break;
-  case 5:
-    break;
-  case 6:
-    break;
-  case 7:
-    break;
-  case 10:
-    break;
-  case 11:
-    break;
-  case 12:
-    break;
-  case 13:
-    break;
-  case 20:
-    break;
-  default:
-    printf("Unkown type. Double check what you are sending\n");
+
+  if (*type == 2) { 
+    InfoForServer *info;
+    info = (InfoForServer*) tmp_buf;
+    printf("This is the username: %s\n", info->user_name);    
+    printf("type: %d\n", *type);
+  } else if (*type == 3) {
+
+  } else if (*type == 4) {
+
+  } else if (*type == 5) {
+
+  } else if (*type == 6) {
+
+  } else if (*type == 7) {
+
+  } else if (*type == 10) {
+
+  } else if (*type == 11) {
+
+  } else if (*type == 12) {
+
+  } else if (*type == 13) {
+
+  } else if (*type == 20) {
+
+  } else { //unknown type!
+    printf("Unknown type. Exiting...\n");
     exit(1);
   }
-
-
-
   
 }
 
