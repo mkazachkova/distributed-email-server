@@ -322,7 +322,8 @@ void create_user_if_nonexistent(char name[MAX_NAME_LEN]) {
     //create new user
     User *user_to_insert = malloc(sizeof(User));
     strcpy(user_to_insert->name, name);
-    create_list((user_to_insert->email_list), sizeof(Email));
+    printf("before creating email list for user\n");
+    create_list(&user_to_insert->email_list, sizeof(Email));
     printf("new user created!\n");
   }
 }
@@ -336,7 +337,7 @@ int compare_users(void* user1, void* user2) {
 void print_user(void *user) {
   User *temp = (User*) user;
   printf("Username: %s", temp->name);
-  print_list(temp->email_list, print_email);
+  print_list(&(temp->email_list), print_email);
 }
 
 void print_email(void *email) {

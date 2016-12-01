@@ -87,7 +87,7 @@ typedef struct mergematrix {
 // * held in server, not sent anywhere
 typedef struct user {
   char  name[MAX_NAME_LEN];
-  List  *email_list;
+  List  email_list;
 } User;
 
 // Information from clients
