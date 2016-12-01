@@ -37,11 +37,15 @@ static char curr_user[MAX_NAME_LEN];
 static char hardcoded_server_names[NUM_SERVERS][MAX_NAME_LEN];
 
 
+static bool logged_in = false;
+
+
 int main(int argc, char *argv[]) {
   int     ret;
   int     mver, miver, pver;
   sp_time test_timeout;
 
+  
   test_timeout.sec = 5;
   test_timeout.usec = 0;
 
@@ -126,17 +130,24 @@ static void User_command() {
   switch(command[0]) {
     //Login with a username
     case 'u':
-      ret = sscanf( &command[2], "%s", group );
-      if (ret < 1) {
+      ret = sscanf( &command[2], "%s", curr_user);
+      printf("this is curr user: %s\n", curr_user);
+      logged_in = true;
+      /*if (ret < 1) {
         printf(" invalid group \n");
         break;
       }
       ret = SP_join( Mbox, group );
       if (ret < 0) SP_error( ret );
-      break;
+      break;*/
+      
 
     //Connect to a specific mail server
     case 'c':
+      if (!logged_in) {
+        printf("Must log in before connecting to server.\n");
+        break;
+      }
       ret = sscanf(&command[2], "%s", group);
       curr_server = atoi(group) - 1;
       
