@@ -227,6 +227,8 @@ static void Respond_To_Message() {
   int16 mess_type;
   int   endian_mismatch;
 
+
+  /*
   int ret = SP_receive(Mbox, &service_type, sender, 100, &num_groups, target_groups,
              &mess_type, &endian_mismatch, sizeof(mess), mess);
 
@@ -248,7 +250,7 @@ static void Respond_To_Message() {
   if  (Is_caused_join_mess(service_type)) {
     printf("we have received a membership message\n");
   }
-  
+  */
   //  InfoForServer *info = malloc(sizeof(InfoForServer));
   //ret = SP_receive(Mbox, &service_type, sender, 100, &num_groups, target_groups,
   //               &mess_type, &endian_mismatch, sizeof(InfoForServer), (char*)info);
@@ -270,10 +272,17 @@ static void Respond_To_Message() {
   //maybe we create a separate method for creating a user when we get an email, read, or
   //delete for a user that has not been created
 
+
   
   char *tmp_buf = malloc(MAX_PACKET_LEN);
   ret = SP_receive(Mbox, &service_type, sender, 100, &num_groups, target_groups,
                    &mess_type, &endian_mismatch, MAX_PACKET_LEN, (char*)tmp_buf);
+
+  if (Is_caused_join_mess(service_type)) {
+    return;
+  }
+
+
   
   int *type = (int*) tmp_buf;
 
