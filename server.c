@@ -283,6 +283,7 @@ static void Respond_To_Message() {
     printf("This is the username: %s\n", info->user_name);    
     printf("type: %d\n", *type);
     create_user_if_nonexistent(info->user_name);
+    printf("about to print list\n and this is user list size: %d\n", users_list.num_nodes);
     print_list(&users_list, print_user);
 
     
@@ -317,20 +318,29 @@ static void Respond_To_Message() {
 
 
 void create_user_if_nonexistent(char name[MAX_NAME_LEN]) {
-  Node *temp = find(&users_list, &name, compare_users);
+  Node *temp = find(&users_list, &name[0], compare_users);
   if (temp == NULL) {
     //create new user
     User *user_to_insert = malloc(sizeof(User));
     strcpy(user_to_insert->name, name);
     printf("before creating email list for user\n");
-    create_list(&user_to_insert->email_list, sizeof(Email));
+    create_list(&(user_to_insert->email_list), sizeof(Email));
+    add_to_end(&users_list, user_to_insert);
     printf("new user created!\n");
   }
 }
 
 int compare_users(void* user1, void* user2) {
+  printf("entered compare users\n");
   User *user_in_linked_list = (User*) user1;
+  if (user_in_linked_list->name == NULL) {
+    printf("user is null\n");
+  }
   char *user_search = (char*) user2;
+  printf("before other print statements\n");
+  printf("first one: %s\n",  (user_in_linked_list->name));
+  printf("comparing %s and %s\n", (user_in_linked_list->name), user_search);
+  printf("this is value for strcmp: %d\n", strcmp(user_in_linked_list->name, user_search));
   return strcmp(user_in_linked_list->name, user_search); 
 }
 
