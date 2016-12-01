@@ -161,7 +161,7 @@ static void User_command() {
 
       InfoForServer *info = malloc(sizeof(InfoForServer));
       info->type = 2; //for new user
-      sprintf(info->user_name, "%s","YAIR"); //to be changed when we implement getting the user name
+      sprintf(info->user_name, "%s",curr_user); //to be changed when we implement getting the user name
       
       SP_multicast(Mbox, AGREED_MESS, hardcoded_server_names[curr_server], 2, sizeof(InfoForServer), (char*)info);
       
