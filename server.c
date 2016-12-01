@@ -139,6 +139,7 @@ int     ret;
 int     mver, miver, pver;
 sp_time test_timeout;
 
+List users_list;
 
 
 #define MAX_MESSLEN 102400
@@ -147,10 +148,17 @@ sp_time test_timeout;
 
 
 static void Respond_To_Message();
+int compare_users(void* user1, void* user2);
+void create_user_if_nonexistent(char *name);
 
-
+  
 int main(int argc, char *argv[]) {
 
+
+  //Create a linked list of users
+  create_list(&users_list, sizeof(User));
+
+  
   my_machine_index =  atoi(argv[1]) - 1; //subtract 1 for correct indexing
   num_machines =      atoi(argv[2]);
 
@@ -251,6 +259,16 @@ static void Respond_To_Message() {
   //assert(info->type == 2);
   //printf("This is the username: %s\n", info->user_name);
 
+
+
+  //IDEA: if we receive an update then we're still going to end up doing some of the things in
+  //the large if else block thing, so maybe we should check if it's an update and then change
+  //type to that value and then just make sure that each if else statement takes care of the
+  //case where the update arrives before the user or email is actually created
+
+  //maybe we create a separate method for creating a user when we get an email, read, or
+  //delete for a user that has not been created
+
   
   char *tmp_buf = malloc(MAX_PACKET_LEN);
   ret = SP_receive(Mbox, &service_type, sender, 100, &num_groups, target_groups,
@@ -263,6 +281,10 @@ static void Respond_To_Message() {
     info = (InfoForServer*) tmp_buf;
     printf("This is the username: %s\n", info->user_name);    
     printf("type: %d\n", *type);
+
+
+    
+    //check user linked list for username; if no username then create a new object and 
   } else if (*type == 3) {
 
   } else if (*type == 4) {
@@ -289,6 +311,26 @@ static void Respond_To_Message() {
   }
   
 }
+
+
+
+void create_user_if_nonexistent(char name[MAX_NAME_LEN]) {
+  Node *temp = find(&users_list, &name, compare_users);
+  if (temp == NULL) {
+    //create new user
+    User *user_to_insert = malloc(sizeof(User));
+    strcpy(user_to_insert->name, name);
+    create_list((user_to_insert->email_list), sizeof(Email));
+  }
+}
+
+int compare_users(void* user1, void* user2) {
+  User *user_in_linked_list = (User*) user1;
+  char *user_search = (char*) user2;
+  return strcmp(user_in_linked_list->name, user_search); 
+}
+
+
 
 /*
 static void Print_menu();
