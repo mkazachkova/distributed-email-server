@@ -150,7 +150,8 @@ List users_list;
 static void Respond_To_Message();
 int compare_users(void* user1, void* user2);
 void create_user_if_nonexistent(char *name);
-
+void print_user(void *user);
+void print_email(void *user);
   
 int main(int argc, char *argv[]) {
 
@@ -281,7 +282,8 @@ static void Respond_To_Message() {
     info = (InfoForServer*) tmp_buf;
     printf("This is the username: %s\n", info->user_name);    
     printf("type: %d\n", *type);
-
+    create_user_if_nonexistent(info->user_name);
+    print_list(&users_list, print_user);
 
     
     //check user linked list for username; if no username then create a new object and 
@@ -321,6 +323,7 @@ void create_user_if_nonexistent(char name[MAX_NAME_LEN]) {
     User *user_to_insert = malloc(sizeof(User));
     strcpy(user_to_insert->name, name);
     create_list((user_to_insert->email_list), sizeof(Email));
+    printf("new user created!\n");
   }
 }
 
@@ -330,7 +333,18 @@ int compare_users(void* user1, void* user2) {
   return strcmp(user_in_linked_list->name, user_search); 
 }
 
+void print_user(void *user) {
+  User *temp = (User*) user;
+  printf("Username: %s", temp->name);
+  print_list(temp->email_list, print_email);
+}
 
+void print_email(void *email) {
+  Email *temp = (Email*) email;
+  printf("Timestamp: Counter: %d, Machine_index: %d, message_index: %d\n",
+         temp->emailInfo.timestamp.counter, temp->emailInfo.timestamp.machine_index, temp->emailInfo.timestamp.message_index);
+  printf("To: %s\n From: %s\n Subject: %s\n\n", temp->emailInfo.to_field, temp->emailInfo.from_field, temp->emailInfo.subject);
+}
 
 /*
 static void Print_menu();
