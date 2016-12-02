@@ -32,6 +32,8 @@ December 9, 2016
 #define MAX_PACKET_LEN  2000
 #define NUM_SERVERS     5
 
+#define MAX_MEMBERS     100
+
 // **************** DATA STRUCTURES **************** //
 
 // Lamport timestamp with additional server information
