@@ -149,7 +149,7 @@ List users_list;
 
 static void Respond_To_Message();
 int compare_users(void* user1, void* user2);
-void create_user_if_nonexistent(char *name);
+bool create_user_if_nonexistent(char *name);
 void print_user(void *user);
 void print_email(void *user);
   
@@ -291,12 +291,19 @@ static void Respond_To_Message() {
     info = (InfoForServer*) tmp_buf;
     printf("This is the username: %s\n", info->user_name);    
     printf("type: %d\n", *type);
-    create_user_if_nonexistent(info->user_name);
+    bool created_new_user = create_user_if_nonexistent(info->user_name);
     printf("about to print list\n and this is user list size: %d\n", users_list.num_nodes);
     print_list(&users_list, print_user);
 
+    //now we want to send an update to all other machines IF A NEW USER WAS CREATED
+    if (created_new_user) {
+      //send update
+      Update *to_be_sent = malloc(sizeof(Update));
+      to_be_sent->type = 13;
+      strcpy(to_be_sent->user_name, info->user_name);
+      SP_multicast(Mbox, AGREED_MESS, group, 2, sizeof(Update), (char*)to_be_sent);
+    }
     
-    //check user linked list for username; if no username then create a new object and 
   } else if (*type == 3) {
 
   } else if (*type == 4) {
@@ -314,7 +321,12 @@ static void Respond_To_Message() {
   } else if (*type == 12) {
 
   } else if (*type == 13) {
-
+    Update *update;
+    update = (Update*) tmp_buf;
+    printf("we have received an update for a new user with name: %s\n", update->user_name);
+    create_user_if_nonexistent(update->user_name);
+    print_list(&users_list, print_user);
+    
   } else if (*type == 20) {
 
   } else { //unknown type!
@@ -326,7 +338,7 @@ static void Respond_To_Message() {
 
 
 
-void create_user_if_nonexistent(char name[MAX_NAME_LEN]) {
+bool create_user_if_nonexistent(char name[MAX_NAME_LEN]) {
   Node *temp = find(&users_list, &name[0], compare_users);
   if (temp == NULL) {
     //create new user
@@ -336,7 +348,9 @@ void create_user_if_nonexistent(char name[MAX_NAME_LEN]) {
     create_list(&(user_to_insert->email_list), sizeof(Email));
     add_to_end(&users_list, user_to_insert);
     printf("new user created!\n");
+    return true;
   }
+  return false;
 }
 
 int compare_users(void* user1, void* user2) {
