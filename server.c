@@ -142,7 +142,8 @@ int                 num_servers_in_partition = 0; //THIS MAY NOT BE CORRECT SO D
 
 //Our own methods 
 static void Respond_To_Message();
-int compare_users(void* user1, void* user2);
+int compare_users(void *user1, void *user2);
+int compare_email(void *temp, void *temp2);
 bool create_user_if_nonexistent(char *name);
 void print_user(void *user);
 void print_email(void *user);
@@ -402,8 +403,16 @@ static void Respond_To_Message() {
     Update *update = (Update*) tmp_buf;
     printf("we have received an update for a new email!\n");
     create_user_if_nonexistent(update->email.emailInfo.to_field); //create new user if new user doesn't exist yet
+    print_list(&users_list, print_user);
+
+    printf("this is subject: %s\n", update->email.emailInfo.subject);
     
-    
+    User *temp = (User*)find(&users_list, (void*)update->email.emailInfo.to_field, compare_users);
+    assert(temp == NULL);
+    insert(&(temp->email_list),(void*)&(update->email), compare_email);
+    printf("inserted into user's email. Now printing user's email inbox: \n");
+    print_list(&(temp->email_list), print_email);
+   
   } else if (*type == 11) {
 
   } else if (*type == 12) {
@@ -438,7 +447,7 @@ static void Respond_To_Message() {
 
 
 bool create_user_if_nonexistent(char name[MAX_NAME_LEN]) {
-  Node *temp = find(&users_list, &name[0], compare_users);
+  User *temp = (User*)find(&users_list, &name[0], compare_users);
   if (temp == NULL) {
     //create new user
     User *user_to_insert = malloc(sizeof(User));
@@ -656,9 +665,9 @@ static void Bye() {
 
 int compareEmail(void* temp1, void* temp2);
 void printEmail(void *n);
+*/
 
-
-int compareEmail(void* temp1, void* temp2) {
+int compare_email(void* temp1, void* temp2) {
   Email *one = (Email*) temp1;
   Email *two = (Email*) temp2;
   
@@ -679,8 +688,8 @@ int compareEmail(void* temp1, void* temp2) {
   }
   
 }
-
-void printEmail(void *n) {
+/*
+void print_email(void *n) {
   Email *e = (Email*)n;
   printf("counter is: %d, machine index is: %d, message index is: %d\n",
          e->emailInfo.timestamp.counter,  e->emailInfo.timestamp.machine_index,  e->emailInfo.timestamp.message_index);  
