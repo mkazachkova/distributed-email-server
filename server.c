@@ -120,8 +120,8 @@ static char         Spread_name[80];
 
 static char         Private_group[MAX_GROUP_NAME];
 static mailbox      Mbox;
-static int          Num_sent;
-static unsigned int Previous_len;
+//static int          Num_sent;
+//static unsigned int Previous_len;
 
 static char         group[80] = "ssukard1mkazach1_2"; 
 char                server_own_group[80] = "ssukard1mkazach1_server_";
