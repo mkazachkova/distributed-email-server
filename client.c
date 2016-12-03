@@ -283,6 +283,8 @@ static void User_command() {
       
     /////////////////////////////// DELETE A MAIL MESSAGE /////////////////////////////
     case 'd':
+      //TODO: YOU MUST populate the user_name field!!!!!
+
       ret = sscanf( &command[2], "%s", group );
       if (ret != 1) {
         strcpy( group, "dummy_group_name" );
