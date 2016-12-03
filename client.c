@@ -132,19 +132,24 @@ static void User_command() {
 
   switch(command[0]) {
     ///////////////////////////////////// LOGIN WITH A USERNAME ///////////////////////////////////
-    case 'u':
+    case 'u':      
       ret = sscanf( &command[2], "%s", curr_user);
       printf("this is curr user: %s\n", curr_user);
-      logged_in = true;
-      /*if (ret < 1) {
-        printf(" invalid group \n");
-        break;
+
+      if (logged_in) {
+        //alert the server that a (potentially) new user might need to be created
+        InfoForServer *info = malloc(sizeof(InfoForServer));
+        info->type = 2; //for new user
+        sprintf(info->user_name, "%s",curr_user); //to be changed when we implement getting the user name
+        
+        SP_multicast(Mbox, AGREED_MESS, hardcoded_server_names[curr_server], 2, sizeof(InfoForServer), (char*)info);
+      } else {
+        // this is the client's first time connecting to a mail server
+        logged_in = true;
       }
-      ret = SP_join( Mbox, group );
-      if (ret < 0) SP_error( ret );
-      break;*/
-      
-    /////////////////////////////// CONNECT TO A SPECIFIC MAIL SERVER /////////////////////////////
+            
+      break;
+    //////////////////////////////// CONNECT TO A SPECIFIC MAIL SERVER ////////////////////////////
     case 'c':
       if (!logged_in) {
         printf("Must log in before connecting to server.\n");
@@ -158,9 +163,10 @@ static void User_command() {
         break;
       }
 
-      unsigned int message_length = strlen(hardcoded_server_names[curr_server]);
-      printf("Message of length %d with contents %s\n", message_length, hardcoded_server_names[curr_server]);
-
+      //this isn't doing anything
+      // unsigned int message_length = strlen(hardcoded_server_names[curr_server]);
+      // printf("Message of length %d with contents %s\n", message_length, hardcoded_server_names[curr_server]);
+  
       InfoForServer *info = malloc(sizeof(InfoForServer));
       info->type = 2; //for new user
       sprintf(info->user_name, "%s",curr_user); //to be changed when we implement getting the user name

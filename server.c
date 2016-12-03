@@ -150,7 +150,7 @@ static int    compare_email(void *temp, void *temp2);
 static bool   create_user_if_nonexistent(char *name);
 static void   print_user(void *user);
 static void   print_email(void *user);
-
+static int    max(int one, int two);
 
 
 // **************************** MAIN METHOD **************************** //
