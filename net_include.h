@@ -99,7 +99,7 @@ typedef struct user {
 // Information from clients
 // * sent from clients to servers only
 typedef struct info_for_server {
-  int type;                               // 2 is new user
+  int   type;                             // 2 is new user
                                           // 3 is list headers 
                                           // 4 is mail message to user
                                           // 5 is delete message
@@ -107,22 +107,22 @@ typedef struct info_for_server {
                                           // 7 is print membership
   char user_name[MAX_NAME_LEN];           // for new user (?)
   Email email;
-  int message_to_delete;
-  int message_to_read;
+  int   message_to_delete;
+  int   message_to_read;
 } InfoForServer;
 
 
 typedef struct header {
-  int                 message_number;
-  char[MAX_NAME_LEN]  sender;
-  char[MAX_NAME_LEN]  subject;
+  int   message_number;
+  char  sender[MAX_NAME_LEN];
+  char  subject[MAX_NAME_LEN];
 } Header;
 
 
 typedef struct info_for_client {
-  int                           type;               // 1 is list headers
-                                                    // 2 is print membership
-  Header[MAX_HEADERS_IN_PACKET] headers;            // used for sending headers
-  char[NUM_SERVERS][MAX_NAME_LEN] memb_identities;  // used for sending membership identities
+  int    type;                                       // 1 is list headers
+                                                     // 2 is print membership
+  Header headers[MAX_HEADERS_IN_PACKET];             // used for sending headers
+  char   memb_identities[NUM_SERVERS][MAX_NAME_LEN]; // used for sending membership identities
 } InfoForClient;
 
