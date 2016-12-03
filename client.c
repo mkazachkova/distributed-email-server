@@ -111,14 +111,14 @@ static void Print_menu() {
 
 //Prints the menu
 static void User_command() {
-  char  command[130];
-  char  mess[MAX_MESSLEN];
-  char to[MAX_NAME_LEN];
-  char subject[MAX_NAME_LEN];
-  char  group[80];
-  char  groups[10][MAX_GROUP_NAME];
-  int   num_groups;
-  unsigned int  mess_len;
+  char         command[130];
+  char         mess[MAX_MESSLEN];
+  char         to[MAX_NAME_LEN];
+  char         subject[MAX_NAME_LEN];
+  char         group[80];
+  char         groups[10][MAX_GROUP_NAME];
+  int          num_groups;
+  unsigned int mess_len;
   int ret;
   int i;
 
@@ -159,8 +159,8 @@ static void User_command() {
         break;
       }
 
-      int mess_len = strlen(hardcoded_server_names[curr_server]);
-      printf("Message of length %d with contents %s\n", mess_len, hardcoded_server_names[curr_server]);
+      unsigned int message_length = strlen(hardcoded_server_names[curr_server]);
+      printf("Message of length %d with contents %s\n", message_length, hardcoded_server_names[curr_server]);
 
       InfoForServer *info = malloc(sizeof(InfoForServer));
       info->type = 2; //for new user

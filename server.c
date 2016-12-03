@@ -142,6 +142,7 @@ int                 num_servers_in_partition = 0; //THIS MAY NOT BE CORRECT SO D
 
 //Our own methods 
 static void Respond_To_Message();
+static void Bye();
 int compare_users(void *user1, void *user2);
 int compare_email(void *temp, void *temp2);
 bool create_user_if_nonexistent(char *name);
@@ -151,7 +152,12 @@ void print_email(void *user);
 
 // Main method
 int main(int argc, char *argv[]) {
-
+  //error check input
+  if (argc <= 1) {
+    printf("Please input the server number (1-5) as a command-line input.\n");
+    exit(0);
+  }
+  
   //Create a linked list of users
   create_list(&users_list, sizeof(User));
 
@@ -161,34 +167,31 @@ int main(int argc, char *argv[]) {
       merge_matrix[i][j] = 0;
     }
   }
-
+ 
   //Get the machine index, as well as however many servers there are 
   my_machine_index =  atoi(argv[1]) - 1; //subtract 1 for correct indexing
 
-  char my_machine_index_str[20];
-  
+  //Concatenates with server_own_group ("ssukard1_makazach1_server_##")
+  char my_machine_index_str[20];  
   sprintf(my_machine_index_str, "%d", my_machine_index + 10);
-  
   strcat(server_own_group, my_machine_index_str);
-  
   printf("%s\n", server_own_group);
 
-  
+  //Spread stuff
   sprintf(Server, "user_mk_ss");
   sprintf(Spread_name, "10100");
 
   if (!SP_version(&mver, &miver, &pver)) {
     printf("main: Illegal variables passed to SP_version()\n");
-    //Bye();
+    Bye();
   }
 
   printf("Spread library version is %d.%d.%d\n", mver, miver, pver);
 
-
   ret = SP_connect_timeout(Spread_name, Server, 0, 1, &Mbox, Private_group, test_timeout);
   if (ret != ACCEPT_SESSION) {
     SP_error(ret);
-    //Bye();
+    Bye();
   }
 
   printf("Server: connected to %s with private group %s\n", Spread_name, Private_group);
@@ -203,7 +206,7 @@ int main(int argc, char *argv[]) {
     SP_error(ret);
   }
 
-  printf("connected\n");
+  printf("Connected!\n");
 
   //Using E_attach is similar to putting the function in th 3rd argument in an infinite for loop
   E_init(); 
@@ -215,7 +218,7 @@ int main(int argc, char *argv[]) {
 }
 
 
- 
+//Primary method that is triggered whenever a message (from another server or client) is received
 static void Respond_To_Message() {
 
   //necessary Variables
@@ -263,6 +266,7 @@ static void Respond_To_Message() {
     //printf("this is num servers in partition: %d\n", num_servers_in_partition);
     for (int i = 0; i < num_groups; i++) {
       int num = atoi(&(target_groups[i][strlen(target_groups[i]) - 1]));
+      printf("Adding server with name %s into index %d...\n", target_groups[i], num);
       servers_in_partition[num] = true;
       num_servers_in_partition++;
     }
@@ -407,9 +411,11 @@ static void Respond_To_Message() {
 
     printf("this is subject: %s\n", update->email.emailInfo.subject);
     
-    User *temp = (User*)find(&users_list, (void*)update->email.emailInfo.to_field, compare_users);
-    assert(temp == NULL);
-    insert(&(temp->email_list),(void*)&(update->email), compare_email);
+    User *temp = (User*) find(&users_list, (void*)update->email.emailInfo.to_field, compare_users);
+    assert(temp != NULL);
+    printf("User found! Here's their name: %s\n", temp->name);
+    
+    insert(&(temp->email_list),(void*) &(update->email), compare_email);
     printf("inserted into user's email. Now printing user's email inbox: \n");
     print_list(&(temp->email_list), print_email);
    
@@ -461,6 +467,7 @@ bool create_user_if_nonexistent(char name[MAX_NAME_LEN]) {
   return false;
 }
 
+//Function pointers for linked list to use to insert into linked list correctly
 int compare_users(void* user1, void* user2) {
   printf("entered compare users\n");
   User *user_in_linked_list = (User*) user1;
@@ -488,46 +495,37 @@ void print_email(void *email) {
   printf("To: %s\n From: %s\n Subject: %s\n\n", temp->emailInfo.to_field, temp->emailInfo.from_field, temp->emailInfo.subject);
 }
 
-/*
-int main(int argc, char *argv[]) {
-  int     ret;
-  int     mver, miver, pver;
-  sp_time test_timeout;
-
-  test_timeout.sec = 5;
-  test_timeout.usec = 0;
-
-  Usage(argc, argv);
-
-  if (!SP_version(&mver, &miver, &pver)) {
-    printf("main: Illegal variables passed to SP_version()\n");
-    Bye();
-  }
+int compare_email(void* temp1, void* temp2) {
+  Email *one = (Email*) temp1;
+  Email *two = (Email*) temp2;
   
-  printf("Spread library version is %d.%d.%d\n", mver, miver, pver);
-
-  ret = SP_connect_timeout(Spread_name, User, 0, 1, &Mbox, Private_group, test_timeout);
-  if(ret != ACCEPT_SESSION) {
-    SP_error(ret);
-    Bye();
-  }
-
-  printf("User: connected to %s with private group %s\n", Spread_name, Private_group );
-
-  E_init();
-  E_attach_fd(0, READ_FD, User_command, 0, NULL, LOW_PRIORITY);
-  E_attach_fd(Mbox, READ_FD, Read_message, 0, NULL, HIGH_PRIORITY);
-  Print_menu();
-
-  printf("\nUser> ");
-  fflush(stdout);
-
-  Num_sent = 0;
-  E_handle_events();
-
-  return(0);
+  if (one->emailInfo.timestamp.counter < two->emailInfo.timestamp.counter) {
+    return -1;
+  } else if (one->emailInfo.timestamp.counter > two->emailInfo.timestamp.counter) {
+    return 1;
+  } else {
+    //they are equal; use machine index for tie breaker
+    if (one->emailInfo.timestamp.machine_index < two->emailInfo.timestamp.machine_index) {
+      return -1;
+    } else if(one->emailInfo.timestamp.machine_index > two->emailInfo.timestamp.machine_index) {
+      return 1;
+    } else {
+      printf("Error: should not be here\n");
+      return 0;
+    }
+  }  
 }
 
+//Method to exit
+static void Bye() {
+  To_exit = 1;
+  printf("\nBye.\n");
+  SP_disconnect(Mbox);
+  exit(0);
+}
+
+
+/*
 static void Read_message() {
 
   static  char     mess[MAX_MESSLEN];
@@ -651,47 +649,5 @@ static void Read_message() {
   printf("\n");
   printf("User> ");
   fflush(stdout);
-}
-
-static void Bye() {
-  To_exit = 1;
-  printf("\nBye.\n");
-  SP_disconnect( Mbox );
-  exit( 0 );
-}
-*/
-
-/*
-
-int compareEmail(void* temp1, void* temp2);
-void printEmail(void *n);
-*/
-
-int compare_email(void* temp1, void* temp2) {
-  Email *one = (Email*) temp1;
-  Email *two = (Email*) temp2;
-  
-  if (one->emailInfo.timestamp.counter < two->emailInfo.timestamp.counter) {
-    return -1;
-  } else if (one->emailInfo.timestamp.counter > two->emailInfo.timestamp.counter) {
-    return 1;
-  } else {
-    //they are equal; use machine index for tie breaker
-    if (one->emailInfo.timestamp.machine_index < two->emailInfo.timestamp.machine_index) {
-      return -1;
-    } else if(one->emailInfo.timestamp.machine_index > two->emailInfo.timestamp.machine_index) {
-      return 1;
-    } else {
-      printf("Error: should not be here\n");
-      return 0;
-    }
-  }
-  
-}
-/*
-void print_email(void *n) {
-  Email *e = (Email*)n;
-  printf("counter is: %d, machine index is: %d, message index is: %d\n",
-         e->emailInfo.timestamp.counter,  e->emailInfo.timestamp.machine_index,  e->emailInfo.timestamp.message_index);  
 }
 */
