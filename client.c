@@ -244,7 +244,7 @@ static void User_command() {
 
       fgets(&subject[0], MAX_NAME_LEN, stdin);
       int subject_len = strlen(subject);
-      subject[subject_len- 1] = '\0';
+      subject[subject_len - 1] = '\0';
       
       printf("Message: ");
       mess_len = 0;
@@ -260,7 +260,6 @@ static void User_command() {
         mess_len += strlen(&mess[mess_len]);
       }
 
-      printf("\n");
       printf("this is to: %s\nThis is subject: %s\nThis is message: %s\n", to, subject, mess);
       
       //ret = SP_multigroup_multicast( Mbox, SAFE_MESS, num_groups, (const char (*)[MAX_GROUP_NAME]) groups, 1, mess_len, mess );
@@ -272,10 +271,11 @@ static void User_command() {
       // Num_sent++;
       InfoForServer *info2 = malloc(sizeof(InfoForServer));
       info2->type = 4; //for new email
-      sprintf(info2->email.emailInfo.to_field, "%s",to); //to be changed when we implement getting the user name
-      sprintf(info2->email.emailInfo.subject, "%s",subject);
-      sprintf(info2->email.emailInfo.from_field, "%s",curr_user);
-      sprintf(info2->email.emailInfo.message, "%s",mess);
+      sprintf(info2->email.emailInfo.to_field,    "%s", to); //to be changed when we implement getting the user name
+      sprintf(info2->email.emailInfo.subject,     "%s", subject);
+      sprintf(info2->email.emailInfo.from_field,  "%s", curr_user);
+      sprintf(info2->email.emailInfo.message,     "%s", mess);
+
       SP_multicast(Mbox, AGREED_MESS, hardcoded_server_names[curr_server], 2, sizeof(InfoForServer), (char*)info2);
       break;
 

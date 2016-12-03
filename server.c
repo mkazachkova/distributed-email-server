@@ -371,6 +371,7 @@ static void Respond_To_Message() {
     
 
   } else if (*type == 4) { // Client put in request to server to mail message to another user
+
     //NOTE: We are NOT directly putting the email in our own personal email list (in our Users linked list)
     //because we will RECEIVE THIS MESSAGE FROM OURSELVES-- THEN we will put it in our own personal email list.
 
@@ -383,8 +384,14 @@ static void Respond_To_Message() {
     update_count++;
     to_be_sent->timestamp.counter = update_count;
     to_be_sent->timestamp.machine_index = my_machine_index;
+
     to_be_sent->email = info->email;
-         
+    to_be_sent->email.emailInfo.timestamp.machine_index = my_machine_index
+
+    //TODO: ASK MARIYA WHAT ARE THESE ACTUALLY SUPPOSED TO BE???????????????
+    to_be_sent->email.emailInfo.timestamp.counter = update_count;
+    to_be_sent->email.emailInfo.timestamp.message_index = -1; //this is obviously NOT RIGHT; just a placeholder
+
     //copy our row of the 2d array and send with update 
     merge_matrix[my_machine_index][my_machine_index] = update_count;
     memcpy(to_be_sent->updates_array, merge_matrix[my_machine_index], sizeof(merge_matrix[my_machine_index]));
@@ -435,14 +442,14 @@ static void Respond_To_Message() {
 
   } else if (*type == 7) { //Server received a "PRINT MEMBERSHIP" message from the client 
     //TODO: This is unimplemented
-    
+
 
 
 
 
   // **************************** parse messages from server **************************** //
+  // If *type is of type 10-13, we have RECEIVED A MESSAGE FROM THE CLIENT.
 
-  //If *type is of type 10-13, we have RECEIVED A MESSAGE FROM THE CLIENT.
   } else if (*type == 10) { //server received a NEW EMAIL update from another server
     //Cast into Update type
     Update *update = (Update*) tmp_buf;
@@ -460,6 +467,7 @@ static void Respond_To_Message() {
     printf("inserted into user's email. Now printing user's email inbox: \n");
     print_list(&(temp->email_list), print_email);
    
+
   } else if (*type == 11) { //server received a READ EMAIL update from another server
 
 
@@ -540,20 +548,21 @@ int compare_users(void* user1, void* user2) {
   }
 
   char *user_search = (char*) user2;
-  printf("before other print statements\n");
-  printf("first one: %s\n",  (user_in_linked_list->name));
-  printf("comparing %s and %s\n", (user_in_linked_list->name), user_search);
-  printf("this is value for strcmp: %d\n", strcmp(user_in_linked_list->name, user_search));
+  printf("comparing %s and %s", (user_in_linked_list->name), user_search);
+  printf("with strcmp value: %d\n", strcmp(user_in_linked_list->name, user_search));
+
   return strcmp(user_in_linked_list->name, user_search); 
 }
 
 
 void print_email(void *email) {
-  Email *temp = (Email*) email;
-  printf("Timestamp: Counter: %d, Machine_index: %d, message_index: %d\n",
-        temp->emailInfo.timestamp.counter, temp->emailInfo.timestamp.machine_index, temp->emailInfo.timestamp.message_index);
-  printf("To: %s\n From: %s\n Subject: %s\n\n", 
-        temp->emailInfo.to_field, temp->emailInfo.from_field, temp->emailInfo.subject);
+  Email *temp_email = (Email*) email;
+  printf("Email Timestamp:\nCounter: %d, Machine_index: %d, message_index: %d\n",
+        temp_email->emailInfo.timestamp.counter, temp_email->emailInfo.timestamp.machine_index, 
+        temp_email->emailInfo.timestamp.message_index);
+
+  printf("To: %s\nFrom: %s\nSubject: %s\n\n", 
+        temp_email->emailInfo.to_field, temp_email->emailInfo.from_field, temp_email->emailInfo.subject);
 }
 
 
@@ -575,7 +584,7 @@ int compare_email(void* temp1, void* temp2) {
       printf("Error: should not be here\n");
       return 0;
     }
-  }  
+  }
 }
 
 
