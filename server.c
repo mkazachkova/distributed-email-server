@@ -399,9 +399,9 @@ static void Respond_To_Message() {
 
   } else if (*type == 10) {
     //receiving a new email update
-    Update *update;
-    update = (Update*) tmp_buf;
+    Update *update = (Update*) tmp_buf;
     printf("we have received an update for a new email!\n");
+    create_user_if_nonexistent(update->email.emailInfo.to_field); //create new user if new user doesn't exist yet
     
     
   } else if (*type == 11) {

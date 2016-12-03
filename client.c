@@ -224,7 +224,8 @@ static void User_command() {
       //to_len += strlen(&to[to_len - 1]);
       //}
       fgets(&to[0], MAX_NAME_LEN, stdin);
-
+      int to_len = strlen(to);
+      to[to_len-1] = '\0';
       
       printf("Subject: ");
       //int subject_len = 0;
@@ -242,7 +243,9 @@ static void User_command() {
       //}
 
       fgets(&subject[0], MAX_NAME_LEN, stdin);
-
+      int subject_len = strlen(subject);
+      subject[subject_len- 1] = '\0';
+      
       printf("Message: ");
       mess_len = 0;
       while (mess_len < MAX_MESS_LEN) {
