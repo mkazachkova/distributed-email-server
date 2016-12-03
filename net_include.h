@@ -24,13 +24,14 @@ December 9, 2016
 
 #include "generic_linked_list.h"
 
-#define PORT            10100
+#define PORT                  10100
 
 // ******************* VARIABLES ******************* //
-#define MAX_NAME_LEN    50
-#define MAX_MESS_LEN    1000
-#define MAX_PACKET_LEN  2000
-#define NUM_SERVERS     5
+#define MAX_NAME_LEN          50
+#define MAX_MESS_LEN          1000
+#define MAX_PACKET_LEN        2000
+#define MAX_HEADERS_IN_PACKET 10
+#define NUM_SERVERS           5
 
 // **************** DATA STRUCTURES **************** //
 
@@ -42,6 +43,7 @@ typedef struct timestamp {
   int         message_index;
 } TimeStamp;
 
+
 // Information associated with an email
 // * attached to emails
 typedef struct emailinfo {
@@ -51,6 +53,7 @@ typedef struct emailinfo {
   char        message[MAX_MESS_LEN];  
   TimeStamp   timestamp;
 } EmailInfo;
+
 
 // Emails themselves
 // * Attached to updates, as well as info_for_server messages
@@ -75,6 +78,7 @@ typedef struct update {
   int         updates_array[NUM_SERVERS]; // one-dimensional array containing server's current "view" of updates received
 } Update;
 
+
 // Mergematrix used for reconciliation during merges and repartitions (membership changes)
 // * sent only between servers
 typedef struct mergematrix {
@@ -83,12 +87,14 @@ typedef struct mergematrix {
   int matrix[NUM_SERVERS][NUM_SERVERS];   // the 2-dimensional 5 x 5 reconciliation matrix
 } MergeMatrix;
 
+
 // User struct (a linked list of users held server-side)
 // * held in server, not sent anywhere
 typedef struct user {
   char  name[MAX_NAME_LEN];
   List  email_list;
 } User;
+
 
 // Information from clients
 // * sent from clients to servers only
@@ -104,3 +110,19 @@ typedef struct info_for_server {
   int message_to_delete;
   int message_to_read;
 } InfoForServer;
+
+
+typedef struct header {
+  int                 message_number;
+  char[MAX_NAME_LEN]  sender;
+  char[MAX_NAME_LEN]  subject;
+} Header;
+
+
+typedef struct info_for_client {
+  int                           type;               // 1 is list headers
+                                                    // 2 is print membership
+  Header[MAX_HEADERS_IN_PACKET] headers;            // used for sending headers
+  char[NUM_SERVERS][MAX_NAME_LEN] memb_identities;  // used for sending membership identities
+} InfoForClient;
+
