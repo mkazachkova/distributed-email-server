@@ -131,7 +131,7 @@ static void User_command() {
   }
 
   switch(command[0]) {
-    //Login with a username
+    ///////////////////////////////////// LOGIN WITH A USERNAME ///////////////////////////////////
     case 'u':
       ret = sscanf( &command[2], "%s", curr_user);
       printf("this is curr user: %s\n", curr_user);
@@ -144,8 +144,7 @@ static void User_command() {
       if (ret < 0) SP_error( ret );
       break;*/
       
-
-    //Connect to a specific mail server
+    /////////////////////////////// CONNECT TO A SPECIFIC MAIL SERVER /////////////////////////////
     case 'c':
       if (!logged_in) {
         printf("Must log in before connecting to server.\n");
@@ -174,7 +173,8 @@ static void User_command() {
       */
       break;
 
-    //List the headers of received mail
+      
+    ////////////////////////////// LIST THE HEADERS OF RECEIVED MAIL ////////////////////////////
     case 'l':
       num_groups = sscanf(&command[2], "%s%s%s%s%s%s%s%s%s%s", 
             groups[0], groups[1], groups[2], groups[3], groups[4],
@@ -198,7 +198,8 @@ static void User_command() {
       Num_sent++;
       break;
 
-    //Mail a message to a user
+      
+    /////////////////////////////////// MAIL A MESSAGE TO A USER ////////////////////////////////
     case 'm':
       /*num_groups = sscanf(&command[2], "%s%s%s%s%s%s%s%s%s%s", 
             groups[0], groups[1], groups[2], groups[3], groups[4],
@@ -279,7 +280,8 @@ static void User_command() {
       SP_multicast(Mbox, AGREED_MESS, hardcoded_server_names[curr_server], 2, sizeof(InfoForServer), (char*)info2);
       break;
 
-    //Delete a mail message
+      
+    /////////////////////////////// DELETE A MAIL MESSAGE /////////////////////////////
     case 'd':
       ret = sscanf( &command[2], "%s", group );
       if (ret != 1) {
@@ -313,33 +315,37 @@ static void User_command() {
       }
       break;
 
-    //Read a received mail message
+      
     case 'r':
       Read_message();
       break;
 
-    //Print the membership of the mail servers in the current mail server's network component
+      
+    /////////////////////////// PRINT MEMBERSHIP OF THE MAIL SERVERS /////////////////////////
+    ////////////////////// IN THE CURRENT MAIL SERVER'S NETWORK COMPONENT ////////////////////
     case 'p':
       ret = SP_poll( Mbox );
       printf("Polling sais: %d\n", ret );
       break;
 
-    //Exit the program
+      
+    ///////////////////////////////////// EXIT THE PROGRAM //////////////////////////////////
     case 'q':
       Bye();
       break;
 
-
+      
+    /////////////////////////////////////// DEFAULT CASE ///////////////////////////////////
     default:
-      printf("\nUnknown commnad\n");
+      printf("\nYou input an unknown commnand...\n");
       Print_menu();
       break;
   }
 
   printf("\nUser> ");
   fflush(stdout);
-
 }
+
 
 static void Read_message() {
 
@@ -493,6 +499,7 @@ static void Usage(int argc, char *argv[]) {
   }
 }
 
+//Print the help menu
 static void Print_help() {
   printf( "Usage: spuser\n%s\n%s\n%s\n",
     "\t[-u <user name>]  : unique (in this machine) user name",
@@ -501,6 +508,7 @@ static void Print_help() {
   exit( 0 );
 }
 
+//Exit the program
 static void Bye() {
   To_exit = 1;
   printf("\nBye.\n");

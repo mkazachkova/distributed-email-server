@@ -386,7 +386,7 @@ static void Respond_To_Message() {
     to_be_sent->timestamp.machine_index = my_machine_index;
 
     to_be_sent->email = info->email;
-    to_be_sent->email.emailInfo.timestamp.machine_index = my_machine_index
+    to_be_sent->email.emailInfo.timestamp.machine_index = my_machine_index;
 
     //TODO: ASK MARIYA WHAT ARE THESE ACTUALLY SUPPOSED TO BE???????????????
     to_be_sent->email.emailInfo.timestamp.counter = update_count;
