@@ -372,7 +372,11 @@ static void Respond_To_Message() {
     to_be_sent->timestamp.counter = update_count;
     to_be_sent->timestamp.machine_index = my_machine_index;
     to_be_sent->email = info->email;
-
+         
+    //copy our row of the 2d array and send with update 
+    merge_matrix[my_machine_index][my_machine_index] = update_count;
+    memcpy(to_be_sent->updates_array, merge_matrix[my_machine_index], sizeof(merge_matrix[my_machine_index]));
+    
     //Print the contents of the email that was received for debugging purposes
     printf("Sending an email update to other servers! \nHere's the Email:\n");
     printf("TO: %s\n", to_be_sent->email.emailInfo.to_field);
