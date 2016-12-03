@@ -30,7 +30,7 @@ void add_to_end(List *list, void *data);
 void remove_from_beginning(List *list);
 void remove_from_end(List *list);
 void insert(List *list, void *data, int (*fptr)(void *, void *));
-Node* find(List *list, void* data, int (*fptr)(void *, void *));
+void* find(List *list, void* data, int (*fptr)(void *, void *));
 
 
 // Accessor methods

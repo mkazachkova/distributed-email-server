@@ -147,12 +147,12 @@ void insert(List *list, void *data, int (*compare)(void *, void *)) {
   return;
 }
 
-
-Node* find(List *list, void* data, int (*compare)(void *, void *)) {
+//NOTE: The return will be the data being searched for.
+void* find(List *list, void* data, int (*compare)(void *, void *)) {
   Node *temp = list->head;
   while (temp != NULL) {
     if ((*compare)(temp->data, data) == 0) {
-      return temp;
+      return temp->data;
     }
     temp = temp->next;
   }

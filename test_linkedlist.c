@@ -77,9 +77,8 @@ int main() {
 
   //Test find method
   int find2 = 75;
-  Node* temp2 = find(&list2,(void*)&find2, compareInt);
-  int *printed = (int*)temp2->data;
-  printf("%d\n", *printed);
+  int* temp2 = (int*) find(&list2,(void*)&find2, compareInt);
+  printf("%d\n", *temp2);
   
   return 0;
 }
