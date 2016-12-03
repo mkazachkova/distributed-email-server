@@ -114,6 +114,7 @@ December 9, 2016
 
 #define int32u unsigned int
 
+//Variables for Spread
 static char         Server[80];
 static char         Spread_name[80];
 
@@ -125,15 +126,16 @@ static unsigned int Previous_len;
 static char         group[80] = "ssukard1mkazach1_2"; 
 char                server_own_group[80] = "ssukard1mkazach1_server_";
 
-int                 my_machine_index;
-
 static int          To_exit = 0;
 
 int                 ret;
 int                 mver, miver, pver;
 sp_time             test_timeout;
 
+
+// Our own variables
 List                users_list;
+int                 my_machine_index;
 int                 merge_matrix[NUM_SERVERS][NUM_SERVERS];
 int                 update_count = 0;
 bool                servers_in_partition[NUM_SERVERS] = { false };
@@ -141,17 +143,19 @@ int                 num_servers_in_partition = 0; //THIS MAY NOT BE CORRECT SO D
 
 
 //Our own methods 
-static void Respond_To_Message();
-static void Bye();
-int compare_users(void *user1, void *user2);
-int compare_email(void *temp, void *temp2);
-bool create_user_if_nonexistent(char *name);
-void print_user(void *user);
-void print_email(void *user);
+static void   Respond_To_Message();
+static void   Bye();
+static int    compare_users(void *user1, void *user2);
+static int    compare_email(void *temp, void *temp2);
+static bool   create_user_if_nonexistent(char *name);
+static void   print_user(void *user);
+static void   print_email(void *user);
 
 
-// Main method
+
+// **************************** MAIN METHOD **************************** //
 int main(int argc, char *argv[]) {
+
   //error check input
   if (argc <= 1) {
     printf("Please input the server number (1-5) as a command-line input.\n");
@@ -177,7 +181,7 @@ int main(int argc, char *argv[]) {
   strcat(server_own_group, my_machine_index_str);
   printf("%s\n", server_own_group);
 
-  //Spread stuff
+  //Spread setup
   sprintf(Server, "user_mk_ss");
   sprintf(Spread_name, "10100");
 
@@ -246,6 +250,10 @@ static void Respond_To_Message() {
 
 
 
+
+  // **************************** PARSE MEMBERSHIP MESSAGES **************************** //
+
+
   //Parsing the server entering message (Should only be executed at the beginning of the program)
   if (Is_caused_join_mess(service_type)) {
     //int num = atoi(&(target_groups[0][strlen(target_groups[0]) - 1]));
@@ -310,9 +318,14 @@ static void Respond_To_Message() {
   }
 
 
+
+  // **************************** PARSE NON-MEMBERSHIP MESSAGES **************************** //
+
   //Cast first digit into integer to find out the type  
   int *type = (int*) tmp_buf;
 
+
+  // ****************************** PARSE MESSAGES FROM CLIENT ***************************** //
 
   //If *type is of type 2-7, we have RECEIVED A MESSAGE FROM THE CLIENT.
   if (*type == 2) { //We received a "new user" message from client
@@ -397,6 +410,11 @@ static void Respond_To_Message() {
     //TODO: This is unimplemented
 
 
+
+
+
+  // **************************** PARSE MESSAGES FROM SERVER **************************** //
+
   } else if (*type == 10) { //server received a NEW EMAIL update from another server
     //Cast into Update type
     Update *update = (Update*) tmp_buf;
@@ -456,7 +474,8 @@ static void Respond_To_Message() {
 
 
 bool create_user_if_nonexistent(char name[MAX_NAME_LEN]) {
-  User *temp = (User*)find(&users_list, &name[0], compare_users);
+  User *temp = (User*) find(&users_list, &name[0], compare_users);
+
   if (temp == NULL) {
     //create new user
     User *user_to_insert = malloc(sizeof(User));
@@ -467,6 +486,7 @@ bool create_user_if_nonexistent(char name[MAX_NAME_LEN]) {
     printf("new user created!\n");
     return true;
   }
+
   return false;
 }
 
@@ -477,6 +497,7 @@ int compare_users(void* user1, void* user2) {
   if (user_in_linked_list->name == NULL) {
     printf("user is null\n");
   }
+
   char *user_search = (char*) user2;
   printf("before other print statements\n");
   printf("first one: %s\n",  (user_in_linked_list->name));
@@ -485,11 +506,13 @@ int compare_users(void* user1, void* user2) {
   return strcmp(user_in_linked_list->name, user_search); 
 }
 
+
 void print_user(void *user) {
   User *temp = (User*) user;
   printf("Username: %s", temp->name);
   print_list(&(temp->email_list), print_email);
 }
+
 
 void print_email(void *email) {
   Email *temp = (Email*) email;
@@ -497,6 +520,7 @@ void print_email(void *email) {
          temp->emailInfo.timestamp.counter, temp->emailInfo.timestamp.machine_index, temp->emailInfo.timestamp.message_index);
   printf("To: %s\n From: %s\n Subject: %s\n\n", temp->emailInfo.to_field, temp->emailInfo.from_field, temp->emailInfo.subject);
 }
+
 
 int compare_email(void* temp1, void* temp2) {
   Email *one = (Email*) temp1;
@@ -518,6 +542,7 @@ int compare_email(void* temp1, void* temp2) {
     }
   }  
 }
+
 
 //Method to exit
 static void Bye() {
