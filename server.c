@@ -612,6 +612,11 @@ int compare_email(void* temp1, void* temp2) {
 }
 
 
+int max(int first, int second) {
+  return first >= second ? first : second;
+}
+
+
 //Method to exit
 static void Bye() {
   To_exit = 1;
@@ -619,6 +624,7 @@ static void Bye() {
   SP_disconnect(Mbox);
   exit(0);
 }
+
 
 
 /*
