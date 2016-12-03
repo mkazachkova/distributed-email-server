@@ -120,8 +120,8 @@ static char         Spread_name[80];
 
 static char         Private_group[MAX_GROUP_NAME];
 static mailbox      Mbox;
-static int          Num_sent;
-static unsigned int Previous_len;
+//static int          Num_sent;
+//static unsigned int Previous_len;
 
 static char         group[80] = "ssukard1mkazach1_2"; 
 char                server_own_group[80] = "ssukard1mkazach1_server_";
@@ -217,6 +217,7 @@ int main(int argc, char *argv[]) {
   E_attach_fd( Mbox, READ_FD, Respond_To_Message, 0, NULL, LOW_PRIORITY );
 
   fflush(stdout);
+
   //Start the "infinite for loop"
   E_handle_events();
 }
@@ -241,6 +242,7 @@ static void Respond_To_Message() {
   //maybe we create a separate method for creating a user when we get an email, read, or
   //delete for a user that has not been created
   
+
   
   // Putting whatever was received into tmp_buf, which will be cast into whatever type
   // it is by looking at the first digit!
@@ -250,9 +252,7 @@ static void Respond_To_Message() {
 
 
 
-
   // **************************** PARSE MEMBERSHIP MESSAGES **************************** //
-
 
   //Parsing the server entering message (Should only be executed at the beginning of the program)
   if (Is_caused_join_mess(service_type)) {
@@ -325,7 +325,7 @@ static void Respond_To_Message() {
   int *type = (int*) tmp_buf;
 
 
-  // ****************************** PARSE MESSAGES FROM CLIENT ***************************** //
+  // ****************************** parse messages from client ***************************** //
 
   //If *type is of type 2-7, we have RECEIVED A MESSAGE FROM THE CLIENT.
   if (*type == 2) { //We received a "new user" message from client
@@ -369,7 +369,8 @@ static void Respond_To_Message() {
   } else if (*type == 3) { //We received a "list headers" message from the client
     //TODO: This is unimplemented
     
-  } else if (*type == 4) { // client put in request to server to mail message to user 
+
+  } else if (*type == 4) { // Client put in request to server to mail message to another user
     //NOTE: We are NOT directly putting the email in our own personal email list (in our Users linked list)
     //because we will RECEIVE THIS MESSAGE FROM OURSELVES-- THEN we will put it in our own personal email list.
 
@@ -398,23 +399,26 @@ static void Respond_To_Message() {
     //Send the Update to ALL OTHER SERVERS in the same partition
     SP_multicast(Mbox, AGREED_MESS, group, 2, sizeof(Update), (char*)to_be_sent);
     
-  } else if (*type == 5) { //We received a "delete message" message from the client
-    //TODO: This is unimplemented
-
-
-  } else if (*type == 6) { //We received a "read message" message from the client
-    //TODO: This is unimplemented
-
-
-  } else if (*type == 7) { //We received a "print membership" message from the client 
+  } else if (*type == 5) { //Server received a "DELETE MESSAGE" message from the client
     //TODO: This is unimplemented
 
 
 
+  } else if (*type == 6) { //Server received a "READ MESSAGE" message from the client
+    //TODO: This is unimplemented
 
 
-  // **************************** PARSE MESSAGES FROM SERVER **************************** //
 
+  } else if (*type == 7) { //Server received a "PRINT MEMBERSHIP" message from the client 
+    //TODO: This is unimplemented
+
+
+
+
+
+  // **************************** parse messages from server **************************** //
+
+  //If *type is of type 10-13, we have RECEIVED A MESSAGE FROM THE CLIENT.
   } else if (*type == 10) { //server received a NEW EMAIL update from another server
     //Cast into Update type
     Update *update = (Update*) tmp_buf;
@@ -432,11 +436,11 @@ static void Respond_To_Message() {
     printf("inserted into user's email. Now printing user's email inbox: \n");
     print_list(&(temp->email_list), print_email);
    
-  } else if (*type == 11) {
+  } else if (*type == 11) { //server received a READ EMAIL update from another server
 
 
 
-  } else if (*type == 12) {
+  } else if (*type == 12) { //server received a DELETE EMAIL update from another server
 
 
 
@@ -461,8 +465,11 @@ static void Respond_To_Message() {
       }
       printf("\n");
     }
-    
-  } else if (*type == 20) {
+
+  // **************************** parse reconciliation message **************************** //    
+  } else if (*type == 20) { //server received a MERGEMATRIX from another server
+
+
 
   } else { //unknown type!
     printf("Unknown type received! Exiting program...\n");
@@ -490,7 +497,17 @@ bool create_user_if_nonexistent(char name[MAX_NAME_LEN]) {
   return false;
 }
 
+
+// *********** COMPARISON & PRINTING FUNCTION POINTERS FOR GENERIC LINKED LIST *********** //
+
 //Function pointers for linked list to use to insert into linked list correctly
+void print_user(void *user) {
+  User *temp = (User*) user;
+  printf("Username: %s", temp->name);
+  print_list(&(temp->email_list), print_email);
+}
+
+
 int compare_users(void* user1, void* user2) {
   printf("entered compare users\n");
   User *user_in_linked_list = (User*) user1;
@@ -507,18 +524,12 @@ int compare_users(void* user1, void* user2) {
 }
 
 
-void print_user(void *user) {
-  User *temp = (User*) user;
-  printf("Username: %s", temp->name);
-  print_list(&(temp->email_list), print_email);
-}
-
-
 void print_email(void *email) {
   Email *temp = (Email*) email;
   printf("Timestamp: Counter: %d, Machine_index: %d, message_index: %d\n",
-         temp->emailInfo.timestamp.counter, temp->emailInfo.timestamp.machine_index, temp->emailInfo.timestamp.message_index);
-  printf("To: %s\n From: %s\n Subject: %s\n\n", temp->emailInfo.to_field, temp->emailInfo.from_field, temp->emailInfo.subject);
+        temp->emailInfo.timestamp.counter, temp->emailInfo.timestamp.machine_index, temp->emailInfo.timestamp.message_index);
+  printf("To: %s\n From: %s\n Subject: %s\n\n", 
+        temp->emailInfo.to_field, temp->emailInfo.from_field, temp->emailInfo.subject);
 }
 
 
