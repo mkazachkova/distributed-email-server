@@ -137,10 +137,10 @@ sp_time             test_timeout;
 List                users_list;
 int                 my_machine_index;
 int                 merge_matrix[NUM_SERVERS][NUM_SERVERS];
-int                 update_count = 0;
+int                 update_index = 0;
 bool                servers_in_partition[NUM_SERVERS] = { false };
 int                 num_servers_in_partition = 0; //THIS MAY NOT BE CORRECT SO DO NOT USE
-
+int                 lamport_counter = 0;
 
 //Our own methods 
 static void   Respond_To_Message();
@@ -345,13 +345,13 @@ static void Respond_To_Message() {
       Update *to_be_sent = malloc(sizeof(Update));
       //Fill in relevant parameters
       to_be_sent->type = 13;
-      update_count++;
-      to_be_sent->timestamp.counter = update_count;
+      update_index++;
+      to_be_sent->timestamp.message_index = update_index;
       to_be_sent->timestamp.machine_index = my_machine_index;
       strcpy(to_be_sent->user_name, info->user_name);
       
       //copy our row of the 2d array and send with update 
-      merge_matrix[my_machine_index][my_machine_index] = update_count;
+      merge_matrix[my_machine_index][my_machine_index] = update_index;
       memcpy(to_be_sent->updates_array, merge_matrix[my_machine_index], sizeof(merge_matrix[my_machine_index]));
 
       //(for debug)
@@ -381,19 +381,22 @@ static void Respond_To_Message() {
     //Send an update to all other servers to put that email into their email list
     Update *to_be_sent = malloc(sizeof(Update));
     to_be_sent->type = 10;
-    update_count++;
-    to_be_sent->timestamp.counter = update_count;
+    update_index++;
+    to_be_sent->timestamp.counter = -1; // this does not matter
     to_be_sent->timestamp.machine_index = my_machine_index;
+    to_be_sent->timestamp.message_index = update_index;
 
     to_be_sent->email = info->email;
     to_be_sent->email.emailInfo.timestamp.machine_index = my_machine_index;
 
     //TODO: ASK MARIYA WHAT ARE THESE ACTUALLY SUPPOSED TO BE???????????????
-    to_be_sent->email.emailInfo.timestamp.counter = update_count;
+
+    lamport_counter++;
+    to_be_sent->email.emailInfo.timestamp.counter = lamport_counter;
     to_be_sent->email.emailInfo.timestamp.message_index = -1; //this is obviously NOT RIGHT; just a placeholder
 
     //copy our row of the 2d array and send with update 
-    merge_matrix[my_machine_index][my_machine_index] = update_count;
+    merge_matrix[my_machine_index][my_machine_index] = update_index;
     memcpy(to_be_sent->updates_array, merge_matrix[my_machine_index], sizeof(merge_matrix[my_machine_index]));
     
     //Print the contents of the email that was received for debugging purposes
@@ -415,8 +418,8 @@ static void Respond_To_Message() {
     //Send an update to all other servers to put that email into their email list
     Update *to_be_sent = malloc(sizeof(Update));
     to_be_sent->type = 12;
-    update_count++;
-    to_be_sent->timestamp.counter = update_count;
+    update_index++;
+    to_be_sent->timestamp.message_index = update_index;
     to_be_sent->timestamp.machine_index = my_machine_index;
 
 
@@ -427,8 +430,11 @@ static void Respond_To_Message() {
     //What about populating the counter and the machine_index????
 
 
+    //TODO: find email that user wants to delete; pull lamport timestamp off of it and attach to update
+
+
     //copy our row of the 2d array and send with update 
-    merge_matrix[my_machine_index][my_machine_index] = update_count;
+    merge_matrix[my_machine_index][my_machine_index] = update_index;
     memcpy(to_be_sent->updates_array, merge_matrix[my_machine_index], sizeof(merge_matrix[my_machine_index]));
         
     //Send the Update to ALL OTHER SERVERS in the same partition
@@ -444,8 +450,8 @@ static void Respond_To_Message() {
     //Send an update to all other servers to put that email into their email list
     Update *to_be_sent = malloc(sizeof(Update));
     to_be_sent->type = 11;
-    update_count++;
-    to_be_sent->timestamp.counter = update_count;
+    update_index++;
+    to_be_sent->timestamp.message_index = update_index;
     to_be_sent->timestamp.machine_index = my_machine_index;
 
 
@@ -457,7 +463,7 @@ static void Respond_To_Message() {
 
 
     //copy our row of the 2d array and send with update 
-    merge_matrix[my_machine_index][my_machine_index] = update_count;
+    merge_matrix[my_machine_index][my_machine_index] = update_index;
     memcpy(to_be_sent->updates_array, merge_matrix[my_machine_index], sizeof(merge_matrix[my_machine_index]));
         
     //Send the Update to ALL OTHER SERVERS in the same partition
@@ -481,6 +487,11 @@ static void Respond_To_Message() {
     create_user_if_nonexistent(update->email.emailInfo.to_field); //create new user if new user doesn't exist yet
     print_list(&users_list, print_user);
 
+    //update our own lamport counter
+    lamport_counter = max(lamport_counter, update->email.emailInfo.timestamp.counter);
+
+    //TODO:updates_array needs to be taken into account; update our 2d array
+    
     printf("this is subject: %s\n", update->email.emailInfo.subject);
     
     User *temp = (User*) find(&users_list, (void*)update->email.emailInfo.to_field, compare_users);
