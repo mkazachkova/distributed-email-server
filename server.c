@@ -135,6 +135,7 @@ sp_time             test_timeout;
 
 // Our own variables
 List                users_list;
+List                array_of_updates_list[NUM_SERVERS];
 int                 my_machine_index;
 int                 merge_matrix[NUM_SERVERS][NUM_SERVERS];
 int                 update_index = 0;
@@ -147,9 +148,11 @@ static void   Respond_To_Message();
 static void   Bye();
 static int    compare_users(void *user1, void *user2);
 static int    compare_email(void *temp, void *temp2);
+static int    compare_update(void* update1, void* update2);
 static bool   create_user_if_nonexistent(char *name);
 static void   print_user(void *user);
-static void   print_email(void *user);
+static void   print_email(void *email);
+static void   print_update(void *update);
 static int    max(int one, int two);
 
 
@@ -165,13 +168,18 @@ int main(int argc, char *argv[]) {
   //Create a linked list of users
   create_list(&users_list, sizeof(User));
 
+  //initialize array of linked lists of updates
+  for (int i = 0; i < NUM_SERVERS; i++) {
+    create_list(&array_of_updates_list[i], sizeof(Update));
+  }
+
   //Populate entire merge_matrix with 0's 
   for (int i = 0; i < NUM_SERVERS; i++) {
     for (int j = 0; j < NUM_SERVERS; j++) {
       merge_matrix[i][j] = 0;
     }
   }
- 
+
   //Get the machine index, as well as however many servers there are 
   my_machine_index =  atoi(argv[1]) - 1; //subtract 1 for correct indexing
 
@@ -351,17 +359,20 @@ static void Respond_To_Message() {
       strcpy(to_be_sent->user_name, info->user_name);
       
       //copy our row of the 2d array and send with update 
-      merge_matrix[my_machine_index][my_machine_index] = update_index;
-      memcpy(to_be_sent->updates_array, merge_matrix[my_machine_index], sizeof(merge_matrix[my_machine_index]));
+      //REVISED: tbd what we're actually doing here
+      //merge_matrix[my_machine_index][my_machine_index] = update_index;
+      //memcpy(to_be_sent->updates_array, merge_matrix[my_machine_index], sizeof(merge_matrix[my_machine_index]));
 
       //(for debug)
+      /*
       printf("this is updates array: \n");
       for (int i = 0; i < NUM_SERVERS; i++) {
         printf("%d ", to_be_sent->updates_array[i]);
       }
       printf("\n");
-
+      */
       //Send the Update to ALL OTHER SERVERS in the same partition
+
       SP_multicast(Mbox, AGREED_MESS, group, 2, sizeof(Update), (char*)to_be_sent);
     }
 
@@ -396,8 +407,8 @@ static void Respond_To_Message() {
     to_be_sent->email.emailInfo.timestamp.message_index = -1; //this is obviously NOT RIGHT; just a placeholder
 
     //copy our row of the 2d array and send with update 
-    merge_matrix[my_machine_index][my_machine_index] = update_index;
-    memcpy(to_be_sent->updates_array, merge_matrix[my_machine_index], sizeof(merge_matrix[my_machine_index]));
+    //merge_matrix[my_machine_index][my_machine_index] = update_index;
+    //memcpy(to_be_sent->updates_array, merge_matrix[my_machine_index], sizeof(merge_matrix[my_machine_index]));
     
     //Print the contents of the email that was received for debugging purposes
     printf("Sending an email update to other servers! \nHere's the Email:\n");
@@ -434,8 +445,8 @@ static void Respond_To_Message() {
 
 
     //copy our row of the 2d array and send with update 
-    merge_matrix[my_machine_index][my_machine_index] = update_index;
-    memcpy(to_be_sent->updates_array, merge_matrix[my_machine_index], sizeof(merge_matrix[my_machine_index]));
+    //merge_matrix[my_machine_index][my_machine_index] = update_index;
+    //memcpy(to_be_sent->updates_array, merge_matrix[my_machine_index], sizeof(merge_matrix[my_machine_index]));
         
     //Send the Update to ALL OTHER SERVERS in the same partition
     SP_multicast(Mbox, AGREED_MESS, group, 2, sizeof(Update), (char*)to_be_sent);
@@ -463,8 +474,8 @@ static void Respond_To_Message() {
 
 
     //copy our row of the 2d array and send with update 
-    merge_matrix[my_machine_index][my_machine_index] = update_index;
-    memcpy(to_be_sent->updates_array, merge_matrix[my_machine_index], sizeof(merge_matrix[my_machine_index]));
+    //merge_matrix[my_machine_index][my_machine_index] = update_index;
+    //memcpy(to_be_sent->updates_array, merge_matrix[my_machine_index], sizeof(merge_matrix[my_machine_index]));
         
     //Send the Update to ALL OTHER SERVERS in the same partition
     SP_multicast(Mbox, AGREED_MESS, group, 2, sizeof(Update), (char*)to_be_sent);
@@ -491,6 +502,14 @@ static void Respond_To_Message() {
     lamport_counter = max(lamport_counter, update->email.emailInfo.timestamp.counter);
 
     //TODO:updates_array needs to be taken into account; update our 2d array
+    for (int i = 0; i < NUM_SERVERS; i++) {
+      if (servers_in_partition[i]) {
+        merge_matrix[i][update->timestamp.machine_index] = update->timestamp.message_index;
+      }
+    }
+
+    
+    insert(&(array_of_updates_list[update->timestamp.machine_index]), (void*)update, compare_update);
     
     printf("this is subject: %s\n", update->email.emailInfo.subject);
     
@@ -619,6 +638,26 @@ int compare_email(void* temp1, void* temp2) {
       printf("Error: should not be here\n");
       return 0;
     }
+  }
+}
+
+
+void print_update(void* temp) {
+  Update *update = (Update*) temp;
+  printf("This is type: %d\nThis is message index: %d\n", update->type, update->timestamp.message_index);
+}
+
+int compare_update(void* update1, void* update2) {
+  Update *one = (Update*) update1;
+  Update *two = (Update*) update2;
+
+  if (one->timestamp.message_index < two->timestamp.message_index) {
+    return -1;
+  } else if (one->timestamp.message_index > two->timestamp.message_index) {
+    return 1;
+  } else {
+    printf("Error: this should not happen: have two updates with same message index from same machine\n");
+    return 0;
   }
 }
 
