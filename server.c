@@ -140,11 +140,13 @@ int     mver, miver, pver;
 sp_time test_timeout;
 
 List users_list;
-
-
-#define MAX_MESSLEN 102400
-#define MAX_VSSETS  10
-#define MAX_MEMBERS 100
+int merge_matrix[NUM_SERVERS][NUM_SERVERS];
+int update_count = 0;
+bool servers_in_partition[NUM_SERVERS] = { false };
+int num_servers_in_partition = 0; //THIS MAY NOT BE CORRECT SO DO NOT USE
+//#define MAX_MESSLEN 102400
+//#define MAX_VSSETS  10
+//#define MAX_MEMBERS 100
 
 
 static void Respond_To_Message();
@@ -152,20 +154,28 @@ int compare_users(void* user1, void* user2);
 bool create_user_if_nonexistent(char *name);
 void print_user(void *user);
 void print_email(void *user);
-  
+
+
+
+
 int main(int argc, char *argv[]) {
 
 
   //Create a linked list of users
   create_list(&users_list, sizeof(User));
 
+  for (int i = 0; i < NUM_SERVERS; i++) {
+    for (int j = 0; j < NUM_SERVERS; j++) {
+      merge_matrix[i][j] = 0;
+    }
+  }
   
   my_machine_index =  atoi(argv[1]) - 1; //subtract 1 for correct indexing
   num_machines =      atoi(argv[2]);
 
   char my_machine_index_str[20];
   
-  sprintf(my_machine_index_str, "%d", my_machine_index + 1);
+  sprintf(my_machine_index_str, "%d", my_machine_index + 10);
   
 
   strcat(server_own_group, my_machine_index_str);
@@ -219,11 +229,11 @@ int main(int argc, char *argv[]) {
 
 static void Respond_To_Message() {
   
-  static  char  mess[MAX_MESSLEN];
+  //static  char  mess[MAX_MESSLEN];
   int   service_type;
   char  sender[MAX_GROUP_NAME];
   int   num_groups;
-  char  target_groups[MAX_MEMBERS][MAX_GROUP_NAME];
+  char  target_groups[NUM_SERVERS][MAX_GROUP_NAME];
   int16 mess_type;
   int   endian_mismatch;
 
@@ -279,10 +289,71 @@ static void Respond_To_Message() {
                    &mess_type, &endian_mismatch, MAX_PACKET_LEN, (char*)tmp_buf);
 
   if (Is_caused_join_mess(service_type)) {
+    //int num = atoi(&(target_groups[0][strlen(target_groups[0]) - 1]));
+    //printf("num in caused by join: %d\n", num);
+    for (int i = 0; i < num_groups; i++) {
+      printf("%s\n", target_groups[i]);
+    }   
+    //servers_in_partition[num] = true;
+    //num_servers_in_partition++;
+    //printf("this is num servers in partition: %d\n", num_servers_in_partition);
+    for (int i = 0; i < num_groups; i++) {
+      int num = atoi(&(target_groups[i][strlen(target_groups[i]) - 1]));
+      servers_in_partition[num] = true;
+      num_servers_in_partition++;
+    }
+    printf("printing boolean array: \n");
+    for(int i = 0; i < NUM_SERVERS; i++) {
+      printf("%d ", servers_in_partition[i]);
+    }
+    printf("\n"); 
+    return;
+  } else if (Is_caused_leave_mess(service_type)) {
+    int num = atoi(&(target_groups[0][strlen(target_groups[0]) - 1]));
+    printf("num in caused by leave: %d\n", num);
+    for (int i = 0; i < num_groups; i++) {
+      printf("%s\n", target_groups[i]);
+    }   
+    servers_in_partition[num] = false;
+    num_servers_in_partition--;
+    printf("printing boolean array: \n");
+    for (int i = 0; i < NUM_SERVERS; i++) {
+      printf("%d ", servers_in_partition[i]);
+    }
+    printf("\n");
     return;
   }
 
+  if (Is_caused_network_mess(service_type)) {
+    printf("change in membership has occured!\n");
+    for (int i = 0; i < NUM_SERVERS; i++) {
+      servers_in_partition[i] = 0;
+    }
+    num_servers_in_partition = 0;
+    //change in membership has occured
+    for (int i = 0; i < num_groups; i++) {
+      int num = atoi(&(target_groups[i][strlen(target_groups[i]) - 1]));
+      servers_in_partition[num] = true;
+      num_servers_in_partition++;
+    }
+    for (int i = 0; i < num_groups; i++) {
+      printf("%s\n", target_groups[i]);
+    }   
+  }
 
+  
+  /*
+  if (Is_reg_memb_mess(service_type)) {
+    printf("\nPrinting groups (mem message received):\n");
+    for (int i = 0; i < num_groups; i++) {
+      printf("%s\n", target_groups[i]);
+    }
+    return;
+    }*//* else if (Is_caused_join_mess(service_type) || Is_caused_leave_mess(service_type)) {
+    printf("received either join or leave\n");
+    return;
+  }
+  */
   
   int *type = (int*) tmp_buf;
 
@@ -300,7 +371,18 @@ static void Respond_To_Message() {
       //send update
       Update *to_be_sent = malloc(sizeof(Update));
       to_be_sent->type = 13;
+      update_count++;
+      to_be_sent->timestamp.counter = update_count;
+      to_be_sent->timestamp.machine_index = my_machine_index;
       strcpy(to_be_sent->user_name, info->user_name);
+      //copy our row of 2d array and send with update
+      merge_matrix[my_machine_index][my_machine_index] = update_count;
+      memcpy(to_be_sent->updates_array, merge_matrix[my_machine_index], sizeof(merge_matrix[my_machine_index]));
+      printf("this is updates array: \n");
+      for (int i = 0; i < NUM_SERVERS; i++) {
+        printf("%d ", to_be_sent->updates_array[i]);
+      }
+      printf("\n");
       SP_multicast(Mbox, AGREED_MESS, group, 2, sizeof(Update), (char*)to_be_sent);
     }
     
@@ -326,6 +408,17 @@ static void Respond_To_Message() {
     printf("we have received an update for a new user with name: %s\n", update->user_name);
     create_user_if_nonexistent(update->user_name);
     print_list(&users_list, print_user);
+    //now we want to process the array that we received and update our own 2d array with the info
+    memcpy(merge_matrix[update->timestamp.machine_index], update->updates_array, sizeof(update->updates_array));
+    //consider if need to take max above or not; for now we say no
+    merge_matrix[my_machine_index][update->timestamp.machine_index] = update->timestamp.counter;
+    printf("printing merge matrix: \n");
+    for (int i = 0; i < NUM_SERVERS; i++) {
+      for (int j = 0; j < NUM_SERVERS; j++) {
+        printf("%d ", merge_matrix[i][j]);
+      }
+      printf("\n");
+    }
     
   } else if (*type == 20) {
 
@@ -435,7 +528,7 @@ static void Read_message() {
           char     target_groups[MAX_MEMBERS][MAX_GROUP_NAME];
           membership_info  memb_info;
           vs_set_info      vssets[MAX_VSSETS];
-          unsigned int     my_vsset_index;
+          unsigned int     vsset_index;
           int              num_vs_sets;
           char             members[MAX_MEMBERS][MAX_GROUP_NAME];
           int    num_groups;
