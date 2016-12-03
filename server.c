@@ -508,8 +508,20 @@ static void Respond_To_Message() {
       }
     }
 
+    printf("\nPrinting merge matrix: \n");
+    for (int i = 0; i < NUM_SERVERS; i++) {
+      for (int j = 0; j < NUM_SERVERS; j++) {
+        printf("%d ", merge_matrix[i][j]);
+      }
+      printf("\n");
+    }
     
     insert(&(array_of_updates_list[update->timestamp.machine_index]), (void*)update, compare_update);
+    printf("Printing array of updates list: \n");
+    for (int i = 0; i < NUM_SERVERS; i++) {
+      printf("This is the linked list for index %d: \n", i);
+      print_list(&(array_of_updates_list[i]), print_update);
+    }
     
     printf("this is subject: %s\n", update->email.emailInfo.subject);
     
@@ -541,15 +553,28 @@ static void Respond_To_Message() {
     memcpy(merge_matrix[update->timestamp.machine_index], update->updates_array, sizeof(update->updates_array));
 
     //consider if need to take max above or not; for now we say no
-    merge_matrix[my_machine_index][update->timestamp.machine_index] = update->timestamp.counter;
-    printf("printing merge matrix: \n");
+    // merge_matrix[my_machine_index][update->timestamp.machine_index] = update->timestamp.counter;
 
-    //Print the merge matrix (for debug)
+    //TODO:updates_array needs to be taken into account; update our 2d array
+    for (int i = 0; i < NUM_SERVERS; i++) {
+      if (servers_in_partition[i]) {
+        merge_matrix[i][update->timestamp.machine_index] = update->timestamp.message_index;
+      }
+    }
+
+    printf("\nPrinting merge matrix: \n");
     for (int i = 0; i < NUM_SERVERS; i++) {
       for (int j = 0; j < NUM_SERVERS; j++) {
         printf("%d ", merge_matrix[i][j]);
       }
       printf("\n");
+    }
+
+    insert(&(array_of_updates_list[update->timestamp.machine_index]), (void*)update, compare_update);
+    printf("Printing array of updates list: \n");
+    for (int i = 0; i < NUM_SERVERS; i++) {
+      printf("This is the linked list for index %d: \n", i);
+      print_list(&(array_of_updates_list[i]), print_update);
     }
 
   // **************************** parse reconciliation message **************************** //    
