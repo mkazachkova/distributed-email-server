@@ -465,11 +465,13 @@ static void Respond_To_Message() {
     to_be_sent->timestamp.message_index = update_index;
     to_be_sent->timestamp.machine_index = my_machine_index;
 
+    //set global variable equal to zero 
+    //find(&())
 
     //WARNING! THIS IS NOT GOING TO WORK! 
     //The format of deleting an email in InfoForServer is a single integer ('message to delete')
     //but the format of sending an update for reading an email is an entire TimeStamp.
-    to_be_sent->timestamp_of_email.message_index = info->message_to_delete;
+    //to_be_sent->timestamp_of_email.message_index = info->message_to_delete;
     //What about populating the counter and the machine_index????
 
 
@@ -685,6 +687,13 @@ int compare_update(void* update1, void* update2) {
     return 0;
   }
 }
+
+
+compare_update_for_find(void* temp1, void* temp2) {
+  //find the nth from end exisiting and undeleted email
+  
+}
+
 
 
 int max(int first, int second) {

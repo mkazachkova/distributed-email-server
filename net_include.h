@@ -61,6 +61,7 @@ typedef struct email {
   EmailInfo   emailInfo;
   bool        read;
   bool        deleted;
+  bool        exists;
 } Email;
 
 
