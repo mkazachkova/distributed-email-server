@@ -113,6 +113,8 @@ static void Print_menu() {
 static void User_command() {
   char  command[130];
   char  mess[MAX_MESSLEN];
+  char to[MAX_NAME_LEN];
+  char subject[MAX_NAME_LEN];
   char  group[80];
   char  groups[10][MAX_GROUP_NAME];
   int   num_groups;
@@ -198,18 +200,52 @@ static void User_command() {
 
     //Mail a message to a user
     case 'm':
-      num_groups = sscanf(&command[2], "%s%s%s%s%s%s%s%s%s%s", 
+      /*num_groups = sscanf(&command[2], "%s%s%s%s%s%s%s%s%s%s", 
             groups[0], groups[1], groups[2], groups[3], groups[4],
             groups[5], groups[6], groups[7], groups[8], groups[9] );
 
       if(num_groups < 1) {
         printf(" invalid group \n");
         break;
-      }
+        }*/
+      
+      printf("To: ");
+      //int to_len = 0;
 
-      printf("Enter message: ");
+      // while (to_len < MAX_NAME_LEN) {
+      // if (fgets(&to[to_len], 200, stdin) == NULL) {
+      //   Bye();
+      // }
+
+      // if (to[to_len] == '\n') {
+      //  break;
+      // }
+
+      //to_len += strlen(&to[to_len - 1]);
+      //}
+      fgets(&to[0], MAX_NAME_LEN, stdin);
+
+      
+      printf("Subject: ");
+      //int subject_len = 0;
+
+      //while (subject_len < MAX_NAME_LEN) {
+      //if (fgets(&subject[subject_len], 200, stdin) == NULL) {
+      //  Bye();
+      // }
+
+      //if (subject[subject_len] == '\n') {
+      //  break;
+      //}
+
+      //subject_len += strlen(&subject[subject_len]);
+      //}
+
+      fgets(&subject[0], MAX_NAME_LEN, stdin);
+
+      printf("Message: ");
       mess_len = 0;
-      while (mess_len < MAX_MESSLEN) {
+      while (mess_len < MAX_MESS_LEN) {
         if (fgets(&mess[mess_len], 200, stdin) == NULL) {
           Bye();
         }
@@ -220,13 +256,24 @@ static void User_command() {
         
         mess_len += strlen(&mess[mess_len]);
       }
-      ret = SP_multigroup_multicast( Mbox, SAFE_MESS, num_groups, (const char (*)[MAX_GROUP_NAME]) groups, 1, mess_len, mess );
-      if (ret < 0) {
-        SP_error(ret);
-        Bye();
-      }
 
-      Num_sent++;
+      printf("\n");
+      printf("this is to: %s\nThis is subject: %s\nThis is message: %s\n", to, subject, mess);
+      
+      //ret = SP_multigroup_multicast( Mbox, SAFE_MESS, num_groups, (const char (*)[MAX_GROUP_NAME]) groups, 1, mess_len, mess );
+      // if (ret < 0) {
+      // SP_error(ret);
+      //  Bye();
+      //}
+
+      // Num_sent++;
+      InfoForServer *info2 = malloc(sizeof(InfoForServer));
+      info2->type = 4; //for new email
+      sprintf(info2->email.emailInfo.to_field, "%s",to); //to be changed when we implement getting the user name
+      sprintf(info2->email.emailInfo.subject, "%s",subject);
+      sprintf(info2->email.emailInfo.from_field, "%s",curr_user);
+      sprintf(info2->email.emailInfo.message, "%s",mess);
+      SP_multicast(Mbox, AGREED_MESS, hardcoded_server_names[curr_server], 2, sizeof(InfoForServer), (char*)info2);
       break;
 
     //Delete a mail message
