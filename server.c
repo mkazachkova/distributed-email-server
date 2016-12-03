@@ -229,18 +229,6 @@ static void Respond_To_Message() {
   int16 mess_type;
   int   endian_mismatch;
 
-  //  InfoForServer *info = malloc(sizeof(InfoForServer));
-  //ret = SP_receive(Mbox, &service_type, sender, 100, &num_groups, target_groups,
-  //               &mess_type, &endian_mismatch, sizeof(InfoForServer), (char*)info);
-
-  //printf("This is ret:  %d\n", ret);
-  // printf("This is mess: %s\n", mess);
-  // printf("this is ret: %d\n", ret);
-  //printf("%d\n", service_type);
-  //assert(info->type == 2);
-  //printf("This is the username: %s\n", info->user_name);
-
-
   //IDEA: if we receive an update then we're still going to end up doing some of the things in
   //the large if else block thing, so maybe we should check if it's an update and then change
   //type to that value and then just make sure that each if else statement takes care of the
@@ -249,18 +237,25 @@ static void Respond_To_Message() {
   //maybe we create a separate method for creating a user when we get an email, read, or
   //delete for a user that has not been created
   
+  
+  // Putting whatever was received into tmp_buf, which will be cast into whatever type
+  // it is by looking at the first digit!
   char *tmp_buf = malloc(MAX_PACKET_LEN);
   ret = SP_receive(Mbox, &service_type, sender, 100, &num_groups, target_groups,
-                   &mess_type, &endian_mismatch, MAX_PACKET_LEN, (char*)tmp_buf);
+                      &mess_type, &endian_mismatch, MAX_PACKET_LEN, (char*)tmp_buf);
 
-  //Parsing the server entering message
-  //(Should only be executed at the beginning of the program)
+
+
+  //Parsing the server entering message (Should only be executed at the beginning of the program)
   if (Is_caused_join_mess(service_type)) {
     //int num = atoi(&(target_groups[0][strlen(target_groups[0]) - 1]));
     //printf("num in caused by join: %d\n", num);
+
+    printf("A join message was received. Here are the contents of target_groups...\n");
     for (int i = 0; i < num_groups; i++) {
       printf("%s\n", target_groups[i]);
     }   
+
     //servers_in_partition[num] = true;
     //num_servers_in_partition++;
     //printf("this is num servers in partition: %d\n", num_servers_in_partition);
@@ -270,12 +265,15 @@ static void Respond_To_Message() {
       servers_in_partition[num] = true;
       num_servers_in_partition++;
     }
+
     printf("printing boolean array: \n");
     for(int i = 0; i < NUM_SERVERS; i++) {
       printf("%d ", servers_in_partition[i]);
     }
     printf("\n"); 
     return;
+
+  //TODO: This isn't implemented fully yet (Low priority-- how do servers actually leave?)
   } else if (Is_caused_leave_mess(service_type)) {
     int num = atoi(&(target_groups[0][strlen(target_groups[0]) - 1]));
     printf("num in caused by leave: %d\n", num);
@@ -292,12 +290,14 @@ static void Respond_To_Message() {
     return;
   }
 
+  //TODO: Will be fleshed out when we work on actual network partitions
   if (Is_caused_network_mess(service_type)) {
     printf("change in membership has occured!\n");
     for (int i = 0; i < NUM_SERVERS; i++) {
       servers_in_partition[i] = 0;
     }
     num_servers_in_partition = 0;
+
     //change in membership has occured
     for (int i = 0; i < num_groups; i++) {
       int num = atoi(&(target_groups[i][strlen(target_groups[i]) - 1]));
@@ -309,32 +309,22 @@ static void Respond_To_Message() {
     }   
   }
 
-  
-  /*
-  if (Is_reg_memb_mess(service_type)) {
-    printf("\nPrinting groups (mem message received):\n");
-    for (int i = 0; i < num_groups; i++) {
-      printf("%s\n", target_groups[i]);
-    }
-    return;
-    }*//* else if (Is_caused_join_mess(service_type) || Is_caused_leave_mess(service_type)) {
-    printf("received either join or leave\n");
-    return;
-  }
-  */
-  
+
+  //Cast first digit into integer to find out the type  
   int *type = (int*) tmp_buf;
+
 
   //If *type is of type 2-7, we have RECEIVED A MESSAGE FROM THE CLIENT.
   if (*type == 2) { //We received a "new user" message from client
 
-    //We know that the thing that was sent was of type InfoForSever, so we can cast it accordingly
+    //We know that the thing that was sent was of type InfoForServer, so we can cast it accordingly
     InfoForServer *info = (InfoForServer*) tmp_buf;
     printf("This is the username: %s\n", info->user_name);    
     printf("type: %d\n", *type);
     bool created_new_user = create_user_if_nonexistent(info->user_name);
     printf("about to print list\n and this is user list size: %d\n", users_list.num_nodes);
     print_list(&users_list, print_user);
+
 
     //now we want to send an update to all other machines ONLY IF A NEW USER WAS CREATED
     if (created_new_user) {
@@ -361,13 +351,16 @@ static void Respond_To_Message() {
       //Send the Update to ALL OTHER SERVERS in the same partition
       SP_multicast(Mbox, AGREED_MESS, group, 2, sizeof(Update), (char*)to_be_sent);
     }
+
     
   } else if (*type == 3) { //We received a "list headers" message from the client
     //TODO: This is unimplemented
     
   } else if (*type == 4) { // client put in request to server to mail message to user 
+    //NOTE: We are NOT directly putting the email in our own personal email list (in our Users linked list)
+    //because we will RECEIVE THIS MESSAGE FROM OURSELVES-- THEN we will put it in our own personal email list.
 
-    //We know that the thing that was sent was of type InfoForSever, so we can cast it accordingly
+    //We know that the thing that was sent was of type InfoForServer, so we can cast it accordingly
     InfoForServer *info = (InfoForServer *) tmp_buf;    
 
     //Send an update to all other servers to put that email into their email list
@@ -399,11 +392,13 @@ static void Respond_To_Message() {
   } else if (*type == 6) { //We received a "read message" message from the client
     //TODO: This is unimplemented
 
+
   } else if (*type == 7) { //We received a "print membership" message from the client 
     //TODO: This is unimplemented
 
-  } else if (*type == 10) {
-    //receiving a new email update
+
+  } else if (*type == 10) { //server received a NEW EMAIL update from another server
+    //Cast into Update type
     Update *update = (Update*) tmp_buf;
     printf("we have received an update for a new email!\n");
     create_user_if_nonexistent(update->email.emailInfo.to_field); //create new user if new user doesn't exist yet
@@ -421,19 +416,27 @@ static void Respond_To_Message() {
    
   } else if (*type == 11) {
 
+
+
   } else if (*type == 12) {
 
-  } else if (*type == 13) {
-    Update *update;
-    update = (Update*) tmp_buf;
+
+
+  } else if (*type == 13) { //server received a NEW USER update from another server
+
+    Update *update = (Update*) tmp_buf;
     printf("we have received an update for a new user with name: %s\n", update->user_name);
     create_user_if_nonexistent(update->user_name);
     print_list(&users_list, print_user);
+
     //now we want to process the array that we received and update our own 2d array with the info
     memcpy(merge_matrix[update->timestamp.machine_index], update->updates_array, sizeof(update->updates_array));
+
     //consider if need to take max above or not; for now we say no
     merge_matrix[my_machine_index][update->timestamp.machine_index] = update->timestamp.counter;
     printf("printing merge matrix: \n");
+
+    //Print the merge matrix (for debug)
     for (int i = 0; i < NUM_SERVERS; i++) {
       for (int j = 0; j < NUM_SERVERS; j++) {
         printf("%d ", merge_matrix[i][j]);
@@ -444,7 +447,7 @@ static void Respond_To_Message() {
   } else if (*type == 20) {
 
   } else { //unknown type!
-    printf("Unknown type. Exiting...\n");
+    printf("Unknown type received! Exiting program...\n");
     exit(1);
   }
   
