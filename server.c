@@ -244,13 +244,13 @@ static void Respond_To_Message() {
 
   //maybe we create a separate method for creating a user when we get an email, read, or
   //delete for a user that has not been created
-
-
   
   char *tmp_buf = malloc(MAX_PACKET_LEN);
   ret = SP_receive(Mbox, &service_type, sender, 100, &num_groups, target_groups,
                    &mess_type, &endian_mismatch, MAX_PACKET_LEN, (char*)tmp_buf);
 
+  //Parsing the server entering message
+  //(Should only be executed at the beginning of the program)
   if (Is_caused_join_mess(service_type)) {
     //int num = atoi(&(target_groups[0][strlen(target_groups[0]) - 1]));
     //printf("num in caused by join: %d\n", num);
@@ -373,8 +373,12 @@ static void Respond_To_Message() {
     to_be_sent->timestamp.machine_index = my_machine_index;
     to_be_sent->email = info->email;
 
-    //for debug
-    printf("Sending email update to other servers! \nHere's the Email I'm sending's to_field: %s\n", to_be_sent->email.emailInfo.to_field);
+    //Print the contents of the email that was received for debugging purposes
+    printf("Sending an email update to other servers! \nHere's the Email:\n");
+    printf("TO: %s\n", to_be_sent->email.emailInfo.to_field);
+    printf("FROM: %s\n", to_be_sent->email.emailInfo.from_field);
+    printf("SUBJECT: %s\n", to_be_sent->email.emailInfo.subject);
+    printf("MESSAGE: %s\n", to_be_sent->email.emailInfo.message);
     
     //Send the Update to ALL OTHER SERVERS in the same partition
     SP_multicast(Mbox, AGREED_MESS, group, 2, sizeof(Update), (char*)to_be_sent);
