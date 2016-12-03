@@ -414,7 +414,7 @@ static void Respond_To_Message() {
 
     //Send an update to all other servers to put that email into their email list
     Update *to_be_sent = malloc(sizeof(Update));
-    to_be_sent->type = 5;
+    to_be_sent->type = 12;
     update_count++;
     to_be_sent->timestamp.counter = update_count;
     to_be_sent->timestamp.machine_index = my_machine_index;
@@ -436,8 +436,32 @@ static void Respond_To_Message() {
 
 
   } else if (*type == 6) { //Server received a "READ MESSAGE" message from the client
-    //TODO: This is unimplemented
+    //TODO: The implementation of this is not correct yet!!!
 
+    //We know that the thing that was sent was of type InfoForServer, so we can cast it accordingly
+    InfoForServer *info = (InfoForServer *) tmp_buf;    
+
+    //Send an update to all other servers to put that email into their email list
+    Update *to_be_sent = malloc(sizeof(Update));
+    to_be_sent->type = 11;
+    update_count++;
+    to_be_sent->timestamp.counter = update_count;
+    to_be_sent->timestamp.machine_index = my_machine_index;
+
+
+    //WARNING! THIS IS NOT GOING TO WORK! 
+    //The format of deleting an email in InfoForServer is a single integer ('message to delete')
+    //but the format of sending an update for reading an email is an entire TimeStamp.
+    to_be_sent->timestamp_of_email.message_index = info->message_to_delete;
+    //What about populating the counter and the machine_index????
+
+
+    //copy our row of the 2d array and send with update 
+    merge_matrix[my_machine_index][my_machine_index] = update_count;
+    memcpy(to_be_sent->updates_array, merge_matrix[my_machine_index], sizeof(merge_matrix[my_machine_index]));
+        
+    //Send the Update to ALL OTHER SERVERS in the same partition
+    SP_multicast(Mbox, AGREED_MESS, group, 2, sizeof(Update), (char*)to_be_sent);
 
 
   } else if (*type == 7) { //Server received a "PRINT MEMBERSHIP" message from the client 
