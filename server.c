@@ -62,7 +62,7 @@ December 9, 2016
 
 
 //CASE: client switches servers
-//private group between cliet and original server is dropped
+//private group between client and original server is dropped
 //private group between client and new server is created
 
 
@@ -122,34 +122,30 @@ static mailbox      Mbox;
 static int          Num_sent;
 static unsigned int Previous_len;
 
-static char     group[80] = "ssukard1mkazach1_2"; 
+static char         group[80] = "ssukard1mkazach1_2"; 
+char                server_own_group[80] = "ssukard1mkazach1_server_";
 
-
-char server_own_group[80] = "ssukard1mkazach1_server_";
-
-int             my_machine_index;
-int             num_machines;
+int                 my_machine_index;
 
 static int          To_exit = 0;
 
-int     ret;
-int     mver, miver, pver;
-sp_time test_timeout;
+int                 ret;
+int                 mver, miver, pver;
+sp_time             test_timeout;
 
-List users_list;
-int merge_matrix[NUM_SERVERS][NUM_SERVERS];
-int update_count = 0;
-bool servers_in_partition[NUM_SERVERS] = { false };
-int num_servers_in_partition = 0; //THIS MAY NOT BE CORRECT SO DO NOT USE
+List                users_list;
+int                 merge_matrix[NUM_SERVERS][NUM_SERVERS];
+int                 update_count = 0;
+bool                servers_in_partition[NUM_SERVERS] = { false };
+int                 num_servers_in_partition = 0; //THIS MAY NOT BE CORRECT SO DO NOT USE
 
 
+//Our own methods 
 static void Respond_To_Message();
 int compare_users(void* user1, void* user2);
 bool create_user_if_nonexistent(char *name);
 void print_user(void *user);
 void print_email(void *user);
-
-
 
 
 // Main method
@@ -158,20 +154,20 @@ int main(int argc, char *argv[]) {
   //Create a linked list of users
   create_list(&users_list, sizeof(User));
 
+  //Populate entire merge_matrix with 0's 
   for (int i = 0; i < NUM_SERVERS; i++) {
     for (int j = 0; j < NUM_SERVERS; j++) {
       merge_matrix[i][j] = 0;
     }
   }
-  
+
+  //Get the machine index, as well as however many servers there are 
   my_machine_index =  atoi(argv[1]) - 1; //subtract 1 for correct indexing
-  num_machines =      atoi(argv[2]);
 
   char my_machine_index_str[20];
   
   sprintf(my_machine_index_str, "%d", my_machine_index + 10);
   
-
   strcat(server_own_group, my_machine_index_str);
   
   printf("%s\n", server_own_group);
@@ -200,9 +196,7 @@ int main(int argc, char *argv[]) {
   if (ret < 0) {
     SP_error(ret);
   }
-
-
-
+  
   ret = SP_join(Mbox, server_own_group);
   if (ret < 0) {
     SP_error(ret);
@@ -210,27 +204,26 @@ int main(int argc, char *argv[]) {
 
   printf("connected\n");
 
-  E_init();
+  //Using E_attach is similar to putting the function in th 3rd argument in an infinite for loop
+  E_init(); 
   E_attach_fd( Mbox, READ_FD, Respond_To_Message, 0, NULL, LOW_PRIORITY );
 
   fflush(stdout);
+  //Start the "infinite for loop"
   E_handle_events();
-  
-  
 }
 
 
  
 static void Respond_To_Message() {
-  
-  //static  char  mess[MAX_MESSLEN];
+
+  //necessary Variables
   int   service_type;
   char  sender[MAX_GROUP_NAME];
   int   num_groups;
   char  target_groups[NUM_SERVERS][MAX_GROUP_NAME];
   int16 mess_type;
   int   endian_mismatch;
-
 
   //  InfoForServer *info = malloc(sizeof(InfoForServer));
   //ret = SP_receive(Mbox, &service_type, sender, 100, &num_groups, target_groups,
@@ -242,7 +235,6 @@ static void Respond_To_Message() {
   //printf("%d\n", service_type);
   //assert(info->type == 2);
   //printf("This is the username: %s\n", info->user_name);
-
 
 
   //IDEA: if we receive an update then we're still going to end up doing some of the things in
@@ -381,6 +373,12 @@ static void Respond_To_Message() {
     to_be_sent->timestamp.machine_index = my_machine_index;
     to_be_sent->email = info->email;
 
+    //for debug
+    printf("Sending email update to other servers! \nHere's the Email I'm sending's to_field: %s\n", to_be_sent->email.emailInfo.to_field);
+    
+    //Send the Update to ALL OTHER SERVERS in the same partition
+    SP_multicast(Mbox, AGREED_MESS, group, 2, sizeof(Update), (char*)to_be_sent);
+    
   } else if (*type == 5) { //We received a "delete message" message from the client
     //TODO: This is unimplemented
 
