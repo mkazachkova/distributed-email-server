@@ -394,7 +394,11 @@ static void Respond_To_Message() {
     //TODO: This is unimplemented
 
   } else if (*type == 10) {
-    //TODO: This is unimplemented
+    //receiving a new email update
+    Update *update;
+    update = (Update*) tmp_buf;
+    printf("we have received an update for a new email!\n");
+    
     
   } else if (*type == 11) {
 
