@@ -110,11 +110,6 @@ December 9, 2016
 //considering the processes that are in the partition). The process with the max value is responsible for sending the updates to all other processes
 //in the partition
 
-
-
-
-
-
 #define int32u unsigned int
 
 static char         Server[80];
@@ -144,9 +139,6 @@ int merge_matrix[NUM_SERVERS][NUM_SERVERS];
 int update_count = 0;
 bool servers_in_partition[NUM_SERVERS] = { false };
 int num_servers_in_partition = 0; //THIS MAY NOT BE CORRECT SO DO NOT USE
-//#define MAX_MESSLEN 102400
-//#define MAX_VSSETS  10
-//#define MAX_MEMBERS 100
 
 
 static void Respond_To_Message();
@@ -158,8 +150,8 @@ void print_email(void *user);
 
 
 
+// Main method
 int main(int argc, char *argv[]) {
-
 
   //Create a linked list of users
   create_list(&users_list, sizeof(User));
@@ -357,47 +349,72 @@ static void Respond_To_Message() {
   
   int *type = (int*) tmp_buf;
 
-  if (*type == 2) { 
-    InfoForServer *info;
-    info = (InfoForServer*) tmp_buf;
+  //If *type is of type 2-7, we have RECEIVED A MESSAGE FROM THE CLIENT.
+  if (*type == 2) { //We received a "new user" message from client
+
+    //We know that the thing that was sent was of type InfoForSever, so we can cast it accordingly
+    InfoForServer *info = (InfoForServer*) tmp_buf;
     printf("This is the username: %s\n", info->user_name);    
     printf("type: %d\n", *type);
     bool created_new_user = create_user_if_nonexistent(info->user_name);
     printf("about to print list\n and this is user list size: %d\n", users_list.num_nodes);
     print_list(&users_list, print_user);
 
-    //now we want to send an update to all other machines IF A NEW USER WAS CREATED
+    //now we want to send an update to all other machines ONLY IF A NEW USER WAS CREATED
     if (created_new_user) {
-      //send update
+      //Dynamically create and send update
       Update *to_be_sent = malloc(sizeof(Update));
+      //Fill in relevant parameters
       to_be_sent->type = 13;
       update_count++;
       to_be_sent->timestamp.counter = update_count;
       to_be_sent->timestamp.machine_index = my_machine_index;
       strcpy(to_be_sent->user_name, info->user_name);
-      //copy our row of 2d array and send with update
+      
+      //copy our row of the 2d array and send with update 
       merge_matrix[my_machine_index][my_machine_index] = update_count;
       memcpy(to_be_sent->updates_array, merge_matrix[my_machine_index], sizeof(merge_matrix[my_machine_index]));
+
+      //(for debug)
       printf("this is updates array: \n");
       for (int i = 0; i < NUM_SERVERS; i++) {
         printf("%d ", to_be_sent->updates_array[i]);
       }
       printf("\n");
+
+      //Send the Update to ALL OTHER SERVERS in the same partition
       SP_multicast(Mbox, AGREED_MESS, group, 2, sizeof(Update), (char*)to_be_sent);
     }
     
-  } else if (*type == 3) {
+  } else if (*type == 3) { //We received a "list headers" message from the client
+    //TODO: This is unimplemented
+    
+  } else if (*type == 4) { // client put in request to server to mail message to user 
 
-  } else if (*type == 4) {
+    //We know that the thing that was sent was of type InfoForSever, so we can cast it accordingly
+    InfoForServer *info = (InfoForServer *) tmp_buf;    
 
-  } else if (*type == 5) {
+    //Send an update to all other servers to put that email into their email list
+    Update *to_be_sent = malloc(sizeof(Update));
+    to_be_sent->type = 10;
+    update_count++;
+    to_be_sent->timestamp.counter = update_count;
+    to_be_sent->timestamp.machine_index = my_machine_index;
+    to_be_sent->email = info->email;
 
-  } else if (*type == 6) {
+  } else if (*type == 5) { //We received a "delete message" message from the client
+    //TODO: This is unimplemented
 
-  } else if (*type == 7) {
+
+  } else if (*type == 6) { //We received a "read message" message from the client
+    //TODO: This is unimplemented
+
+  } else if (*type == 7) { //We received a "print membership" message from the client 
+    //TODO: This is unimplemented
 
   } else if (*type == 10) {
-
+    //TODO: This is unimplemented
+    
   } else if (*type == 11) {
 
   } else if (*type == 12) {
