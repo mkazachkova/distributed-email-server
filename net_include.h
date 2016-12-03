@@ -24,7 +24,7 @@ December 9, 2016
 
 #include "generic_linked_list.h"
 
-#define PORT            10050
+#define PORT            10100
 
 // ******************* VARIABLES ******************* //
 #define MAX_NAME_LEN    50

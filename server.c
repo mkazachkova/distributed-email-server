@@ -174,7 +174,7 @@ int main(int argc, char *argv[]) {
 
   
   sprintf(Server, "user_mk_ss");
-  sprintf(Spread_name, "10050");
+  sprintf(Spread_name, "10100");
 
   if (!SP_version(&mver, &miver, &pver)) {
     printf("main: Illegal variables passed to SP_version()\n");

@@ -472,7 +472,7 @@ static void Read_message() {
 //Takes in command-line args for spread name and user
 static void Usage(int argc, char *argv[]) {
   sprintf(Client_name, "client_user_mk_ss");
-  sprintf(Spread_name, "10050");
+  sprintf(Spread_name, "10100");
 
   while (--argc > 0) {
     argv++;
