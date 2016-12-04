@@ -149,6 +149,7 @@ static void   Bye();
 static int    compare_users(void *user1, void *user2);
 static int    compare_email(void *temp, void *temp2);
 static int    compare_update(void* update1, void* update2);
+static int    compare_update_for_find(void* update1, void* update2);
 static bool   create_user_if_nonexistent(char *name);
 static void   print_user(void *user);
 static void   print_email(void *email);
@@ -688,9 +689,9 @@ int compare_update(void* update1, void* update2) {
 }
 
 
-compare_update_for_find(void* temp1, void* temp2) {
+int compare_update_for_find(void* temp1, void* temp2) {
   //find the nth from end exisiting and undeleted email
-  
+  return -1;
 }
 
 

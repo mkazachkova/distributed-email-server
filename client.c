@@ -133,181 +133,182 @@ static void User_command() {
 
   switch(command[0]) {
     ///////////////////////////////////// LOGIN WITH A USERNAME ///////////////////////////////////
-    case 'u':      
-      ret = sscanf( &command[2], "%s", curr_user);
-      printf("this is curr user: %s\n", curr_user);
-
-      if (logged_in) {
-        //alert the server that a (potentially) new user might need to be created
-        InfoForServer *new_user_request = malloc(sizeof(InfoForServer));
-        new_user_request->type = 2; //for new user
-        sprintf(new_user_request->user_name, "%s",curr_user); //to be changed when we implement getting the user name
-        
-        SP_multicast(Mbox, AGREED_MESS, hardcoded_server_names[curr_server], 2, sizeof(InfoForServer), (char*)new_user_request);
-        free(new_user_request);
-      } else {
-        // this is the client's first time connecting to a mail server
-        logged_in = true;
-      }
-            
+  case 'u': {
+    ret = sscanf( &command[2], "%s", curr_user);
+    printf("this is curr user: %s\n", curr_user);
+    
+    if (logged_in) {
+      //alert the server that a (potentially) new user might need to be created
+      InfoForServer *new_user_request = malloc(sizeof(InfoForServer));
+      new_user_request->type = 2; //for new user
+      sprintf(new_user_request->user_name, "%s",curr_user); //to be changed when we implement getting the user name
+      
+      SP_multicast(Mbox, AGREED_MESS, hardcoded_server_names[curr_server], 2, sizeof(InfoForServer), (char*)new_user_request);
+      free(new_user_request);
+    } else {
+      // this is the client's first time connecting to a mail server
+      logged_in = true;
+    }
+    
+    break;
+  }
+  //////////////////////////////// CONNECT TO A SPECIFIC MAIL SERVER ////////////////////////////
+  case 'c': {
+    if (!logged_in) {
+      printf("Must log in before connecting to server.\n");
       break;
-    //////////////////////////////// CONNECT TO A SPECIFIC MAIL SERVER ////////////////////////////
-    case 'c':
-      if (!logged_in) {
-        printf("Must log in before connecting to server.\n");
-        break;
-      }
-      ret = sscanf(&command[2], "%s", group);
-      curr_server = atoi(group) - 1;
+    }
+    ret = sscanf(&command[2], "%s", group);
+    curr_server = atoi(group) - 1;
       
-      if (ret < 1) {
-        printf(" invalid group \n");
-        break;
-      }
+    if (ret < 1) {
+      printf(" invalid group \n");
+      break;
+    }
 
-      //this isn't doing anything
-      // unsigned int message_length = strlen(hardcoded_server_names[curr_server]);
-      // printf("Message of length %d with contents %s\n", message_length, hardcoded_server_names[curr_server]);
+    //this isn't doing anything
+    // unsigned int message_length = strlen(hardcoded_server_names[curr_server]);
+    // printf("Message of length %d with contents %s\n", message_length, hardcoded_server_names[curr_server]);
   
-      InfoForServer *connect_server_request = malloc(sizeof(InfoForServer));
-      connect_server_request->type = 2; //for new user
-      sprintf(connect_server_request->user_name, "%s",curr_user); //to be changed when we implement getting the user name
+    InfoForServer *connect_server_request = malloc(sizeof(InfoForServer));
+    connect_server_request->type = 2; //for new user
+    sprintf(connect_server_request->user_name, "%s",curr_user); //to be changed when we implement getting the user name
       
-      SP_multicast(Mbox, AGREED_MESS, hardcoded_server_names[curr_server], 2, sizeof(InfoForServer), (char*)connect_server_request);
-      free(connect_server_request);
+    SP_multicast(Mbox, AGREED_MESS, hardcoded_server_names[curr_server], 2, sizeof(InfoForServer), (char*)connect_server_request);
+    free(connect_server_request);
       
-      /*
+    /*
       ret = SP_join(Mbox, hardcoded_server_names[server_to_be_used]);
       if (ret < 0) SP_error(ret); 
-      */
-      break;
-
-      
-    ////////////////////////////// LIST THE HEADERS OF RECEIVED MAIL ////////////////////////////
-  case 'l': {
-      InfoForServer *header_request = malloc(sizeof(InfoForServer));
-      header_request->type = 3; //for a list headers of received mail request
-      sprintf(header_request->user_name, "%s", curr_user);  //populate who is sending the email
-
-      SP_multicast(Mbox, AGREED_MESS, hardcoded_server_names[curr_server], 2, sizeof(InfoForServer), (char*) header_request);
-      free(header_request);
-
-      break;
+    */
+    break;
   }
       
-    /////////////////////////////////// MAIL A MESSAGE TO A USER ////////////////////////////////
-    case 'm':      
-      printf("To: ");
-      //int to_len = 0;
-
-      // while (to_len < MAX_NAME_LEN) {
-      // if (fgets(&to[to_len], 200, stdin) == NULL) {
-      //   Bye();
-      // }
-
-      // if (to[to_len] == '\n') {
-      //  break;
-      // }
-
-      //to_len += strlen(&to[to_len - 1]);
-      //}
-      fgets(&to[0], MAX_NAME_LEN, stdin);
-      int to_len = strlen(to);
-      to[to_len-1] = '\0';
+  ////////////////////////////// LIST THE HEADERS OF RECEIVED MAIL ////////////////////////////
+  case 'l': {
+    InfoForServer *header_request = malloc(sizeof(InfoForServer));
+    header_request->type = 3; //for a list headers of received mail request
+    sprintf(header_request->user_name, "%s", curr_user);  //populate who is sending the email
+    
+    SP_multicast(Mbox, AGREED_MESS, hardcoded_server_names[curr_server], 2, sizeof(InfoForServer), (char*) header_request);
+    free(header_request);
+    
+    break;
+  }
       
-      printf("Subject: ");
-      //int subject_len = 0;
+  /////////////////////////////////// MAIL A MESSAGE TO A USER ////////////////////////////////
+  case 'm': {
+    printf("To: ");
+    //int to_len = 0;
 
-      //while (subject_len < MAX_NAME_LEN) {
-      //if (fgets(&subject[subject_len], 200, stdin) == NULL) {
-      //  Bye();
-      // }
+    // while (to_len < MAX_NAME_LEN) {
+    // if (fgets(&to[to_len], 200, stdin) == NULL) {
+    //   Bye();
+    // }
 
-      //if (subject[subject_len] == '\n') {
-      //  break;
-      //}
+    // if (to[to_len] == '\n') {
+    //  break;
+    // }
 
-      //subject_len += strlen(&subject[subject_len]);
-      //}
-
-      fgets(&subject[0], MAX_NAME_LEN, stdin);
-      int subject_len = strlen(subject);
-      subject[subject_len - 1] = '\0';
+    //to_len += strlen(&to[to_len - 1]);
+    //}
+    fgets(&to[0], MAX_NAME_LEN, stdin);
+    int to_len = strlen(to);
+    to[to_len-1] = '\0';
       
-      printf("Message: ");
-      mess_len = 0;
-      while (mess_len < MAX_MESS_LEN) {
-        if (fgets(&mess[mess_len], 200, stdin) == NULL) {
-          Bye();
-        }
+    printf("Subject: ");
+    //int subject_len = 0;
 
-        if (mess[mess_len] == '\n') {
-          break;
-        }
-        
-        mess_len += strlen(&mess[mess_len]);
-      }
+    //while (subject_len < MAX_NAME_LEN) {
+    //if (fgets(&subject[subject_len], 200, stdin) == NULL) {
+    //  Bye();
+    // }
 
-      printf("this is to: %s\nThis is subject: %s\nThis is message: %s\n", to, subject, mess);
+    //if (subject[subject_len] == '\n') {
+    //  break;
+    //}
+
+    //subject_len += strlen(&subject[subject_len]);
+    //}
+
+    fgets(&subject[0], MAX_NAME_LEN, stdin);
+    int subject_len = strlen(subject);
+    subject[subject_len - 1] = '\0';
       
-      InfoForServer *info2 = malloc(sizeof(InfoForServer));
-      info2->type = 4; //for new email
-      sprintf(info2->email.emailInfo.to_field,    "%s", to); //to be changed when we implement getting the user name
-      sprintf(info2->email.emailInfo.subject,     "%s", subject);
-      sprintf(info2->email.emailInfo.from_field,  "%s", curr_user);
-      sprintf(info2->email.emailInfo.message,     "%s", mess);
-
-      SP_multicast(Mbox, AGREED_MESS, hardcoded_server_names[curr_server], 2, sizeof(InfoForServer), (char*)info2);
-      free(info2);
-
-      break;
-
-      
-    /////////////////////////////// DELETE A MAIL MESSAGE /////////////////////////////
-    case 'd':
-      //TODO: This method has not been implemented yet
-      //TODO: YOU MUST populate the user_name field!!!!!
-
-      ret = sscanf(&command[2], "%s", group);
-      if (ret != 1) {
-        strcpy( group, "dummy_group_name" );
-      }
-      printf("enter size of each message: ");
-      if (fgets(mess, 200, stdin) == NULL) {
+    printf("Message: ");
+    mess_len = 0;
+    while (mess_len < MAX_MESS_LEN) {
+      if (fgets(&mess[mess_len], 200, stdin) == NULL) {
         Bye();
       }
 
-      ret = sscanf(mess, "%u", &mess_len );
-      if (ret != 1) {
-        mess_len = Previous_len;
+      if (mess[mess_len] == '\n') {
+        break;
       }
-      if (mess_len > MAX_MESSLEN) {
-        mess_len = MAX_MESSLEN;
-      }
+        
+      mess_len += strlen(&mess[mess_len]);
+    }
 
-      Previous_len = mess_len;
-      printf("sending 10 messages of %u bytes\n", mess_len );
-      for (i = 0; i < 10; i++) {
-        Num_sent++;
-        sprintf( mess, "mess num %d ", Num_sent );
-        ret= SP_multicast( Mbox, FIFO_MESS, group, 2, mess_len, mess );
-
-        if (ret < 0) {
-          SP_error(ret);
-          Bye();
-        }
-        printf("sent message %d (total %d)\n", i+1, Num_sent );
-      }
-      break;
-
+    printf("this is to: %s\nThis is subject: %s\nThis is message: %s\n", to, subject, mess);
       
-    case 'r':
-      Read_message();
-      break;
+    InfoForServer *info2 = malloc(sizeof(InfoForServer));
+    info2->type = 4; //for new email
+    sprintf(info2->email.emailInfo.to_field,    "%s", to); //to be changed when we implement getting the user name
+    sprintf(info2->email.emailInfo.subject,     "%s", subject);
+    sprintf(info2->email.emailInfo.from_field,  "%s", curr_user);
+    sprintf(info2->email.emailInfo.message,     "%s", mess);
 
+    SP_multicast(Mbox, AGREED_MESS, hardcoded_server_names[curr_server], 2, sizeof(InfoForServer), (char*)info2);
+    free(info2);
+
+    break;   
+  }
+    
+    /////////////////////////////// DELETE A MAIL MESSAGE /////////////////////////////
+  case 'd': {
+    //TODO: This method has not been implemented yet
+    //TODO: YOU MUST populate the user_name field!!!!!
+
+    ret = sscanf(&command[2], "%s", group);
+    if (ret != 1) {
+      strcpy( group, "dummy_group_name" );
+    }
+    printf("enter size of each message: ");
+    if (fgets(mess, 200, stdin) == NULL) {
+      Bye();
+    }
+
+    ret = sscanf(mess, "%u", &mess_len );
+    if (ret != 1) {
+      mess_len = Previous_len;
+    }
+    if (mess_len > MAX_MESSLEN) {
+      mess_len = MAX_MESSLEN;
+    }
+
+    Previous_len = mess_len;
+    printf("sending 10 messages of %u bytes\n", mess_len );
+    for (i = 0; i < 10; i++) {
+      Num_sent++;
+      sprintf( mess, "mess num %d ", Num_sent );
+      ret= SP_multicast( Mbox, FIFO_MESS, group, 2, mess_len, mess );
+
+      if (ret < 0) {
+        SP_error(ret);
+        Bye();
+      }
+      printf("sent message %d (total %d)\n", i+1, Num_sent );
+    }
+    break;
+
+  }
+  case 'r': {
+    Read_message();
+    break;
+  }
       
-    /////////////////////////// PRINT MEMBERSHIP OF THE MAIL SERVERS /////////////////////////
-    ////////////////////// IN THE CURRENT MAIL SERVER'S NETWORK COMPONENT ////////////////////
+  /////////////////////////// PRINT MEMBERSHIP OF THE MAIL SERVERS /////////////////////////
+  ////////////////////// IN THE CURRENT MAIL SERVER'S NETWORK COMPONENT ////////////////////
   case 'v': {
       InfoForServer *membership_request = malloc(sizeof(InfoForServer));
       membership_request->type = 7; //for a print membership request
@@ -319,19 +320,20 @@ static void User_command() {
       break;
   }
       
-    ///////////////////////////////////// EXIT THE PROGRAM //////////////////////////////////
-    case 'q':
-      Bye();
-      break;
-
+  ///////////////////////////////////// EXIT THE PROGRAM //////////////////////////////////
+  case 'q': {
+    Bye();
+    break;
+  }
       
     /////////////////////////////////////// DEFAULT CASE ///////////////////////////////////
-    default:
-      printf("\nYou input an unknown commnand...\n");
-      Print_menu();
-      break;
+  default: {
+    printf("\nYou input an unknown commnand...\n");
+    Print_menu();
+    break;
   }
-
+  }
+  
   printf("\nUser> ");
   fflush(stdout);
 }
