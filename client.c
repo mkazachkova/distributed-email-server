@@ -264,7 +264,7 @@ static void User_command() {
     sscanf(&command[2], "%s", group);
     int to_be_deleted = atoi(group);
 
-    //set the request's message_to_read field
+    //set the request's message_to_delete field
     delete_request->message_to_delete = to_be_deleted; 
     SP_multicast(Mbox, AGREED_MESS, hardcoded_server_names[curr_server], 2, sizeof(InfoForServer), (char*) delete_request);
 
