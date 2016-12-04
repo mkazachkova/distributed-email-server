@@ -143,6 +143,14 @@ int                 num_servers_in_partition = 0; //THIS MAY NOT BE CORRECT SO D
 int                 lamport_counter = 0;
 int                 num_emails_checked = 0;
 
+
+int                 message_number_stamp = 0;
+int                 num_headers_added;
+InfoForClient       *client_header_response;     
+
+char                sender[MAX_GROUP_NAME];
+
+
 //Our own methods 
 static void   Respond_To_Message();
 static void   Bye();
@@ -154,6 +162,8 @@ static bool   create_user_if_nonexistent(char *name);
 static void   print_user(void *user);
 static void   print_email(void *email);
 static void   print_update(void *update);
+static void   add_to_struct_to_send(void *data);
+static void   add_to_header(Email *email);
 static int    max(int one, int two);
 
 
@@ -237,7 +247,6 @@ static void Respond_To_Message() {
 
   //necessary Variables
   int   service_type;
-  char  sender[MAX_GROUP_NAME];
   int   num_groups;
   char  target_groups[NUM_SERVERS][MAX_GROUP_NAME];
   int16 mess_type;
@@ -387,9 +396,21 @@ static void Respond_To_Message() {
     //TODO: This is unimplemented
     //We know that the thing that was sent was of type InfoForServer, so we can cast it accordingly
     //    InfoForServer *info = (InfoForServer *) tmp_buf;    
-
+    InfoForServer *info = (InfoForServer*) tmp_buf;
+    User *user = find(&(users_list), info->user_name, compare_users);
     
-    
+    client_header_response = malloc(sizeof(InfoForClient));
+    message_number_stamp = 0;
+    num_headers_added = 0;
+    backward_iterator(&(user->email_list), add_to_struct_to_send);
+    //send the very last one
+    for (int i = num_headers_added; i < 10; i++) {
+      client_header_response->headers[i].message_number = -1;
+    }
+    SP_multicast(Mbox, AGREED_MESS, sender, 2, sizeof(InfoForClient), (char*)client_header_response);
+    free(client_header_response);
+    client_header_response = NULL;
+  
   } else if (*type == 4) { // Client put in request to server to mail message to another user
 
     //NOTE: We are NOT directly putting the email in our own personal email list (in our Users linked list)
@@ -886,9 +907,34 @@ int compare_email_for_find(void* temp1, void* temp2) {
 }
 
 
+void add_to_struct_to_send(void *data) {
+  Email *email = (Email*) data;
+  if (email->exists && !email->deleted) {
+    add_to_header(email);
+  }
+}
+
 
 int max(int first, int second) {
   return first >= second ? first : second;
+}
+
+
+void add_to_header(Email *email) {
+  if (num_headers_added == 10) {
+    SP_multicast(Mbox, AGREED_MESS, sender, 2, sizeof(InfoForClient), (char*)client_header_response);
+    
+    num_headers_added = 0;
+    free(client_header_response);
+    client_header_response = NULL;
+    client_header_response = malloc(sizeof(client_header_response));
+  }
+  
+  client_header_response->headers[num_headers_added].message_number =message_number_stamp;
+  strcpy(client_header_response->headers[num_headers_added].sender, email->emailInfo.from_field);
+  strcpy(client_header_response->headers[num_headers_added].subject, email->emailInfo.subject);
+  message_number_stamp++;
+  num_headers_added++;
 }
 
 
