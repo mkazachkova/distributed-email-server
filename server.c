@@ -142,7 +142,7 @@ bool                servers_in_partition[NUM_SERVERS] = { false };
 int                 num_servers_in_partition = 0; //THIS MAY NOT BE CORRECT SO DO NOT USE
 int                 lamport_counter = 0;
 int                 num_emails_checked = 0;
-
+int                 min_seen_global = -1;
 
 int                 message_number_stamp = 1;
 int                 num_headers_added;
@@ -162,6 +162,7 @@ static bool   create_user_if_nonexistent(char *name);
 static void   print_user(void *user);
 static void   print_email(void *email);
 static void   print_update(void *update);
+static void   send_updates_for_merge(void *update);
 static void   add_to_struct_to_send(void *data);
 static void   add_to_header(Email *email);
 static int    max(int one, int two);
