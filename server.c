@@ -144,7 +144,7 @@ int                 lamport_counter = 0;
 int                 num_emails_checked = 0;
 
 
-int                 message_number_stamp = 0;
+int                 message_number_stamp = 1;
 int                 num_headers_added;
 InfoForClient       *client_header_response;     
 
@@ -400,7 +400,8 @@ static void Respond_To_Message() {
     User *user = find(&(users_list), info->user_name, compare_users);
     
     client_header_response = malloc(sizeof(InfoForClient));
-    message_number_stamp = 0;
+    client_header_response->type = 1;
+    message_number_stamp = 1;
     num_headers_added = 0;
     backward_iterator(&(user->email_list), add_to_struct_to_send);
     //send the very last one
@@ -928,9 +929,10 @@ void add_to_header(Email *email) {
     free(client_header_response);
     client_header_response = NULL;
     client_header_response = malloc(sizeof(client_header_response));
+    client_header_response->type = 1;
   }
-  
-  client_header_response->headers[num_headers_added].message_number =message_number_stamp;
+
+  client_header_response->headers[num_headers_added].message_number = message_number_stamp;
   strcpy(client_header_response->headers[num_headers_added].sender, email->emailInfo.from_field);
   strcpy(client_header_response->headers[num_headers_added].subject, email->emailInfo.subject);
   message_number_stamp++;
