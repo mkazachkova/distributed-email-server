@@ -402,14 +402,12 @@ static void Respond_To_Message() {
     to_be_sent->timestamp.machine_index = my_machine_index;
     to_be_sent->timestamp.message_index = update_index;
 
+    lamport_counter++;
+
     to_be_sent->email = info->email;
     to_be_sent->email.emailInfo.timestamp.machine_index = my_machine_index;
-
-
-    lamport_counter++;
     to_be_sent->email.emailInfo.timestamp.counter = lamport_counter;
-    to_be_sent->email.emailInfo.timestamp.message_index = -1; //this is obviously NOT RIGHT; just a placeholder
-
+    to_be_sent->email.emailInfo.timestamp.message_index = -1; //Message index attached to an UPDATE'S timestamp is never used
 
     to_be_sent->email.exists = true;
     to_be_sent->email.deleted = false;
@@ -493,7 +491,6 @@ static void Respond_To_Message() {
       return;
     }
 
-    
     TimeStamp timestamp = email->emailInfo.timestamp;
     to_be_sent->timestamp_of_email = timestamp;
 

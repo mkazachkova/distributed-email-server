@@ -302,6 +302,8 @@ static void User_command() {
     break;
 
   }
+    
+  ////////////////////////////////////// READ AN EMAIL  ////////////////////////////////////
   case 'r': {
     //Read_message();
     InfoForServer *read_request = malloc(sizeof(InfoForServer));
