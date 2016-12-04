@@ -920,6 +920,10 @@ int max(int first, int second) {
   return first >= second ? first : second;
 }
 
+int min(int first, int second) {
+  return first <= second ? first : second;
+}
+
 
 void add_to_header(Email *email) {
   if (num_headers_added == 10) {
