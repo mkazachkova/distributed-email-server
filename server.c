@@ -476,7 +476,7 @@ static void Respond_To_Message() {
     printf("this is user email list:\n");
     print_list(&(user->email_list), print_email);
     printf("this is message to delete: %d\n", info->message_to_delete);
-    Email *email = find(&(user->email_list), (void*)&(info->message_to_delete), compare_email_for_find);
+    Email *email = find_backwards(&(user->email_list), (void*)&(info->message_to_delete), compare_email_for_find);
 
     if (email == NULL) {
       printf("Error: should not be null yet!\n");
@@ -521,7 +521,7 @@ static void Respond_To_Message() {
     printf("this is user email list:\n");
     print_list(&(user->email_list), print_email);
     printf("this is message to read: %d\n", info->message_to_read);
-    Email *email = find(&(user->email_list), (void*)&(info->message_to_read), compare_email_for_find);
+    Email *email = find_backwards(&(user->email_list), (void*)&(info->message_to_read), compare_email_for_find);
 
     if (email == NULL) {
       printf("Error: should not be null yet!\n");
@@ -665,7 +665,7 @@ static void Respond_To_Message() {
     Email *dummy = malloc(sizeof(Email));
     dummy->emailInfo.timestamp = update->timestamp_of_email;
     
-    Email *email = find(&(temp->email_list), (void*)dummy, compare_email);
+    Email *email = find_backwards(&(temp->email_list), (void*)dummy, compare_email);
 
     if (email == NULL) {
       printf("\n\nNEW EMAIL IS BEING CREATED!!\n\n");
@@ -723,7 +723,7 @@ static void Respond_To_Message() {
     Email *dummy = malloc(sizeof(Email));
     dummy->emailInfo.timestamp = update->timestamp_of_email;
     
-    Email *email = find(&(temp->email_list), (void*)dummy, compare_email);
+    Email *email = find_backwards(&(temp->email_list), (void*)dummy, compare_email);
 
     if (email == NULL) {
       printf("\n\nNEW EMAIL IS BEING CREATED!!\n\n");
