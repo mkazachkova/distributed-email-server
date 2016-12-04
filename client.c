@@ -30,6 +30,7 @@ static void Read_message();
 static void Usage( int argc, char *argv[] );
 static void Print_help();
 static void Bye();
+static void print_header(Header *header);
 
 //Variables that I (Sarah) added
 static int  curr_server = -1;
@@ -335,22 +336,22 @@ static void User_command() {
 //This method is triggered whenever a client RECEIVES a message from a server
 static void Read_message() {
 
-  static  char              mess[MAX_MESSLEN];
-          char              sender[MAX_GROUP_NAME];
+  static  char              sender[MAX_GROUP_NAME];
+          //char              mess[MAX_MESSLEN];
           char              target_groups[MAX_MEMBERS][MAX_GROUP_NAME];
-          membership_info   memb_info;
-          vs_set_info       vssets[MAX_VSSETS];
-          unsigned int      my_vsset_index;
-          int               num_vs_sets;
-          char              members[MAX_MEMBERS][MAX_GROUP_NAME];
+          //membership_info   memb_info;
+          //vs_set_info       vssets[MAX_VSSETS];
+          //unsigned int      my_vsset_index;
+          //int               num_vs_sets;
+          //char              members[MAX_MEMBERS][MAX_GROUP_NAME];
           int               num_groups;
           int               service_type;
           int16             mess_type;
           int               endian_mismatch;
-          int               i,j;
-          int               ret;
+          //int               i,j;
+          //int               ret;
 
-  int service_type = 0;
+          service_type = 0;
 
 
   //should be triggered when we receive something
@@ -363,12 +364,13 @@ static void Read_message() {
 
 
   ////////////////////////// LIST HEADERS MESSAGE RECEIVED //////////////////////////
+  //NOTE: Make sure to make all EMPTY HEADERS have a message_number of -1
+
   if (info->type == 1) { //this is to "list headers" message received from server 
     //TODO: implement!
 
-    //NOTE: Make sure to set unused headers to NULL in server.c
     for (int i = 0; i < MAX_HEADERS_IN_PACKET; i++) {
-      if (info->headers[i] != NULL) {
+      if (info->headers[i].message_number != -1) {
         print_header(&(info->headers[i]));
         printf("\n");
       }
@@ -384,10 +386,11 @@ static void Read_message() {
   //////////////////////// PRINT MEMBERSHIP MESSAGE RECEIVED ////////////////////////
   } else if (info->type == 3) { //print memberships
 
-    //NOTE: Make sure to set unused servers to NULL in server.c
+    //NOTE: Make sure to set unused servers to the empty string in server.c
     for (int i = 0; i < NUM_SERVERS; i++) {
-      if (memb_identities[i] != NULL) {
-        printf("%s\n", memb_identities[i]);
+      //if not the empty string, print the server
+      if (strcmp(info->memb_identities[i], "") != 0) {
+        printf("%s\n", info->memb_identities[i]);
       }
     }    
   }

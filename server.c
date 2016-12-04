@@ -382,7 +382,7 @@ static void Respond_To_Message() {
   } else if (*type == 3) { //We received a "list headers" message from the client
     //TODO: This is unimplemented
     //We know that the thing that was sent was of type InfoForServer, so we can cast it accordingly
-    InfoForServer *info = (InfoForServer *) tmp_buf;    
+    //    InfoForServer *info = (InfoForServer *) tmp_buf;    
     
     
     
