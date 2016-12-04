@@ -495,6 +495,7 @@ static void Respond_To_Message() {
 
     
     TimeStamp timestamp = email->emailInfo.timestamp;
+    printf("THIS IS THE EMAIL TIMESTAMP COUNTER: %d\n\n", timestamp.counter);
     to_be_sent->timestamp_of_email = timestamp;
 
     
@@ -559,10 +560,15 @@ static void Respond_To_Message() {
     
     printf("this is subject: %s\n", update->email.emailInfo.subject);
     
-    User *temp = (User*) find(&users_list, (void*)update->email.emailInfo.to_field, compare_users);
+    User *temp = find(&users_list, (void*)update->email.emailInfo.to_field, compare_users);
     assert(temp != NULL);
     printf("User found! Here's their name: %s\n", temp->name);
-    
+
+
+    printf("\nTHIS IS THE LAMPORT COUNTER THAT WE ARE GOING TO BE INSERTING: \n");
+    printf("This is counter: %d and message index: %d and machine index: %d\n",
+           update->email.emailInfo.timestamp.counter, update->email.emailInfo.timestamp.message_index, update->email.emailInfo.timestamp.machine_index);
+
     insert(&(temp->email_list),(void*) &(update->email), compare_email);
     printf("inserted into user's email. Now printing user's email inbox: \n");
     print_list(&(temp->email_list), print_email);
@@ -598,13 +604,19 @@ static void Respond_To_Message() {
     
     printf("this is subject: %s\n", update->email.emailInfo.subject);
     
-    User *temp = (User*) find(&users_list, (void*)update->email.emailInfo.to_field, compare_users);
+    User *temp = (User*) find(&users_list, (void*)update->user_name, compare_users);
     assert(temp != NULL);
     printf("User found! Here's their name: %s\n", temp->name);
+
+    printf("timestamp of email (just counter and machine index): %d %d\n", update->timestamp_of_email.counter, update->timestamp_of_email.machine_index);
+
+    Email *dummy = malloc(sizeof(Email));
+    dummy->emailInfo.timestamp = update->timestamp_of_email;
     
-    Email *email = find(&(temp->email_list), (void*) &(update->timestamp_of_email), compare_email);
+    Email *email = find(&(temp->email_list), (void*)dummy, compare_email);
 
     if (email == NULL) {
+      printf("\n\nNEW EMAIL IS BEING CREATED!!\n\n");
       Email* new_email = malloc(sizeof(Email));
       new_email->emailInfo.timestamp = update->timestamp_of_email;
       new_email->read = true;
