@@ -383,14 +383,23 @@ static void Read_message() {
   SP_receive( Mbox, &service_type, sender, 100, &num_groups, target_groups,
               &mess_type, &endian_mismatch, sizeof(InfoForClient), (char*)info); 
 
+  
   printf("We have received a new info for client object!\n");
   printf("This is the type: %d\n", info->type);
-  printf("This is the message: %s\n", info->email.emailInfo.message);
-
-
-  /*
 
   
+  if (info->type == 1) { //this is to list headers: 
+    //TODO: implement!
+  } else if (info->type == 2) { //print email body (mark as read server side)
+    printf("To: %s\nFrom: %s\nSubject: %s\nBody: %s\n",
+           info->email.emailInfo.to_field, info->email.emailInfo.from_field, info->email.emailInfo.subject, info->email.emailInfo.message);
+  } else if (info->type == 3) { //print memberships
+    //TODO: implement!
+  }
+
+  
+
+  /*  
   ret = SP_receive( Mbox, &service_type, sender, 100, &num_groups, target_groups, 
     &mess_type, &endian_mismatch, sizeof(mess), mess );
   printf("\n============================\n");
