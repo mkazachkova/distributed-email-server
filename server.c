@@ -269,8 +269,11 @@ static void Respond_To_Message() {
   ret = SP_receive(Mbox, &service_type, sender, 100, &num_groups, target_groups,
                       &mess_type, &endian_mismatch, MAX_PACKET_LEN, (char*)tmp_buf);
 
+  printf("THIS IS SERVICE TYPE: ! %d\n", service_type);
 
-
+  if (Is_transition_mess(service_type)) {
+    return;
+  }
   // **************************** PARSE MEMBERSHIP MESSAGES **************************** //
 
   //Parsing the server entering message (Should only be executed at the beginning of the program)
@@ -382,6 +385,10 @@ static void Respond_To_Message() {
     //now both arrays loaded; figure out which machine needs to send
     int who_sends[NUM_SERVERS] = { -1 };
     int max_seen = 0;
+    printf("This is servers in partition array: \n");
+    for (int i = 0; i < NUM_SERVERS; i++) {
+      printf("%d ", servers_in_partition[i]);
+    }
     for (int i = 0; i < NUM_SERVERS; i++) {
       for (int j = 0; j < NUM_SERVERS; j++) {
         if (servers_in_partition[j]) {
@@ -395,7 +402,7 @@ static void Respond_To_Message() {
     }
     printf("printing who sends array!\n");
     for (int i = 0; i < NUM_SERVERS; i++) {
-      assert(who_sends[i] > 0);
+      //assert(who_sends[i] >= 0);
       printf("%d ", who_sends[i]);
     }
 
@@ -414,7 +421,7 @@ static void Respond_To_Message() {
         forward_iterator(&(array_of_updates_list[i]), send_updates_for_merge);
       }
     }
-    
+    return;
   }
 
 
