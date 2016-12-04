@@ -410,6 +410,10 @@ static void Respond_To_Message() {
     to_be_sent->email.emailInfo.timestamp.counter = lamport_counter;
     to_be_sent->email.emailInfo.timestamp.message_index = -1; //this is obviously NOT RIGHT; just a placeholder
 
+
+    to_be_sent->email.exists = true;
+    to_be_sent->email.deleted = false;
+    to_be_sent->email.read = false;
     //copy our row of the 2d array and send with update 
     //merge_matrix[my_machine_index][my_machine_index] = update_index;
     //memcpy(to_be_sent->updates_array, merge_matrix[my_machine_index], sizeof(merge_matrix[my_machine_index]));
@@ -473,7 +477,13 @@ static void Respond_To_Message() {
 
     User *user = find(&users_list, (void*)info->user_name, compare_users);
     assert(user != NULL);
-    //set global variable equal to zero 
+    //set global variable equal to zero
+    printf("this is user's name: %s\n", user->name);
+    printf("this is user email list:\n");
+    print_list(&(user->email_list), print_email);
+    printf("this is user list:\n");
+    print_list(&users_list, print_user);
+    printf("this is message to read: %d\n", info->message_to_read);
     Email *email = find(&(user->email_list), (void*)&(info->message_to_read), compare_email_for_find);
 
     if (email == NULL) {
@@ -724,6 +734,10 @@ int compare_email_for_find(void* temp1, void* temp2) {
   int *the_one_we_want = (int*) temp2;
   Email *email_being_checked = (Email*) temp1;
 
+
+  printf("Email being checked: %s\n", email_being_checked->emailInfo.subject);
+  printf("This is the one we want %d\n", *the_one_we_want);
+  printf("This is num emails checked: %d\n", num_emails_checked);
   //global var called num_emails_checked
   if (email_being_checked->exists && !email_being_checked->deleted) {
     num_emails_checked++;
