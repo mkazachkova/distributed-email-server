@@ -160,6 +160,19 @@ void* find(List *list, void* data, int (*compare)(void *, void *)) {
   return NULL;
 }
 
+//NOTE: The return will be the data being searched for.
+void* find_backwards(List *list, void* data, int (*compare)(void *, void *)) {
+  Node *temp = list->tail;
+  while (temp != NULL) {
+    if ((*compare)(temp->data, data) == 0) {
+      return temp->data;
+    }
+    temp = temp->prev;
+  }
+  //node not found
+  return NULL;
+}
+
 
 // Accessor methods
 void print_list(List *list, void (*fptr)(void *)) {
