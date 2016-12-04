@@ -160,6 +160,30 @@ void* find(List *list, void* data, int (*compare)(void *, void *)) {
   return NULL;
 }
 
+
+void forward_iterator(List *list, void (*modifying_func)(void *)) {
+  Node *temp = list->head;
+  while (temp != NULL) {
+    (*modifying_func)(temp->data);
+
+    temp = temp->next;
+  }
+  
+  return;
+}
+
+void backward_iterator(List *list, void (*modifying_func)(void *)) {
+  Node *temp = list->tail;
+  while (temp != NULL) {
+    (*modifying_func)(temp->data);
+
+    temp = temp->prev;
+  }
+  
+  return;
+}
+
+
 //NOTE: The return will be the data being searched for.
 void* find_backwards(List *list, void* data, int (*compare)(void *, void *)) {
   Node *temp = list->tail;

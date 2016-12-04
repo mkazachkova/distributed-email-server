@@ -31,6 +31,8 @@ void remove_from_beginning(List *list);
 void remove_from_end(List *list);
 void insert(List *list, void *data, int (*fptr)(void *, void *));
 void* find(List *list, void* data, int (*fptr)(void *, void *));
+void forward_iterator(List *list, void (*fptr)(void *));
+void backward_iterator(List *list, void (*fptr)(void *));
 
 
 // Accessor methods
