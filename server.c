@@ -531,12 +531,10 @@ static void Respond_To_Message() {
 	char name_to_concat_with[80] = "ssukard1mkazach1_server_";
 	strcat(name_to_concat_with, my_machine_index_str);
 
-	strcpy(memb_identities[i], name_to_concat_with);
+	strcpy(info_for_client->memb_identities[i], name_to_concat_with);
       } else { //otherwise, copy the empty string in
-	strcpy(memb_identities[i], "");
+	strcpy(info_for_client->memb_identities[i], "");
       }
-
-      printf("%s\n", memb_identities[i]);
     }
 
     SP_multicast(Mbox, AGREED_MESS, sender, 2, sizeof(InfoForClient), (char*)info_for_client);
