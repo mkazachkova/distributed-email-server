@@ -142,6 +142,7 @@ int                 update_index = 0;
 bool                servers_in_partition[NUM_SERVERS] = { false };
 int                 num_servers_in_partition = 0; //THIS MAY NOT BE CORRECT SO DO NOT USE
 int                 lamport_counter = 0;
+int                 num_emails_checked = 0;
 
 //Our own methods 
 static void   Respond_To_Message();
@@ -380,8 +381,11 @@ static void Respond_To_Message() {
     
   } else if (*type == 3) { //We received a "list headers" message from the client
     //TODO: This is unimplemented
+    //We know that the thing that was sent was of type InfoForServer, so we can cast it accordingly
+    InfoForServer *info = (InfoForServer *) tmp_buf;    
     
-
+    
+    
   } else if (*type == 4) { // Client put in request to server to mail message to another user
 
     //NOTE: We are NOT directly putting the email in our own personal email list (in our Users linked list)
