@@ -198,43 +198,21 @@ static void User_command() {
       
   /////////////////////////////////// MAIL A MESSAGE TO A USER ////////////////////////////////
   case 'm': {
+    //get TO: field from command line
     printf("To: ");
-    //int to_len = 0;
 
-    // while (to_len < MAX_NAME_LEN) {
-    // if (fgets(&to[to_len], 200, stdin) == NULL) {
-    //   Bye();
-    // }
-
-    // if (to[to_len] == '\n') {
-    //  break;
-    // }
-
-    //to_len += strlen(&to[to_len - 1]);
-    //}
     fgets(&to[0], MAX_NAME_LEN, stdin);
     int to_len = strlen(to);
     to[to_len-1] = '\0';
       
+    //get SUBJECT: field from command line
     printf("Subject: ");
-    //int subject_len = 0;
-
-    //while (subject_len < MAX_NAME_LEN) {
-    //if (fgets(&subject[subject_len], 200, stdin) == NULL) {
-    //  Bye();
-    // }
-
-    //if (subject[subject_len] == '\n') {
-    //  break;
-    //}
-
-    //subject_len += strlen(&subject[subject_len]);
-    //}
 
     fgets(&subject[0], MAX_NAME_LEN, stdin);
     int subject_len = strlen(subject);
     subject[subject_len - 1] = '\0';
       
+    //get MESSAGE: field from command line
     printf("Message: ");
     mess_len = 0;
     while (mess_len < MAX_MESS_LEN) {
@@ -249,22 +227,23 @@ static void User_command() {
       mess_len += strlen(&mess[mess_len]);
     }
 
+    //for debug
     printf("this is to: %s\nThis is subject: %s\nThis is message: %s\n", to, subject, mess);
       
-    InfoForServer *info2 = malloc(sizeof(InfoForServer));
-    info2->type = 4; //for new email
-    sprintf(info2->email.emailInfo.to_field,    "%s", to); //to be changed when we implement getting the user name
-    sprintf(info2->email.emailInfo.subject,     "%s", subject);
-    sprintf(info2->email.emailInfo.from_field,  "%s", curr_user);
-    sprintf(info2->email.emailInfo.message,     "%s", mess);
+    InfoForServer *new_message_request = malloc(sizeof(InfoForServer));
+    new_message_request->type = 4; //for new email
+    sprintf(new_message_request->email.emailInfo.to_field,    "%s", to); //to be changed when we implement getting the user name
+    sprintf(new_message_request->email.emailInfo.subject,     "%s", subject);
+    sprintf(new_message_request->email.emailInfo.from_field,  "%s", curr_user);
+    sprintf(new_message_request->email.emailInfo.message,     "%s", mess);
 
-    SP_multicast(Mbox, AGREED_MESS, hardcoded_server_names[curr_server], 2, sizeof(InfoForServer), (char*)info2);
-    free(info2);
+    SP_multicast(Mbox, AGREED_MESS, hardcoded_server_names[curr_server], 2, sizeof(InfoForServer), (char*)new_message_request);
+    free(new_message_request);
 
     break;   
   }
     
-    /////////////////////////////// DELETE A MAIL MESSAGE /////////////////////////////
+  ////////////////////////////////// DELETE A MAIL MESSAGE ////////////////////////////////
   case 'd': {
     //TODO: This method has not been implemented yet
     //TODO: YOU MUST populate the user_name field!!!!!
@@ -303,17 +282,15 @@ static void User_command() {
 
   }
     
-  ////////////////////////////////////// READ AN EMAIL  ////////////////////////////////////
+  ////////////////////////////////////// READ AN EMAIL /////////////////////////////////////
   case 'r': {
-    //Read_message();
     InfoForServer *read_request = malloc(sizeof(InfoForServer));
-    read_request->type = 6; //for a print membership request
+    read_request->type = 6;                             //for a print membership request
     sprintf(read_request->user_name, "%s", curr_user);  //populate who is sending the email
 
-    int to_be_read;
     sscanf(&command[2],"%s", group);
-    to_be_read = atoi(group);
-    printf("this is to be read: %d\n", to_be_read);
+    int to_be_read = atoi(group);
+    printf("This is the email number to be read: %d\n", to_be_read);
       
     read_request->message_to_read = to_be_read; 
     SP_multicast(Mbox, AGREED_MESS, hardcoded_server_names[curr_server], 2, sizeof(InfoForServer), (char*) read_request);
@@ -336,7 +313,7 @@ static void User_command() {
       break;
   }
       
-  ///////////////////////////////////// EXIT THE PROGRAM //////////////////////////////////
+  ///////////////////////////////////// EXIT THE PROGRAM ///////////////////////////////////
   case 'q': {
     Bye();
     break;
@@ -344,7 +321,7 @@ static void User_command() {
       
     /////////////////////////////////////// DEFAULT CASE ///////////////////////////////////
   default: {
-    printf("\nYou input an unknown commnand...\n");
+    printf("\nYou input an undefined commnand. Printing menu...\n");
     Print_menu();
     break;
   }
@@ -355,46 +332,64 @@ static void User_command() {
 }
 
 
+//This method is triggered whenever a client RECEIVES a message from a server
 static void Read_message() {
 
-  static  char     mess[MAX_MESSLEN];
-          char     sender[MAX_GROUP_NAME];
-          char     target_groups[MAX_MEMBERS][MAX_GROUP_NAME];
-          membership_info  memb_info;
-          vs_set_info      vssets[MAX_VSSETS];
-          unsigned int     my_vsset_index;
-          int              num_vs_sets;
-          char             members[MAX_MEMBERS][MAX_GROUP_NAME];
-          int    num_groups;
-          int    service_type;
-          int16    mess_type;
-          int    endian_mismatch;
-          int    i,j;
-          int    ret;
+  static  char              mess[MAX_MESSLEN];
+          char              sender[MAX_GROUP_NAME];
+          char              target_groups[MAX_MEMBERS][MAX_GROUP_NAME];
+          membership_info   memb_info;
+          vs_set_info       vssets[MAX_VSSETS];
+          unsigned int      my_vsset_index;
+          int               num_vs_sets;
+          char              members[MAX_MEMBERS][MAX_GROUP_NAME];
+          int               num_groups;
+          int               service_type;
+          int16             mess_type;
+          int               endian_mismatch;
+          int               i,j;
+          int               ret;
 
-  service_type = 0;
-
+  int service_type = 0;
 
 
   //should be triggered when we receive something
-
-
   InfoForClient *info = malloc(sizeof(InfoForClient)); 
   SP_receive( Mbox, &service_type, sender, 100, &num_groups, target_groups,
               &mess_type, &endian_mismatch, sizeof(InfoForClient), (char*)info); 
 
   
-  printf("We have received a new info for client object!\n");
-  printf("This is the type: %d\n", info->type);
+  printf("We have received a new info for client object of type %d\n", info->type);
 
-  
-  if (info->type == 1) { //this is to list headers: 
+
+  ////////////////////////// LIST HEADERS MESSAGE RECEIVED //////////////////////////
+  if (info->type == 1) { //this is to "list headers" message received from server 
     //TODO: implement!
-  } else if (info->type == 2) { //print email body (mark as read server side)
+
+    //NOTE: Make sure to set unused headers to NULL in server.c
+    for (int i = 0; i < MAX_HEADERS_IN_PACKET; i++) {
+      if (info->headers[i] != NULL) {
+        print_header(&(info->headers[i]));
+        printf("\n");
+      }
+    }
+
+  //////////////////////// PRINT EMAIL BODY MESSAGE RECEIVED ////////////////////////
+  } else if (info->type == 2) { //"print email body" message received from server (mark as read server side)
     printf("To: %s\nFrom: %s\nSubject: %s\nBody: %s\n",
-           info->email.emailInfo.to_field, info->email.emailInfo.from_field, info->email.emailInfo.subject, info->email.emailInfo.message);
+            info->email.emailInfo.to_field, info->email.emailInfo.from_field, 
+            info->email.emailInfo.subject, info->email.emailInfo.message);
+
+
+  //////////////////////// PRINT MEMBERSHIP MESSAGE RECEIVED ////////////////////////
   } else if (info->type == 3) { //print memberships
-    //TODO: implement!
+
+    //NOTE: Make sure to set unused servers to NULL in server.c
+    for (int i = 0; i < NUM_SERVERS; i++) {
+      if (memb_identities[i] != NULL) {
+        printf("%s\n", memb_identities[i]);
+      }
+    }    
   }
 
   
@@ -507,6 +502,10 @@ static void Read_message() {
   printf("\n");
   printf("User> ");*/
   fflush(stdout); 
+}
+
+static void print_header(Header *header) {
+  printf("%d. From: %s\nSubject: %s\n", header->message_number, header->sender, header->subject);
 }
 
 //Takes in command-line args for spread name and user
