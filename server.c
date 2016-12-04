@@ -49,7 +49,6 @@ December 9, 2016
 
 
 /**********CLIENT FUNCTIONS**********/
-
 //CASE: client login to server (new client)
 //Client and server are put into private group (membership and spread stuff)
 //Server x (server that user is on) creates a new user object and appends it to user linked list
@@ -337,23 +336,27 @@ static void Respond_To_Message() {
 
   // ****************************** parse messages from client ***************************** //
 
+
   //If *type is of type 2-7, we have RECEIVED A MESSAGE FROM THE CLIENT.
-  if (*type == 2) { //We received a "new user" message from client
+
+  if (*type == 2) { // We received a "new user" message from the client
 
     //We know that the thing that was sent was of type InfoForServer, so we can cast it accordingly
     InfoForServer *info = (InfoForServer*) tmp_buf;
     printf("This is the username: %s\n", info->user_name);    
     printf("type: %d\n", *type);
     bool created_new_user = create_user_if_nonexistent(info->user_name);
-    printf("about to print list\n and this is user list size: %d\n", users_list.num_nodes);
-    print_list(&users_list, print_user);
 
-    printf("\n\nTHIS IS THE SENDER ARRAY CONTENTS: %s\n", sender);
+    //For debug
+    //printf("about to print list\n and this is user list size: %d\n", users_list.num_nodes);
+    //print_list(&users_list, print_user);
+
     //now we want to send an update to all other machines ONLY IF A NEW USER WAS CREATED
     if (created_new_user) {
       //Dynamically create and send update
       Update *to_be_sent = malloc(sizeof(Update));
-      //Fill in relevant parameters
+ 
+     //Fill in relevant parameters
       to_be_sent->type = 13;
       update_index++;
       to_be_sent->timestamp.message_index = update_index;
@@ -362,6 +365,7 @@ static void Respond_To_Message() {
       
       //copy our row of the 2d array and send with update 
       //REVISED: tbd what we're actually doing here
+
       //merge_matrix[my_machine_index][my_machine_index] = update_index;
       //memcpy(to_be_sent->updates_array, merge_matrix[my_machine_index], sizeof(merge_matrix[my_machine_index]));
 
@@ -383,7 +387,7 @@ static void Respond_To_Message() {
     //TODO: This is unimplemented
     //We know that the thing that was sent was of type InfoForServer, so we can cast it accordingly
     //    InfoForServer *info = (InfoForServer *) tmp_buf;    
-    
+
     
     
   } else if (*type == 4) { // Client put in request to server to mail message to another user
@@ -514,10 +518,28 @@ static void Respond_To_Message() {
 
     
   } else if (*type == 7) { //Server received a "PRINT MEMBERSHIP" message from the client 
-    //TODO: This is unimplemented
 
+    //We know that the thing that was sent was of type InfoForServer, so we can cast it accordingly
+    InfoForClient *info_for_client = malloc(sizeof(InfoForClient));
+    info_for_client->type = 3; // this means that we are sending membership information
 
+    for (int i = 0; i < NUM_SERVERS; i++) {
+      if (servers_in_partition[i]) { //if the ith server is in our partition, add it to memb_identities
+	char my_machine_index_str[20];  
+	sprintf(my_machine_index_str, "%d", i + 10);
 
+	char name_to_concat_with[80] = "ssukard1mkazach1_server_";
+	strcat(name_to_concat_with, my_machine_index_str);
+
+	strcpy(memb_identities[i], name_to_concat_with);
+      } else { //otherwise, copy the empty string in
+	strcpy(memb_identities[i], "");
+      }
+
+      printf("%s\n", memb_identities[i]);
+    }
+
+    SP_multicast(Mbox, AGREED_MESS, sender, 2, sizeof(InfoForClient), (char*)info_for_client);
 
 
   // **************************** parse messages from server **************************** //
@@ -641,7 +663,7 @@ static void Respond_To_Message() {
     print_list(&users_list, print_user);
 
     //now we want to process the array that we received and update our own 2d array with the info
-    memcpy(merge_matrix[update->timestamp.machine_index], update->updates_array, sizeof(update->updates_array));
+    //memcpy(merge_matrix[update->timestamp.machine_index], update->updates_array, sizeof(update->updates_array));
 
     //consider if need to take max above or not; for now we say no
     // merge_matrix[my_machine_index][update->timestamp.machine_index] = update->timestamp.counter;
