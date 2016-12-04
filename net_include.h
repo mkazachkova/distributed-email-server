@@ -106,7 +106,7 @@ typedef struct info_for_server {
                                           // 5 is delete message
                                           // 6 is read message 
                                           // 7 is print membership
-  char user_name[MAX_NAME_LEN];           // for new user (?)
+  char  user_name[MAX_NAME_LEN];          // for new user (?)
   Email email;
   int   message_to_delete;
   int   message_to_read;

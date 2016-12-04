@@ -16,7 +16,6 @@ static char         Spread_name[80];
 static char         Private_group[MAX_GROUP_NAME];
 static mailbox      Mbox;
 static int          Num_sent;
-static unsigned int Previous_len;
 
 static int          To_exit = 0;
 
@@ -132,8 +131,9 @@ static void User_command() {
     Bye();  
   }
 
+  //Switch statement depending on type of message received
   switch(command[0]) {
-    ///////////////////////////////////// LOGIN WITH A USERNAME ///////////////////////////////////
+  ///////////////////////////////////// LOGIN WITH A USERNAME ///////////////////////////////////
   case 'u': {
     ret = sscanf( &command[2], "%s", curr_user);
     printf("this is curr user: %s\n", curr_user);
@@ -153,6 +153,7 @@ static void User_command() {
     
     break;
   }
+
   //////////////////////////////// CONNECT TO A SPECIFIC MAIL SERVER ////////////////////////////
   case 'c': {
     if (!logged_in) {
@@ -177,11 +178,7 @@ static void User_command() {
       
     SP_multicast(Mbox, AGREED_MESS, hardcoded_server_names[curr_server], 2, sizeof(InfoForServer), (char*)connect_server_request);
     free(connect_server_request);
-      
-    /*
-      ret = SP_join(Mbox, hardcoded_server_names[server_to_be_used]);
-      if (ret < 0) SP_error(ret); 
-    */
+
     break;
   }
       
@@ -221,6 +218,7 @@ static void User_command() {
         Bye();
       }
 
+      //Message ends when user presses enter twice
       if (mess[mess_len] == '\n') {
         break;
       }
@@ -230,14 +228,16 @@ static void User_command() {
 
     //for debug
     printf("this is to: %s\nThis is subject: %s\nThis is message: %s\n", to, subject, mess);
-      
+
+    //Send the new message to the server
     InfoForServer *new_message_request = malloc(sizeof(InfoForServer));
-    new_message_request->type = 4; //for new email
-    sprintf(new_message_request->email.emailInfo.to_field,    "%s", to); //to be changed when we implement getting the user name
+    new_message_request->type = 4; //type for new email request
+    sprintf(new_message_request->email.emailInfo.to_field,    "%s", to);
     sprintf(new_message_request->email.emailInfo.subject,     "%s", subject);
     sprintf(new_message_request->email.emailInfo.from_field,  "%s", curr_user);
     sprintf(new_message_request->email.emailInfo.message,     "%s", mess);
 
+    //Send request to server
     SP_multicast(Mbox, AGREED_MESS, hardcoded_server_names[curr_server], 2, sizeof(InfoForServer), (char*)new_message_request);
     free(new_message_request);
 
@@ -246,39 +246,22 @@ static void User_command() {
     
   ////////////////////////////////// DELETE A MAIL MESSAGE ////////////////////////////////
   case 'd': {
-    //TODO: This method has not been implemented yet
-    //TODO: YOU MUST populate the user_name field!!!!!
+    //TODO: This method has not been implemented or tested yet
+    
+    InfoForServer *delete_request = malloc(sizeof(InfoForServer));
+    delete_request->type = 5;                             //for a print membership request
+    sprintf(delete_request->user_name, "%s", curr_user);  //populate the user_name field for who is sending the email
 
-    ret = sscanf(&command[2], "%s", group);
-    if (ret != 1) {
-      strcpy( group, "dummy_group_name" );
-    }
-    printf("enter size of each message: ");
-    if (fgets(mess, 200, stdin) == NULL) {
-      Bye();
-    }
+    //Retrieve which email we want to delete from command-line input
+    sscanf(&command[2], "%s", group);
+    int to_be_deleted = atoi(group);
 
-    ret = sscanf(mess, "%u", &mess_len );
-    if (ret != 1) {
-      mess_len = Previous_len;
-    }
-    if (mess_len > MAX_MESSLEN) {
-      mess_len = MAX_MESSLEN;
-    }
+    //set the request's message_to_read field
+    delete_request->message_to_delete = to_be_deleted; 
+    SP_multicast(Mbox, AGREED_MESS, hardcoded_server_names[curr_server], 2, sizeof(InfoForServer), (char*) delete_request);
 
-    Previous_len = mess_len;
-    printf("sending 10 messages of %u bytes\n", mess_len );
-    for (i = 0; i < 10; i++) {
-      Num_sent++;
-      sprintf( mess, "mess num %d ", Num_sent );
-      ret= SP_multicast( Mbox, FIFO_MESS, group, 2, mess_len, mess );
+    free(delete_request);
 
-      if (ret < 0) {
-        SP_error(ret);
-        Bye();
-      }
-      printf("sent message %d (total %d)\n", i+1, Num_sent );
-    }
     break;
 
   }
@@ -287,12 +270,13 @@ static void User_command() {
   case 'r': {
     InfoForServer *read_request = malloc(sizeof(InfoForServer));
     read_request->type = 6;                             //for a print membership request
-    sprintf(read_request->user_name, "%s", curr_user);  //populate who is sending the email
+    sprintf(read_request->user_name, "%s", curr_user);  //populate the user_name field for who is sending the email
 
-    sscanf(&command[2],"%s", group);
+    //Retrieve which email we want to read from command-line input
+    sscanf(&command[2], "%s", group);
     int to_be_read = atoi(group);
-    printf("This is the email number to be read: %d\n", to_be_read);
-      
+
+    //set the request's message_to_read field
     read_request->message_to_read = to_be_read; 
     SP_multicast(Mbox, AGREED_MESS, hardcoded_server_names[curr_server], 2, sizeof(InfoForServer), (char*) read_request);
 
@@ -304,23 +288,23 @@ static void User_command() {
   /////////////////////////// PRINT MEMBERSHIP OF THE MAIL SERVERS /////////////////////////
   ////////////////////// IN THE CURRENT MAIL SERVER'S NETWORK COMPONENT ////////////////////
   case 'v': {
-      InfoForServer *membership_request = malloc(sizeof(InfoForServer));
-      membership_request->type = 7; //for a print membership request
-      sprintf(membership_request->user_name, "%s", curr_user);  //populate who is sending the email
-
-      SP_multicast(Mbox, AGREED_MESS, hardcoded_server_names[curr_server], 2, sizeof(InfoForServer), (char*) membership_request);
-
-      free(membership_request);
-      break;
+    InfoForServer *membership_request = malloc(sizeof(InfoForServer));
+    membership_request->type = 7; //for a print membership request
+    sprintf(membership_request->user_name, "%s", curr_user);  //populate who is sending the email
+    
+    SP_multicast(Mbox, AGREED_MESS, hardcoded_server_names[curr_server], 2, sizeof(InfoForServer), (char*) membership_request);
+    
+    free(membership_request);
+    break;
   }
-      
+    
   ///////////////////////////////////// EXIT THE PROGRAM ///////////////////////////////////
   case 'q': {
     Bye();
     break;
   }
       
-    /////////////////////////////////////// DEFAULT CASE ///////////////////////////////////
+  //////////////////////////////////////// DEFAULT CASE ////////////////////////////////////
   default: {
     printf("\nYou input an undefined commnand. Printing menu...\n");
     Print_menu();
