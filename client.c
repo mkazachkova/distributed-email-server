@@ -145,6 +145,7 @@ static void User_command() {
       sprintf(new_user_request->user_name, "%s",curr_user); //to be changed when we implement getting the user name
       
       SP_multicast(Mbox, AGREED_MESS, hardcoded_server_names[curr_server], 2, sizeof(InfoForServer), (char*)new_user_request);
+
       free(new_user_request);
     } else {
       // this is the client's first time connecting to a mail server
@@ -176,7 +177,14 @@ static void User_command() {
     connect_server_request->type = 2; //for new user
     sprintf(connect_server_request->user_name, "%s",curr_user); //to be changed when we implement getting the user name
       
-    SP_multicast(Mbox, AGREED_MESS, hardcoded_server_names[curr_server], 2, sizeof(InfoForServer), (char*)connect_server_request);
+    int ret = SP_multicast(Mbox, AGREED_MESS, hardcoded_server_names[curr_server], 2, sizeof(InfoForServer), (char*)connect_server_request);    
+    if (ret < 0) {
+      SP_error(ret);
+      printf("The server you are trying to send/connect to know longer exists!\n");
+      exit(1);
+    }
+
+
     free(connect_server_request);
 
     break;
@@ -377,6 +385,8 @@ static void Read_message() {
         printf("%s\n", info->memb_identities[i]);
       }
     }    
+  } else {
+    printf("SOMETHING UNDEFINED RECEIVED!!\n");
   }
 
   
