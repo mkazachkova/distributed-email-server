@@ -348,7 +348,7 @@ static void Respond_To_Message() {
     printf("about to print list\n and this is user list size: %d\n", users_list.num_nodes);
     print_list(&users_list, print_user);
 
-
+    printf("\n\nTHIS IS THE SENDER ARRAY CONTENTS: %s\n", sender);
     //now we want to send an update to all other machines ONLY IF A NEW USER WAS CREATED
     if (created_new_user) {
       //Dynamically create and send update
@@ -474,7 +474,7 @@ static void Respond_To_Message() {
     User *user = find(&users_list, (void*)info->user_name, compare_users);
     assert(user != NULL);
     //set global variable equal to zero 
-    Email *email = find(&(user->email_list), info->message_to_read, compare_email_for_find);
+    Email *email = find(&(user->email_list), (void*)&(info->message_to_read), compare_email_for_find);
 
     if (email == NULL) {
       printf("Error: should not be null yet!\n");
@@ -486,7 +486,8 @@ static void Respond_To_Message() {
     }
 
 
-    
+    TimeStamp timestamp = email->emailInfo.timestamp;
+    to_be_sent->timestamp_of_email = timestamp;
     
     //WARNING! THIS IS NOT GOING TO WORK! 
     //The format of deleting an email in InfoForServer is a single integer ('message to delete')
@@ -502,6 +503,9 @@ static void Respond_To_Message() {
     //Send the Update to ALL OTHER SERVERS in the same partition
     SP_multicast(Mbox, AGREED_MESS, group, 2, sizeof(Update), (char*)to_be_sent);
 
+
+
+    //TODO: send the actual email body back to client
 
   } else if (*type == 7) { //Server received a "PRINT MEMBERSHIP" message from the client 
     //TODO: This is unimplemented
@@ -715,7 +719,7 @@ int compare_email_for_find(void* temp1, void* temp2) {
   Email *email_being_checked = (Email*) temp1;
 
   //global var called num_emails_checked
-  if (email->exists && !email->deleted) {
+  if (email_being_checked->exists && !email_being_checked->deleted) {
     num_emails_checked++;
     if (*the_one_we_want == num_emails_checked) {
       return 0;
