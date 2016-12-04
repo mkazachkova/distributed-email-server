@@ -332,7 +332,88 @@ static void Respond_To_Message() {
     }
     for (int i = 0; i < num_groups; i++) {
       printf("%s\n", target_groups[i]);
-    }   
+    }
+
+    //call function to do merge stuff
+    MergeMatrix *merge = malloc(sizeof(MergeMatrix));
+    merge->type = 20;
+    merge->machine_index = my_machine_index;
+    for (int i = 0; i < NUM_SERVERS; i++) {
+      memcpy(merge->matrix[i], merge_matrix[i], sizeof(merge_matrix[i]));
+    }
+    for (int i = 0; i < NUM_SERVERS; i++) {
+      for (int j = 0; j < NUM_SERVERS; j++) {
+        printf("%d ", merge->matrix[i][j]);
+      }
+      printf("\n");
+    }
+    //send 3d array to everyone else
+    SP_multicast(Mbox, AGREED_MESS, group, 2, sizeof(MergeMatrix), (char*)merge);
+
+    free(merge);
+    merge = NULL;
+    //receive num_groups number of 2d arrays
+    int num_matrices_received = 0;
+    int min_array[NUM_SERVERS][NUM_SERVERS];
+
+    for (int i = 0; i < NUM_SERVERS; i++) {
+      for (int j = 0; j < NUM_SERVERS; j++) {
+        min_array[i][j] = 0;
+      }
+    }
+    
+    for (;;) {
+      MergeMatrix *merge = malloc(sizeof(MergeMatrix));
+      SP_receive(Mbox, &service_type, sender, 100, &num_groups, target_groups,
+                 &mess_type, &endian_mismatch, sizeof(MergeMatrix), (char*)merge);
+      num_matrices_received++;
+      //now we want to process it
+      for (int i = 0; i < NUM_SERVERS; i++) {
+        for (int j = 0; j < NUM_SERVERS; j++) {
+          min_array[i][j] = min(merge_matrix[i][j], merge->matrix[i][j]);
+          merge_matrix[i][j] = max(merge_matrix[i][j], merge->matrix[i][j]);
+        }
+      }
+      if (num_matrices_received == num_groups) {
+        break;
+      }
+    }  
+    //now both arrays loaded; figure out which machine needs to send
+    int who_sends[NUM_SERVERS] = { -1 };
+    int max_seen = 0;
+    for (int i = 0; i < NUM_SERVERs; i++) {
+      for (int j = 0; j < NUM_SERVERS; j++) {
+        if (servers_in_partition[j]) {
+          if (merge_matrix[j][i] > max_seen) {
+            max_seen = merge_matrix[j][i];
+            who_sends[i] = j;
+          }
+        }
+      }
+      max_seen = 0;
+    }
+    printf("printing who sends array!\n");
+    for (int i = 0; i < NUM_SERVERS; i++) {
+      assert(who_sends[i] > 0);
+      printf("%d ", who_sends[i]);
+    }
+
+    int min_seen = INT_MAX;
+    for (int i = 0; i < NUM_SERVERS; i++) {
+      min_seen = 0;
+      if (who_sends[i] == my_machine_index) {
+        //this means we must send; we must find the min for the process we are sending for and send from there until the end
+        for (int j = 0; j < NUM_SERVERS; j++) {
+          if (min_array[j][i] < min_seen) {
+            min_seen = min_array[j][i];
+          }
+        }
+        min_seen_gobal = min_seen;
+        //now we actually need to send!
+        forward_iterator(&(array_of_updates_list[i]), send_updates_for_merge);
+      }
+    }
+    
   }
 
 
@@ -994,6 +1075,13 @@ void add_to_header(Email *email) {
   strcpy(client_header_response->headers[num_headers_added].subject, email->emailInfo.subject);
   message_number_stamp++;
   num_headers_added++;
+}
+
+void send_updates_for_merge(void* temp) {
+  Update *might_be_sent = (Update*) temp;
+  if (might_be_sent->timestamp.message_index > min_seen_global) {
+    SP_multicast(Mbox, AGREED_MESS, group, 2, sizeof(Update), (char*)might_be_sent);
+  }
 }
 
 
