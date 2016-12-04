@@ -147,6 +147,7 @@ void insert(List *list, void *data, int (*compare)(void *, void *)) {
   return;
 }
 
+
 //NOTE: The return will be the data being searched for.
 void* find(List *list, void* data, int (*compare)(void *, void *)) {
   Node *temp = list->head;
@@ -155,6 +156,20 @@ void* find(List *list, void* data, int (*compare)(void *, void *)) {
       return temp->data;
     }
     temp = temp->next;
+  }
+  //node not found
+  return NULL;
+}
+
+
+//NOTE: The return will be the data being searched for.
+void* find_backwards(List *list, void* data, int (*compare)(void *, void *)) {
+  Node *temp = list->tail;
+  while (temp != NULL) {
+    if ((*compare)(temp->data, data) == 0) {
+      return temp->data;
+    }
+    temp = temp->prev;
   }
   //node not found
   return NULL;
@@ -172,6 +187,7 @@ void forward_iterator(List *list, void (*modifying_func)(void *)) {
   return;
 }
 
+
 void backward_iterator(List *list, void (*modifying_func)(void *)) {
   Node *temp = list->tail;
   while (temp != NULL) {
@@ -181,20 +197,6 @@ void backward_iterator(List *list, void (*modifying_func)(void *)) {
   }
   
   return;
-}
-
-
-//NOTE: The return will be the data being searched for.
-void* find_backwards(List *list, void* data, int (*compare)(void *, void *)) {
-  Node *temp = list->tail;
-  while (temp != NULL) {
-    if ((*compare)(temp->data, data) == 0) {
-      return temp->data;
-    }
-    temp = temp->prev;
-  }
-  //node not found
-  return NULL;
 }
 
 
