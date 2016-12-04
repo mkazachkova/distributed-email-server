@@ -166,7 +166,7 @@ static void   send_updates_for_merge(void *update);
 static void   add_to_struct_to_send(void *data);
 static void   add_to_header(Email *email);
 static int    max(int one, int two);
-
+static int    min(int one, int two);
 
 // **************************** MAIN METHOD **************************** //
 int main(int argc, char *argv[]) {
@@ -382,7 +382,7 @@ static void Respond_To_Message() {
     //now both arrays loaded; figure out which machine needs to send
     int who_sends[NUM_SERVERS] = { -1 };
     int max_seen = 0;
-    for (int i = 0; i < NUM_SERVERs; i++) {
+    for (int i = 0; i < NUM_SERVERS; i++) {
       for (int j = 0; j < NUM_SERVERS; j++) {
         if (servers_in_partition[j]) {
           if (merge_matrix[j][i] > max_seen) {
@@ -409,7 +409,7 @@ static void Respond_To_Message() {
             min_seen = min_array[j][i];
           }
         }
-        min_seen_gobal = min_seen;
+        min_seen_global = min_seen;
         //now we actually need to send!
         forward_iterator(&(array_of_updates_list[i]), send_updates_for_merge);
       }
