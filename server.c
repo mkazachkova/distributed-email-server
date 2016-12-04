@@ -192,7 +192,7 @@ int main(int argc, char *argv[]) {
 
   //Spread setup (copypasted from class_user sample code)
   sprintf(Server, "user_mk_ss");
-  sprintf(Spread_name, "10100");
+  sprintf(Spread_name, "10050");
 
   if (!SP_version(&mver, &miver, &pver)) {
     printf("main: Illegal variables passed to SP_version()\n");
