@@ -466,7 +466,7 @@ static void Respond_To_Message() {
     //We know that the thing that was sent was of type InfoForServer, so we can cast it accordingly
     InfoForServer *info = (InfoForServer *) tmp_buf;    
 
-    //Send an update to all other servers to put that email into their email list
+    //Send an update to all other servers to mark that email as read
     Update *to_be_sent = malloc(sizeof(Update));
     to_be_sent->type = 11;
     update_index++;
@@ -474,15 +474,15 @@ static void Respond_To_Message() {
     to_be_sent->timestamp.machine_index = my_machine_index;
     strcpy(to_be_sent->user_name, info->user_name);
 
-
+    //Find user that we are logged into
     User *user = find(&users_list, (void*)info->user_name, compare_users);
-    assert(user != NULL);
-    //set global variable equal to zero
+    assert(user != NULL); //for debug
+    
+    //set global variable back equal to zero
+    num_emails_checked = 0;
     printf("this is user's name: %s\n", user->name);
     printf("this is user email list:\n");
     print_list(&(user->email_list), print_email);
-    printf("this is user list:\n");
-    print_list(&users_list, print_user);
     printf("this is message to read: %d\n", info->message_to_read);
     Email *email = find(&(user->email_list), (void*)&(info->message_to_read), compare_email_for_find);
 
@@ -490,22 +490,14 @@ static void Respond_To_Message() {
       printf("Error: should not be null yet!\n");
       //CHECK IF NULL AND SEND ERROR MESSAGE BACK TO USER
 
-
-
       return;
     }
 
-
+    
     TimeStamp timestamp = email->emailInfo.timestamp;
     to_be_sent->timestamp_of_email = timestamp;
+
     
-    //WARNING! THIS IS NOT GOING TO WORK! 
-    //The format of deleting an email in InfoForServer is a single integer ('message to delete')
-    //but the format of sending an update for reading an email is an entire TimeStamp.
-    //to_be_sent->timestamp_of_email.message_index = info->message_to_delete;
-    //What about populating the counter and the machine_index????
-
-
     //copy our row of the 2d array and send with update 
     //merge_matrix[my_machine_index][my_machine_index] = update_index;
     //memcpy(to_be_sent->updates_array, merge_matrix[my_machine_index], sizeof(merge_matrix[my_machine_index]));
@@ -577,7 +569,55 @@ static void Respond_To_Message() {
    
 
   } else if (*type == 11) { //server received a READ EMAIL update from another server
+    //Cast into Update type
+    Update *update = (Update*) tmp_buf;
+    printf("we have received an update for a new email!\n");
 
+    //TODO: updates_array needs to be taken into account; update our 2d array
+    for (int i = 0; i < NUM_SERVERS; i++) {
+      if (servers_in_partition[i]) {
+        merge_matrix[i][update->timestamp.machine_index] = update->timestamp.message_index;
+      }
+    }
+
+    printf("\nPrinting merge matrix: \n");
+    for (int i = 0; i < NUM_SERVERS; i++) {
+      for (int j = 0; j < NUM_SERVERS; j++) {
+        printf("%d ", merge_matrix[i][j]);
+      }
+      printf("\n");
+    }
+   
+    insert(&(array_of_updates_list[update->timestamp.machine_index]), (void*)update, compare_update);
+
+    printf("Printing array of updates list: \n");
+    for (int i = 0; i < NUM_SERVERS; i++) {
+      printf("This is the linked list for index %d: \n", i);
+      print_list(&(array_of_updates_list[i]), print_update);
+    }
+    
+    printf("this is subject: %s\n", update->email.emailInfo.subject);
+    
+    User *temp = (User*) find(&users_list, (void*)update->email.emailInfo.to_field, compare_users);
+    assert(temp != NULL);
+    printf("User found! Here's their name: %s\n", temp->name);
+    
+    Email *email = find(&(temp->email_list), (void*) &(update->timestamp_of_email), compare_email);
+
+    if (email == NULL) {
+      Email* new_email = malloc(sizeof(Email));
+      new_email->emailInfo.timestamp = update->timestamp_of_email;
+      new_email->read = true;
+      new_email->exists = false;
+      new_email->deleted = false;
+            
+      insert(&(temp->email_list),(void*) &(new_email), compare_email);      
+    } else {
+      email->read = true;
+    }
+    
+    printf("inserted into user's email. Now printing user's email inbox: \n");
+    print_list(&(temp->email_list), print_email);
 
 
   } else if (*type == 12) { //server received a DELETE EMAIL update from another server
@@ -702,7 +742,7 @@ int compare_email(void* temp1, void* temp2) {
     } else if(one->emailInfo.timestamp.machine_index > two->emailInfo.timestamp.machine_index) {
       return 1;
     } else {
-      printf("Error: should not be here\n");
+      printf("Two equal emails have been found!\n");
       return 0;
     }
   }
