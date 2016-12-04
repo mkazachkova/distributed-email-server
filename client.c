@@ -116,9 +116,10 @@ static void User_command() {
   char         to[MAX_NAME_LEN];
   char         subject[MAX_NAME_LEN];
   char         group[80];
-  char         groups[10][MAX_GROUP_NAME];
-  int          num_groups;
   unsigned int mess_len;
+  //char         groups[10][MAX_GROUP_NAME];
+  //int          num_groups;
+
   int ret;
   int i;
 
@@ -183,7 +184,7 @@ static void User_command() {
 
       
     ////////////////////////////// LIST THE HEADERS OF RECEIVED MAIL ////////////////////////////
-    case 'l':
+  case 'l': {
       InfoForServer *header_request = malloc(sizeof(InfoForServer));
       header_request->type = 3; //for a list headers of received mail request
       sprintf(header_request->user_name, "%s", curr_user);  //populate who is sending the email
@@ -192,6 +193,7 @@ static void User_command() {
       free(header_request);
 
       break;
+  }
       
     /////////////////////////////////// MAIL A MESSAGE TO A USER ////////////////////////////////
     case 'm':      
@@ -306,7 +308,7 @@ static void User_command() {
       
     /////////////////////////// PRINT MEMBERSHIP OF THE MAIL SERVERS /////////////////////////
     ////////////////////// IN THE CURRENT MAIL SERVER'S NETWORK COMPONENT ////////////////////
-    case 'v':
+  case 'v': {
       InfoForServer *membership_request = malloc(sizeof(InfoForServer));
       membership_request->type = 7; //for a print membership request
       sprintf(membership_request->user_name, "%s", curr_user);  //populate who is sending the email
@@ -315,7 +317,7 @@ static void User_command() {
 
       free(membership_request);
       break;
-
+  }
       
     ///////////////////////////////////// EXIT THE PROGRAM //////////////////////////////////
     case 'q':
