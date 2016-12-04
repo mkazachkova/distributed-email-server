@@ -358,6 +358,23 @@ static void Read_message() {
 
   service_type = 0;
 
+
+
+  //should be triggered when we receive something
+
+
+  InfoForClient *info = malloc(sizeof(InfoForClient)); 
+  SP_receive( Mbox, &service_type, sender, 100, &num_groups, target_groups,
+              &mess_type, &endian_mismatch, sizeof(InfoForClient), (char*)info); 
+
+  printf("We have received a new info for client object!\n");
+  printf("This is the type: %d\n", info->type);
+  printf("This is the message: %s\n", info->email.emailInfo.message);
+
+
+  /*
+
+  
   ret = SP_receive( Mbox, &service_type, sender, 100, &num_groups, target_groups, 
     &mess_type, &endian_mismatch, sizeof(mess), mess );
   printf("\n============================\n");
@@ -463,8 +480,8 @@ static void Read_message() {
   }
 
   printf("\n");
-  printf("User> ");
-  fflush(stdout);
+  printf("User> ");*/
+  fflush(stdout); 
 }
 
 //Takes in command-line args for spread name and user

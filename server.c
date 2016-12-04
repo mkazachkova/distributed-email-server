@@ -506,7 +506,13 @@ static void Respond_To_Message() {
 
 
     //TODO: send the actual email body back to client
+    InfoForClient *info_for_client = malloc(sizeof(InfoForClient));
+    info_for_client->type = 2; // this means that an email has been sent back for the client to read
+    info_for_client->email = *email;
 
+    SP_multicast(Mbox, AGREED_MESS, sender, 2, sizeof(InfoForClient), (char*)info_for_client);
+
+    
   } else if (*type == 7) { //Server received a "PRINT MEMBERSHIP" message from the client 
     //TODO: This is unimplemented
 
