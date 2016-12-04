@@ -149,7 +149,7 @@ static void   Bye();
 static int    compare_users(void *user1, void *user2);
 static int    compare_email(void *temp, void *temp2);
 static int    compare_update(void* update1, void* update2);
-static int    compare_update_for_find(void* update1, void* update2);
+static int    compare_email_for_find(void* email1, void* email2);
 static bool   create_user_if_nonexistent(char *name);
 static void   print_user(void *user);
 static void   print_email(void *email);
@@ -464,10 +464,26 @@ static void Respond_To_Message() {
     update_index++;
     to_be_sent->timestamp.message_index = update_index;
     to_be_sent->timestamp.machine_index = my_machine_index;
+    strcpy(to_be_sent->user_name, info->user_name);
 
+
+    User *user = find(&users_list, (void*)info->user_name, compare_users);
+    assert(user != NULL);
     //set global variable equal to zero 
-    //find(&())
+    Email *email = find(&(user->email_list), info->message_to_read, compare_email_for_find);
 
+    if (email == NULL) {
+      printf("Error: should not be null yet!\n");
+      //CHECK IF NULL AND SEND ERROR MESSAGE BACK TO USER
+
+
+
+      return;
+    }
+
+
+    
+    
     //WARNING! THIS IS NOT GOING TO WORK! 
     //The format of deleting an email in InfoForServer is a single integer ('message to delete')
     //but the format of sending an update for reading an email is an entire TimeStamp.
@@ -689,8 +705,18 @@ int compare_update(void* update1, void* update2) {
 }
 
 
-int compare_update_for_find(void* temp1, void* temp2) {
+int compare_email_for_find(void* temp1, void* temp2) {
   //find the nth from end exisiting and undeleted email
+  int *the_one_we_want = (int*) temp2;
+  Email *email_being_checked = (Email*) temp1;
+
+  //global var called num_emails_checked
+  if (email->exists && !email->deleted) {
+    num_emails_checked++;
+    if (*the_one_we_want == num_emails_checked) {
+      return 0;
+    }
+  }
   return -1;
 }
 
