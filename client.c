@@ -303,7 +303,21 @@ static void User_command() {
 
   }
   case 'r': {
-    Read_message();
+    //Read_message();
+    InfoForServer *read_request = malloc(sizeof(InfoForServer));
+    read_request->type = 6; //for a print membership request
+    sprintf(read_request->user_name, "%s", curr_user);  //populate who is sending the email
+
+    int to_be_read;
+    sscanf(&command[2],"%s", group);
+    to_be_read = atoi(group);
+    printf("this is to be read: %d\n", to_be_read);
+      
+    read_request->message_to_read = to_be_read; 
+    SP_multicast(Mbox, AGREED_MESS, hardcoded_server_names[curr_server], 2, sizeof(InfoForServer), (char*) read_request);
+
+    free(read_request);
+    
     break;
   }
       
