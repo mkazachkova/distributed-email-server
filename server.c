@@ -493,7 +493,16 @@ static void Respond_To_Message() {
     //copy our row of the 2d array and send with update 
     //merge_matrix[my_machine_index][my_machine_index] = update_index;
     //memcpy(to_be_sent->updates_array, merge_matrix[my_machine_index], sizeof(merge_matrix[my_machine_index]));
-        
+
+    printf("\nPrinting merge matrix: \n");
+    for (int i = 0; i < NUM_SERVERS; i++) {
+      for (int j = 0; j < NUM_SERVERS; j++) {
+        printf("%d ", merge_matrix[i][j]);
+      }
+      printf("\n");
+    }
+    
+    
     //Send the Update to ALL OTHER SERVERS in the same partition
     SP_multicast(Mbox, AGREED_MESS, group, 2, sizeof(Update), (char*)to_be_sent);
 
@@ -549,6 +558,14 @@ static void Respond_To_Message() {
     info_for_client->type = 2; // this means that an email has been sent back for the client to read
     info_for_client->email = *email;
 
+    printf("\nPrinting merge matrix: \n");
+    for (int i = 0; i < NUM_SERVERS; i++) {
+      for (int j = 0; j < NUM_SERVERS; j++) {
+        printf("%d ", merge_matrix[i][j]);
+      }
+      printf("\n");
+    }
+    
     SP_multicast(Mbox, AGREED_MESS, sender, 2, sizeof(InfoForClient), (char*)info_for_client);
 
     
@@ -603,28 +620,38 @@ static void Respond_To_Message() {
       printf("\n");
     }
     
-    insert(&(array_of_updates_list[update->timestamp.machine_index]), (void*)update, compare_update);
-    printf("Printing array of updates list: \n");
-    for (int i = 0; i < NUM_SERVERS; i++) {
-      printf("This is the linked list for index %d: \n", i);
-      print_list(&(array_of_updates_list[i]), print_update);
+
+    //insert(&(array_of_updates_list[update->timestamp.machine_index]), (void*)update, compare_update);
+
+    Update *existing_update = find(&(array_of_updates_list[update->timestamp.machine_index]),(void*)update, compare_update);
+    if (existing_update != NULL) {
+      printf("Update already exists! Should only show up in a merge!!\n");
+      return;
+    } else {
+      //update is new! We want to insert it into our array!!!!
+      insert(&(array_of_updates_list[update->timestamp.machine_index]), (void*)update, compare_update);
+
+      printf("Printing array of updates list: \n");
+      for (int i = 0; i < NUM_SERVERS; i++) {
+        printf("This is the linked list for index %d: \n", i);
+        print_list(&(array_of_updates_list[i]), print_update);
+      }
+    
+      printf("this is subject: %s\n", update->email.emailInfo.subject);
+    
+      User *temp = find(&users_list, (void*)update->email.emailInfo.to_field, compare_users);
+      assert(temp != NULL);
+      printf("User found! Here's their name: %s\n", temp->name);
+
+
+      printf("\nTHIS IS THE LAMPORT COUNTER THAT WE ARE GOING TO BE INSERTING: \n");
+      printf("This is counter: %d and message index: %d and machine index: %d\n",
+             update->email.emailInfo.timestamp.counter, update->email.emailInfo.timestamp.message_index, update->email.emailInfo.timestamp.machine_index);
+
+      insert(&(temp->email_list),(void*) &(update->email), compare_email);
+      printf("inserted into user's email. Now printing user's email inbox: \n");
+      print_list(&(temp->email_list), print_email);
     }
-    
-    printf("this is subject: %s\n", update->email.emailInfo.subject);
-    
-    User *temp = find(&users_list, (void*)update->email.emailInfo.to_field, compare_users);
-    assert(temp != NULL);
-    printf("User found! Here's their name: %s\n", temp->name);
-
-
-    printf("\nTHIS IS THE LAMPORT COUNTER THAT WE ARE GOING TO BE INSERTING: \n");
-    printf("This is counter: %d and message index: %d and machine index: %d\n",
-           update->email.emailInfo.timestamp.counter, update->email.emailInfo.timestamp.message_index, update->email.emailInfo.timestamp.machine_index);
-
-    insert(&(temp->email_list),(void*) &(update->email), compare_email);
-    printf("inserted into user's email. Now printing user's email inbox: \n");
-    print_list(&(temp->email_list), print_email);
-   
 
   } else if (*type == 11) { //server received a READ EMAIL update from another server
     //Cast into Update type
@@ -646,43 +673,51 @@ static void Respond_To_Message() {
       printf("\n");
     }
    
-    insert(&(array_of_updates_list[update->timestamp.machine_index]), (void*)update, compare_update);
+    //insert(&(array_of_updates_list[update->timestamp.machine_index]), (void*)update, compare_update);
 
-    printf("Printing array of updates list: \n");
-    for (int i = 0; i < NUM_SERVERS; i++) {
-      printf("This is the linked list for index %d: \n", i);
-      print_list(&(array_of_updates_list[i]), print_update);
-    }
-    
-    printf("this is subject: %s\n", update->email.emailInfo.subject);
-    
-    User *temp = (User*) find(&users_list, (void*)update->user_name, compare_users);
-    assert(temp != NULL);
-    printf("User found! Here's their name: %s\n", temp->name);
-
-    printf("timestamp of email (just counter and machine index): %d %d\n", update->timestamp_of_email.counter, update->timestamp_of_email.machine_index);
-
-    Email *dummy = malloc(sizeof(Email));
-    dummy->emailInfo.timestamp = update->timestamp_of_email;
-    
-    Email *email = find_backwards(&(temp->email_list), (void*)dummy, compare_email);
-
-    if (email == NULL) {
-      printf("\n\nNEW EMAIL IS BEING CREATED!!\n\n");
-      Email* new_email = malloc(sizeof(Email));
-      new_email->emailInfo.timestamp = update->timestamp_of_email;
-      new_email->read = true;
-      new_email->exists = false;
-      new_email->deleted = false;
-            
-      insert(&(temp->email_list),(void*) &(new_email), compare_email);      
+    Update *existing_update = find(&(array_of_updates_list[update->timestamp.machine_index]),(void*)update, compare_update);
+    if (existing_update != NULL) {
+      printf("Update already exists! Should only show up in a merge!!\n");
+      return;
     } else {
-      email->read = true;
-    }
+      //update is new! We want to insert it into our array!!!!
+      insert(&(array_of_updates_list[update->timestamp.machine_index]), (void*)update, compare_update);
     
-    printf("inserted into user's email. Now printing user's email inbox: \n");
-    print_list(&(temp->email_list), print_email);
+      printf("Printing array of updates list: \n");
+      for (int i = 0; i < NUM_SERVERS; i++) {
+        printf("This is the linked list for index %d: \n", i);
+        print_list(&(array_of_updates_list[i]), print_update);
+      }
+    
+      printf("this is subject: %s\n", update->email.emailInfo.subject);
+    
+      User *temp = (User*) find(&users_list, (void*)update->user_name, compare_users);
+      assert(temp != NULL);
+      printf("User found! Here's their name: %s\n", temp->name);
 
+      printf("timestamp of email (just counter and machine index): %d %d\n", update->timestamp_of_email.counter, update->timestamp_of_email.machine_index);
+
+      Email *dummy = malloc(sizeof(Email));
+      dummy->emailInfo.timestamp = update->timestamp_of_email;
+    
+      Email *email = find_backwards(&(temp->email_list), (void*)dummy, compare_email);
+
+      if (email == NULL) {
+        printf("\n\nNEW EMAIL IS BEING CREATED!!\n\n");
+        Email* new_email = malloc(sizeof(Email));
+        new_email->emailInfo.timestamp = update->timestamp_of_email;
+        new_email->read = true;
+        new_email->exists = false;
+        new_email->deleted = false;
+            
+        insert(&(temp->email_list),(void*) &(new_email), compare_email);      
+      } else {
+        email->read = true;
+      }
+    
+      printf("inserted into user's email. Now printing user's email inbox: \n");
+      print_list(&(temp->email_list), print_email);
+    }
 
   } else if (*type == 12) { //server received a DELETE EMAIL update from another server
     //Cast into Update type
@@ -704,44 +739,54 @@ static void Respond_To_Message() {
       printf("\n");
     }
    
-    insert(&(array_of_updates_list[update->timestamp.machine_index]), (void*)update, compare_update);
+    //insert(&(array_of_updates_list[update->timestamp.machine_index]), (void*)update, compare_update);
 
-    printf("Printing array of updates list: \n");
-    for (int i = 0; i < NUM_SERVERS; i++) {
-      printf("This is the linked list for index %d: \n", i);
-      print_list(&(array_of_updates_list[i]), print_update);
-    }
+    Update *existing_update = find(&(array_of_updates_list[update->timestamp.machine_index]),(void*)update, compare_update);
+    if (existing_update != NULL) {
+      //ignore update; not new!
+      printf("Update already exists! Should only show up in a merge!!\n");
+      return;
+    } else {      
+      //update is new! We want to insert it into our array and process!!!!
+      insert(&(array_of_updates_list[update->timestamp.machine_index]), (void*)update, compare_update);
     
-    printf("this is subject: %s\n", update->email.emailInfo.subject);
+      printf("Printing array of updates list: \n");
+      for (int i = 0; i < NUM_SERVERS; i++) {
+        printf("This is the linked list for index %d: \n", i);
+        print_list(&(array_of_updates_list[i]), print_update);
+      }
     
-    User *temp = (User*) find(&users_list, (void*)update->user_name, compare_users);
-    assert(temp != NULL);
-    printf("User found! Here's their name: %s\n", temp->name);
-
-    printf("timestamp of email (just counter and machine index): %d %d\n", update->timestamp_of_email.counter, update->timestamp_of_email.machine_index);
-
-    Email *dummy = malloc(sizeof(Email));
-    dummy->emailInfo.timestamp = update->timestamp_of_email;
+      printf("this is subject: %s\n", update->email.emailInfo.subject);
     
-    Email *email = find_backwards(&(temp->email_list), (void*)dummy, compare_email);
+      User *temp = (User*) find(&users_list, (void*)update->user_name, compare_users);
+      assert(temp != NULL);
+      printf("User found! Here's their name: %s\n", temp->name);
 
-    if (email == NULL) {
-      printf("\n\nNEW EMAIL IS BEING CREATED!!\n\n");
-      Email* new_email = malloc(sizeof(Email));
-      new_email->emailInfo.timestamp = update->timestamp_of_email;
-      new_email->read = false;
-      new_email->exists = false;
-      new_email->deleted = true;
+      printf("timestamp of email (just counter and machine index): %d %d\n", update->timestamp_of_email.counter, update->timestamp_of_email.machine_index);
+
+      Email *dummy = malloc(sizeof(Email));
+      dummy->emailInfo.timestamp = update->timestamp_of_email;
+    
+      Email *email = find_backwards(&(temp->email_list), (void*)dummy, compare_email);
+
+      if (email == NULL) {
+        printf("\n\nNEW EMAIL IS BEING CREATED!!\n\n");
+        Email* new_email = malloc(sizeof(Email));
+        new_email->emailInfo.timestamp = update->timestamp_of_email;
+        new_email->read = false;
+        new_email->exists = false;
+        new_email->deleted = true;
             
-      insert(&(temp->email_list),(void*) &(new_email), compare_email);      
-    } else {
-      email->deleted = true;
+        insert(&(temp->email_list),(void*) &(new_email), compare_email);      
+      } else {
+        email->deleted = true;
+      }
+    
+      printf("inserted into user's email. Now printing user's email inbox: \n");
+      print_list(&(temp->email_list), print_email);
+
     }
     
-    printf("inserted into user's email. Now printing user's email inbox: \n");
-    print_list(&(temp->email_list), print_email);
-
-
   } else if (*type == 13) { //server received a NEW USER update from another server
 
     Update *update = (Update*) tmp_buf;
@@ -770,13 +815,21 @@ static void Respond_To_Message() {
       printf("\n");
     }
 
-    insert(&(array_of_updates_list[update->timestamp.machine_index]), (void*)update, compare_update);
-    printf("Printing array of updates list: \n");
-    for (int i = 0; i < NUM_SERVERS; i++) {
-      printf("This is the linked list for index %d: \n", i);
-      print_list(&(array_of_updates_list[i]), print_update);
+    //can't just insert it; want to check if we have the update already
+    Update *existing_update = find(&(array_of_updates_list[update->timestamp.machine_index]),(void*)update, compare_update);
+    if (existing_update != NULL) {
+      printf("Update already exists! Should only show up in a merge!!\n");
+      return;
+    } else {
+      //update is new! We want to insert it into our array!!!!
+      insert(&(array_of_updates_list[update->timestamp.machine_index]), (void*)update, compare_update);
+      
+      printf("Printing array of updates list: \n");
+      for (int i = 0; i < NUM_SERVERS; i++) {
+        printf("This is the linked list for index %d: \n", i);
+        print_list(&(array_of_updates_list[i]), print_update);
+      }
     }
-
   // **************************** parse reconciliation message **************************** //    
   } else if (*type == 20) { //server received a MERGEMATRIX from another server
 
@@ -866,6 +919,10 @@ int compare_email(void* temp1, void* temp2) {
     }
   }
 }
+
+
+//TODO: create a compare email function that never returns 0 so that email is never inserted!!
+//Create a new method in linked list to insert into list only if new email (to be used in email insert)!
 
 
 void print_update(void* temp) {
