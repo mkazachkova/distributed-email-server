@@ -168,7 +168,7 @@ int main(int argc, char *argv[]) {
   //Create a linked list of users
   create_list(&users_list, sizeof(User));
 
-  //initialize array of linked lists of updates
+  //initialize array of linked list of updates
   for (int i = 0; i < NUM_SERVERS; i++) {
     create_list(&array_of_updates_list[i], sizeof(Update));
   }
@@ -180,16 +180,16 @@ int main(int argc, char *argv[]) {
     }
   }
 
-  //Get the machine index, as well as however many servers there are 
+  //Get the machine index from command-line input
   my_machine_index =  atoi(argv[1]) - 1; //subtract 1 for correct indexing
 
-  //Concatenates with server_own_group ("ssukard1_makazach1_server_##")
+  //Concatenate with server_own_group ("ssukard1_makazach1_server_##")
   char my_machine_index_str[20];  
   sprintf(my_machine_index_str, "%d", my_machine_index + 10);
   strcat(server_own_group, my_machine_index_str);
   printf("%s\n", server_own_group);
 
-  //Spread setup
+  //Spread setup (copypasted from class_user sample code)
   sprintf(Server, "user_mk_ss");
   sprintf(Spread_name, "10100");
 
@@ -400,7 +400,6 @@ static void Respond_To_Message() {
     to_be_sent->email = info->email;
     to_be_sent->email.emailInfo.timestamp.machine_index = my_machine_index;
 
-    //TODO: ASK MARIYA WHAT ARE THESE ACTUALLY SUPPOSED TO BE???????????????
 
     lamport_counter++;
     to_be_sent->email.emailInfo.timestamp.counter = lamport_counter;

@@ -138,11 +138,12 @@ static void User_command() {
 
       if (logged_in) {
         //alert the server that a (potentially) new user might need to be created
-        InfoForServer *info = malloc(sizeof(InfoForServer));
-        info->type = 2; //for new user
-        sprintf(info->user_name, "%s",curr_user); //to be changed when we implement getting the user name
+        InfoForServer *new_user_request = malloc(sizeof(InfoForServer));
+        new_user_request->type = 2; //for new user
+        sprintf(new_user_request->user_name, "%s",curr_user); //to be changed when we implement getting the user name
         
-        SP_multicast(Mbox, AGREED_MESS, hardcoded_server_names[curr_server], 2, sizeof(InfoForServer), (char*)info);
+        SP_multicast(Mbox, AGREED_MESS, hardcoded_server_names[curr_server], 2, sizeof(InfoForServer), (char*)new_user_request);
+        free(new_user_request);
       } else {
         // this is the client's first time connecting to a mail server
         logged_in = true;
@@ -167,11 +168,12 @@ static void User_command() {
       // unsigned int message_length = strlen(hardcoded_server_names[curr_server]);
       // printf("Message of length %d with contents %s\n", message_length, hardcoded_server_names[curr_server]);
   
-      InfoForServer *info = malloc(sizeof(InfoForServer));
-      info->type = 2; //for new user
-      sprintf(info->user_name, "%s",curr_user); //to be changed when we implement getting the user name
+      InfoForServer *connect_server_request = malloc(sizeof(InfoForServer));
+      connect_server_request->type = 2; //for new user
+      sprintf(connect_server_request->user_name, "%s",curr_user); //to be changed when we implement getting the user name
       
-      SP_multicast(Mbox, AGREED_MESS, hardcoded_server_names[curr_server], 2, sizeof(InfoForServer), (char*)info);
+      SP_multicast(Mbox, AGREED_MESS, hardcoded_server_names[curr_server], 2, sizeof(InfoForServer), (char*)connect_server_request);
+      free(connect_server_request);
       
       /*
       ret = SP_join(Mbox, hardcoded_server_names[server_to_be_used]);
@@ -182,40 +184,17 @@ static void User_command() {
       
     ////////////////////////////// LIST THE HEADERS OF RECEIVED MAIL ////////////////////////////
     case 'l':
-      num_groups = sscanf(&command[2], "%s%s%s%s%s%s%s%s%s%s", 
-            groups[0], groups[1], groups[2], groups[3], groups[4],
-            groups[5], groups[6], groups[7], groups[8], groups[9] );
-      if (num_groups < 1) {
-        printf(" invalid group \n");
-        break;
-      }
-      printf("enter message: ");
-      if (fgets(mess, 200, stdin) == NULL) {
-        Bye();
-      }
+      InfoForServer *header_request = malloc(sizeof(InfoForServer));
+      header_request->type = 3; //for a list headers of received mail request
+      sprintf(header_request->user_name, "%s", curr_user);  //populate who is sending the email
 
-      mess_len = strlen(mess);
-      ret= SP_multigroup_multicast( Mbox, SAFE_MESS, num_groups, (const char (*)[MAX_GROUP_NAME]) groups, 1, mess_len, mess );
-      if (ret < 0) {
-        SP_error(ret);
-        Bye();
-      }
+      SP_multicast(Mbox, AGREED_MESS, hardcoded_server_names[curr_server], 2, sizeof(InfoForServer), (char*) header_request);
+      free(header_request);
 
-      Num_sent++;
       break;
-
       
     /////////////////////////////////// MAIL A MESSAGE TO A USER ////////////////////////////////
-    case 'm':
-      /*num_groups = sscanf(&command[2], "%s%s%s%s%s%s%s%s%s%s", 
-            groups[0], groups[1], groups[2], groups[3], groups[4],
-            groups[5], groups[6], groups[7], groups[8], groups[9] );
-
-      if(num_groups < 1) {
-        printf(" invalid group \n");
-        break;
-        }*/
-      
+    case 'm':      
       printf("To: ");
       //int to_len = 0;
 
@@ -269,13 +248,6 @@ static void User_command() {
 
       printf("this is to: %s\nThis is subject: %s\nThis is message: %s\n", to, subject, mess);
       
-      //ret = SP_multigroup_multicast( Mbox, SAFE_MESS, num_groups, (const char (*)[MAX_GROUP_NAME]) groups, 1, mess_len, mess );
-      // if (ret < 0) {
-      // SP_error(ret);
-      //  Bye();
-      //}
-
-      // Num_sent++;
       InfoForServer *info2 = malloc(sizeof(InfoForServer));
       info2->type = 4; //for new email
       sprintf(info2->email.emailInfo.to_field,    "%s", to); //to be changed when we implement getting the user name
@@ -284,14 +256,17 @@ static void User_command() {
       sprintf(info2->email.emailInfo.message,     "%s", mess);
 
       SP_multicast(Mbox, AGREED_MESS, hardcoded_server_names[curr_server], 2, sizeof(InfoForServer), (char*)info2);
+      free(info2);
+
       break;
 
       
     /////////////////////////////// DELETE A MAIL MESSAGE /////////////////////////////
     case 'd':
+      //TODO: This method has not been implemented yet
       //TODO: YOU MUST populate the user_name field!!!!!
 
-      ret = sscanf( &command[2], "%s", group );
+      ret = sscanf(&command[2], "%s", group);
       if (ret != 1) {
         strcpy( group, "dummy_group_name" );
       }
@@ -316,7 +291,7 @@ static void User_command() {
         ret= SP_multicast( Mbox, FIFO_MESS, group, 2, mess_len, mess );
 
         if (ret < 0) {
-          SP_error( ret );
+          SP_error(ret);
           Bye();
         }
         printf("sent message %d (total %d)\n", i+1, Num_sent );
@@ -331,9 +306,14 @@ static void User_command() {
       
     /////////////////////////// PRINT MEMBERSHIP OF THE MAIL SERVERS /////////////////////////
     ////////////////////// IN THE CURRENT MAIL SERVER'S NETWORK COMPONENT ////////////////////
-    case 'p':
-      ret = SP_poll( Mbox );
-      printf("Polling sais: %d\n", ret );
+    case 'v':
+      InfoForServer *membership_request = malloc(sizeof(InfoForServer));
+      membership_request->type = 7; //for a print membership request
+      sprintf(membership_request->user_name, "%s", curr_user);  //populate who is sending the email
+
+      SP_multicast(Mbox, AGREED_MESS, hardcoded_server_names[curr_server], 2, sizeof(InfoForServer), (char*) membership_request);
+
+      free(membership_request);
       break;
 
       
