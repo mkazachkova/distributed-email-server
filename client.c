@@ -192,14 +192,13 @@ static void User_command() {
     // Wait for secs_to_wait seconds (max) to receive a response from the server!
     // Start timer 
     int start_time = time(NULL);
-    int secs_to_wait = 5;
+    int secs_to_wait = 1;
     bool connection_established = false;
 
-    //Loop for 2 seconds at 1/10-second intervals, checking if the mailbox has stuff in it
+    //Loop for 1 seconds at 1/10-second intervals, checking if the mailbox has stuff in it
     while (time(NULL) < (start_time + secs_to_wait)) {
       //Check if the mailbox has anything in it
       ret = SP_poll(Mbox);
-      printf("This is ret when in the while loop: %d\n", ret);
 
       //Error when ret < 0  
       if (ret < 0) {  
@@ -225,7 +224,7 @@ static void User_command() {
         if (info->type == 4) {
           //Now we connect to whatever name the server has sent back to us
           int join = SP_join(Mbox, info->client_server_group_name);
-          printf("This is the client_server_group_name that is being joined: %s\n"info->client_server_group_name);
+          printf("This is the client_server_group_name that is being joined: %s\n", info->client_server_group_name);
           assert(join == 0);
           free(info);
         } else {
@@ -410,13 +409,14 @@ static void Read_message() {
           service_type = 0;
 
   if (Is_caused_join_mess(service_type)) {
-    printf("Join message received!\n")
+    printf("Join message received!\n");
     char *tmp_buf = malloc(MAX_PACKET_LEN); 
 
     //receive to relieve buffer
     int ret = SP_receive(Mbox, &service_type, sender, 100, &num_groups, target_groups,
                         &mess_type, &endian_mismatch, MAX_PACKET_LEN, (char*)tmp_buf);    
 
+    assert(ret >= 0);
     printf("A join message was received. Here are the contents of target_groups...\n");
     for (int i = 0; i < num_groups; i++) {
       printf("%s\n", target_groups[i]);

@@ -189,7 +189,6 @@ static void Respond_To_Message() {
 
   //Parsing the server entering message (Should only be executed at the beginning of the program)
   if (Is_caused_join_mess(service_type)) {
-
     printf("A join message was received. Here are the contents of target_groups...\n");
     for (int i = 0; i < num_groups; i++) {
       printf("%s\n", target_groups[i]);
