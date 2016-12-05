@@ -425,7 +425,6 @@ static void Respond_To_Message() {
       }
       printf("\n");
       */
-      //Send the Update to ALL OTHER SERVERS in the same partition
 
       //MUST send a info for client object back to client with unique name saying that connection was successful
       InfoForClient *info = malloc(sizeof(InfoForClient));
@@ -435,10 +434,12 @@ static void Respond_To_Message() {
       sprintf(group_for_client, "%d", seconds);
       SP_join(Mbox, group_for_client); //we've joined; now send to client
       strcpy(info->client_server_group_name, group_for_client);
-      SP_multicast(Mbox, AGREED_MESS, sender, 2, sizeof(InfoForClient), (char*)info);
-
       printf("this is client server group name: %s\n",info->client_server_group_name);
+      //Send message back to client confirming the connection occurred
+      SP_multicast(Mbox, AGREED_MESS, sender, 2, sizeof(InfoForClient), (char*)info);
       
+
+      //Send the Update to ALL OTHER SERVERS in the same partition
       SP_multicast(Mbox, AGREED_MESS, group, 2, sizeof(Update), (char*)to_be_sent);
     }
 

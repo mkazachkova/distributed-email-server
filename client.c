@@ -158,9 +158,11 @@ static void User_command() {
   //////////////////////////////// CONNECT TO A SPECIFIC MAIL SERVER ////////////////////////////
   case 'c': {
     if (!logged_in) {
-      printf("Must log in before connecting to server.\n");
+      printf("You must log in before connecting to the server.\n");
       break;
     }
+
+    //Parse input
     ret = sscanf(&command[2], "%s", group);
     curr_server = atoi(group) - 1;
       
@@ -168,41 +170,72 @@ static void User_command() {
       printf(" invalid group \n");
       break;
     }
-
-    //this isn't doing anything
-    // unsigned int message_length = strlen(hardcoded_server_names[curr_server]);
-    // printf("Message of length %d with contents %s\n", message_length, hardcoded_server_names[curr_server]);
   
+    //Populate InfoForSever struct with information
     InfoForServer *connect_server_request = malloc(sizeof(InfoForServer));
     connect_server_request->type = 2; //for new user
     sprintf(connect_server_request->user_name, "%s",curr_user); //to be changed when we implement getting the user name
-      
+
+    //Send initial request to log in to the server
     int ret = SP_multicast(Mbox, AGREED_MESS, hardcoded_server_names[curr_server], 2, sizeof(InfoForServer), (char*)connect_server_request);    
     if (ret < 0) {
       SP_error(ret);
-      printf("The server you are trying to send/connect to know longer exists!\n");
+      printf("Error occurred in SP_multicast.\n");
       exit(1);
     }
 
+    // Wait for secs_to_wait seconds (max) to receive a response from the server!
+    // Start timer 
+    int start_time = time(NULL);
+    int secs_to_wait = 5;
+    bool connection_established = false;
 
+    //Loop for 5 seconds at 1/10-second intervals, checking if the mailbox has stuff in it
+    while (time(NULL) < (start_time + secs_to_wait)) {
+      //Check if the mailbox has anything in it
+      ret = SP_poll(Mbox);
+      printf("This is ret when in the while loop: %d\n", ret);
 
-    static  char              sender[MAX_GROUP_NAME];
-    //char              mess[MAX_MESSLEN];
-    char              target_groups[MAX_MEMBERS][MAX_GROUP_NAME];
-    //membership_info   memb_info;
-    //vs_set_info       vssets[MAX_VSSETS];
-    //unsigned int      my_vsset_index;
-    //int               num_vs_sets;
-    //char              members[MAX_MEMBERS][MAX_GROUP_NAME];
-    int               num_groups;
-    int               service_type;
-    int16             mess_type;
-    int               endian_mismatch;
-    //int               i,j;
-    //int               ret;
+      //Error when ret < 0  
+      if (ret < 0) {  
+        printf("Error occurred during SP_poll.\n");
+        exit(1);
 
-    service_type = 0;
-    
+      //There is something in the mailbox to receive!    
+      } else if (ret > 0) { 
+        InfoForClient *info = malloc(sizeof(InfoForClient));
+
+        //Receive information and check if it's the correct type!
+        SP_receive(Mbox, &service_type, sender, 100, &num_groups, target_groups,
+                   &mess_type, &endian_mismatch, sizeof(InfoForClient), (char*)info);
+
+        if (info->type == 4) {
+          //Now we connect to whatever name the server has sent back to us
+          int join = SP_join(Mbox, info->client_server_group_name);
+          assert(join == 0);
+          printf("successfully connected!\n");
+          free(info);
+        } else {
+          printf("received SOMETHING but it's incorrect. Check work!\n");
+          exit(1);
+        }
+
+        break; //exit out of loop
+
+      //There is nothing in the mailbox to receive, loop again
+      } else {
+        usleep(100000); // 1/10 of a second
+      }
+
+    }
+
+    if (!connection_established) {
+      printf("The server is currently unavailable. Please try another server.\n");      
+    } else {
+      printf("Connection successfully established!");
+    }
+
+    /*
     fd_set temp;
     struct timeval timeout_ours;
     FD_ZERO(&temp);
@@ -226,7 +259,7 @@ static void User_command() {
       
     } else {
       printf("The server is currently unavailable. Please try another server.\n");
-    }
+    } */
    
     
     free(connect_server_request);
