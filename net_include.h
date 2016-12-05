@@ -24,7 +24,7 @@ December 9, 2016
 
 #include "generic_linked_list.h"
 
-#define PORT                  10050
+#define PORT                  10100
 
 // ******************* VARIABLES ******************* //
 #define MAX_NAME_LEN          50
@@ -76,6 +76,8 @@ typedef struct update {
   Email       email;                      // used for new emails
   char        user_name[MAX_NAME_LEN];    // used for new user created
   TimeStamp   timestamp_of_email;         // used for email read or email deleted
+
+  //TODO: We don't need this any more. remove it later?  
   int         updates_array[NUM_SERVERS]; // one-dimensional array containing server's current "view" of updates received
 } Update;
 

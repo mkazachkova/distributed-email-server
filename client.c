@@ -203,8 +203,16 @@ static void User_command() {
 
       //There is something in the mailbox to receive!    
       } else if (ret > 0) { 
+        printf("Something received during SP_poll!\n");
         InfoForClient *info = malloc(sizeof(InfoForClient));
 
+        int               service_type;
+        char              sender[MAX_GROUP_NAME];
+        int               num_groups;
+        char              target_groups[MAX_MEMBERS][MAX_GROUP_NAME];
+        int16             mess_type;
+        int               endian_mismatch;
+        
         //Receive information and check if it's the correct type!
         SP_receive(Mbox, &service_type, sender, 100, &num_groups, target_groups,
                    &mess_type, &endian_mismatch, sizeof(InfoForClient), (char*)info);
@@ -220,10 +228,12 @@ static void User_command() {
           exit(1);
         }
 
+        connection_established = true;
         break; //exit out of loop
 
       //There is nothing in the mailbox to receive, loop again
       } else {
+        printf("Nothing received during SP_poll.\n");
         usleep(100000); // 1/10 of a second
       }
 
@@ -585,7 +595,7 @@ static void print_header(Header *header) {
 //Takes in command-line args for spread name and user
 static void Usage(int argc, char *argv[]) {
   sprintf(Client_name, "client_user_mk_ss");
-  sprintf(Spread_name, "10050");
+  sprintf(Spread_name, "10100");
 
   while (--argc > 0) {
     argv++;

@@ -104,7 +104,7 @@ int main(int argc, char *argv[]) {
 
   //Spread setup (copypasted from class_user sample code)
   sprintf(Server, "user_mk_ss");
-  sprintf(Spread_name, "10050");
+  sprintf(Spread_name, "10100");
 
   if (!SP_version(&mver, &miver, &pver)) {
     printf("main: Illegal variables passed to SP_version()\n");
@@ -376,7 +376,6 @@ static void Respond_To_Message() {
   }
 
 
-
   // **************************** PARSE NON-MEMBERSHIP MESSAGES **************************** //
 
   //Cast first digit into integer to find out the type  
@@ -400,7 +399,7 @@ static void Respond_To_Message() {
     //print_list(&users_list, print_user);
 
     //now we want to send an update to all other machines ONLY IF A NEW USER WAS CREATED
-    if (created_new_user) {
+    if (created_new_user) {      
       //Dynamically create and send update
       Update *to_be_sent = malloc(sizeof(Update));
  
@@ -414,18 +413,10 @@ static void Respond_To_Message() {
       //copy our row of the 2d array and send with update 
       //REVISED: tbd what we're actually doing here
 
-      //merge_matrix[my_machine_index][my_machine_index] = update_index;
-      //memcpy(to_be_sent->updates_array, merge_matrix[my_machine_index], sizeof(merge_matrix[my_machine_index]));
-
-      //(for debug)
-      /*
-      printf("this is updates array: \n");
-      for (int i = 0; i < NUM_SERVERS; i++) {
-        printf("%d ", to_be_sent->updates_array[i]);
-      }
-      printf("\n");
-      */
-
+      //NOTE: WHERE THIS IS IN THE BODY IS ONLY GOING TO SEND THIS MESSAGE
+      //WHENEVER A NEW USER IS CREATED. WE PROBABLY WANT TO PULL THIS OUT OF
+      //THE BODY LATER!!!!!!
+      
       //MUST send a info for client object back to client with unique name saying that connection was successful
       InfoForClient *info = malloc(sizeof(InfoForClient));
       info->type = 4;
