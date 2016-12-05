@@ -69,7 +69,7 @@ int main(int argc, char *argv[]) {
   printf("Spread library version is %d.%d.%d\n", mver, miver, pver);
 
   printf("Client name = %s\n", Client_name);
-  ret = SP_connect_timeout(Spread_name, Client_name, 0, 1, &Mbox, Private_group, test_timeout);
+  ret = SP_connect_timeout(Spread_name, NULL, 0, 1, &Mbox, Private_group, test_timeout);
   if(ret != ACCEPT_SESSION) {
     SP_error(ret);
     Bye();
