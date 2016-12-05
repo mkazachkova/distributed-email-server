@@ -920,13 +920,13 @@ int compare_users(void* user1, void* user2) {
 
 void print_email(void *email) {
   Email *temp_email = (Email*) email;
-  printf("Email Timestamp:\nCounter: %d, Machine_index: %d, message_index: %d\n",
+  printf("Email Timestamp- Counter: %d, machine_index: %d, message_index: %d\n",
         temp_email->emailInfo.timestamp.counter, temp_email->emailInfo.timestamp.machine_index, 
         temp_email->emailInfo.timestamp.message_index);
+  printf("Email State- Deleted: %d Read: %d Exists: %d\n", temp_email->deleted, temp_email->read, temp_email->exists);
 
   printf("To: %s\nFrom: %s\nSubject: %s\n\n", 
         temp_email->emailInfo.to_field, temp_email->emailInfo.from_field, temp_email->emailInfo.subject);
-  printf("Deleted: %d\nRead: %d\n, Exists: %d\n", temp_email->deleted, temp_email->read, temp_email->exists);
 }
 
 

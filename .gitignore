@@ -7,3 +7,8 @@ server
 client
 test_linkedlist
 test_servermethods
+final_report/*.aux
+final_report/*.log
+final_report/*.outa
+final_report/*.pdf
+final_report/*.synctex.gz
