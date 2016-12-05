@@ -171,6 +171,11 @@ static void User_command() {
       break;
     }
   
+    //TODO: WHAT IF WE'VE ALREADY CONNECTED TO A SERVER?
+    //WE MUST DISCONNECT FROM THAT SERVER AND CONNECT TO THE ANOTHER ONE !!!!
+    //THIS CASE HAS NOT BEEN ACCOUNTED FOR!
+    //THAT WILL BE SEEN VIA THE logged_in VARIABLE
+
     //Populate InfoForSever struct with information
     InfoForServer *connect_server_request = malloc(sizeof(InfoForServer));
     connect_server_request->type = 2; //for new user
@@ -190,7 +195,7 @@ static void User_command() {
     int secs_to_wait = 5;
     bool connection_established = false;
 
-    //Loop for 5 seconds at 1/10-second intervals, checking if the mailbox has stuff in it
+    //Loop for 2 seconds at 1/10-second intervals, checking if the mailbox has stuff in it
     while (time(NULL) < (start_time + secs_to_wait)) {
       //Check if the mailbox has anything in it
       ret = SP_poll(Mbox);
@@ -220,8 +225,8 @@ static void User_command() {
         if (info->type == 4) {
           //Now we connect to whatever name the server has sent back to us
           int join = SP_join(Mbox, info->client_server_group_name);
+          printf("This is the client_server_group_name that is being joined: %s\n"info->client_server_group_name);
           assert(join == 0);
-          printf("successfully connected!\n");
           free(info);
         } else {
           printf("received SOMETHING but it's incorrect. Check work!\n");
@@ -233,7 +238,6 @@ static void User_command() {
 
       //There is nothing in the mailbox to receive, loop again
       } else {
-        printf("Nothing received during SP_poll.\n");
         usleep(100000); // 1/10 of a second
       }
 
@@ -242,35 +246,8 @@ static void User_command() {
     if (!connection_established) {
       printf("The server is currently unavailable. Please try another server.\n");      
     } else {
-      printf("Connection successfully established!");
-    }
-
-    /*
-    fd_set temp;
-    struct timeval timeout_ours;
-    FD_ZERO(&temp);
-    FD_SET(0, &temp);
-    timeout_ours.tv_sec = 1;
-    timeout_ours.tv_usec = 0;
-    int returned = select(1, &temp, NULL, NULL, &timeout_ours);
-    if (returned) {
-      //have received something; connect
-      InfoForClient *info = malloc(sizeof(InfoForClient));
-      SP_receive( Mbox, &service_type, sender, 100, &num_groups, target_groups,
-                  &mess_type, &endian_mismatch, sizeof(InfoForClient), (char*)info);
-      if (info->type == 4) {
-        //Now we connect to whatever name the server has sent back to us
-        int join = SP_join(Mbox, info->client_server_group_name);
-        assert(join == 0);
-        printf("successfully connected!\n");
-      } else {
-        printf("received SOMETHING but it's incorrect. Check work!\n");
-      }
-      
-    } else {
-      printf("The server is currently unavailable. Please try another server.\n");
-    } */
-   
+      // printf("A connection has been successfully established!");
+    }  
     
     free(connect_server_request);
 
@@ -431,6 +408,23 @@ static void Read_message() {
           //int               ret;
 
           service_type = 0;
+
+  if (Is_caused_join_mess(service_type)) {
+    printf("Join message received!\n")
+    char *tmp_buf = malloc(MAX_PACKET_LEN); 
+
+    //receive to relieve buffer
+    int ret = SP_receive(Mbox, &service_type, sender, 100, &num_groups, target_groups,
+                        &mess_type, &endian_mismatch, MAX_PACKET_LEN, (char*)tmp_buf);    
+
+    printf("A join message was received. Here are the contents of target_groups...\n");
+    for (int i = 0; i < num_groups; i++) {
+      printf("%s\n", target_groups[i]);
+    }
+
+    free(tmp_buf);
+    return;
+  }
 
 
   //should be triggered when we receive something
