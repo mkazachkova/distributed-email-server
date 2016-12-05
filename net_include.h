@@ -129,6 +129,6 @@ typedef struct info_for_client {
   Header headers[MAX_HEADERS_IN_PACKET];             // used for sending headers
   Email  email;                                      // used for sending specific email body
   char   memb_identities[NUM_SERVERS][MAX_NAME_LEN]; // used for sending membership identities
-  char   client_server_group_name[MAX_NAME_LEN]      // used for sending the group name for "client would like to join" message
+  char   client_server_group_name[MAX_NAME_LEN];      // used for sending the group name for "client would like to join" message
 } InfoForClient;
 

@@ -185,6 +185,50 @@ static void User_command() {
     }
 
 
+
+    static  char              sender[MAX_GROUP_NAME];
+    //char              mess[MAX_MESSLEN];
+    char              target_groups[MAX_MEMBERS][MAX_GROUP_NAME];
+    //membership_info   memb_info;
+    //vs_set_info       vssets[MAX_VSSETS];
+    //unsigned int      my_vsset_index;
+    //int               num_vs_sets;
+    //char              members[MAX_MEMBERS][MAX_GROUP_NAME];
+    int               num_groups;
+    int               service_type;
+    int16             mess_type;
+    int               endian_mismatch;
+    //int               i,j;
+    //int               ret;
+
+    service_type = 0;
+    
+    fd_set temp;
+    struct timeval timeout_ours;
+    FD_ZERO(&temp);
+    FD_SET(0, &temp);
+    timeout_ours.tv_sec = 1;
+    timeout_ours.tv_usec = 0;
+    int returned = select(1, &temp, NULL, NULL, &timeout_ours);
+    if (returned) {
+      //have received something; connect
+      InfoForClient *info = malloc(sizeof(InfoForClient));
+      SP_receive( Mbox, &service_type, sender, 100, &num_groups, target_groups,
+                  &mess_type, &endian_mismatch, sizeof(InfoForClient), (char*)info);
+      if (info->type == 4) {
+        //Now we connect to whatever name the server has sent back to us
+        int join = SP_join(Mbox, info->client_server_group_name);
+        assert(join == 0);
+        printf("successfully connected!\n");
+      } else {
+        printf("received SOMETHING but it's incorrect. Check work!\n");
+      }
+      
+    } else {
+      printf("The server is currently unavailable. Please try another server.\n");
+    }
+   
+    
     free(connect_server_request);
 
     break;

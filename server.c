@@ -20,7 +20,8 @@ static mailbox      Mbox;
 //static int          Num_sent;
 
 static char         group[80] = "ssukard1mkazach1_2"; 
-char                server_own_group[80] = "ssukard1mkazach1_server_";
+static char         server_own_group[80] = "ssukard1mkazach1_server_";
+//static char         extra_group[80] = "extra_group_ss_mk";       
 
 static int          To_exit = 0;
 
@@ -130,6 +131,13 @@ int main(int argc, char *argv[]) {
     SP_error(ret);
   }
 
+
+  /*
+  ret = SP_join(Mbox, extra_group);
+  if (ret < 0) {
+    SP_error(ret);
+  }
+  */
   printf("Connected!\n");
 
   //Using E_attach is similar to putting the function in th 3rd argument in an infinite for loop
@@ -419,6 +427,18 @@ static void Respond_To_Message() {
       */
       //Send the Update to ALL OTHER SERVERS in the same partition
 
+      //MUST send a info for client object back to client with unique name saying that connection was successful
+      InfoForClient *info = malloc(sizeof(InfoForClient));
+      info->type = 4;
+      char group_for_client[MAX_GROUP_NAME];
+      int seconds = time(NULL); //get current time
+      sprintf(group_for_client, "%d", seconds);
+      SP_join(Mbox, group_for_client); //we've joined; now send to client
+      strcpy(info->client_server_group_name, group_for_client);
+      SP_multicast(Mbox, AGREED_MESS, sender, 2, sizeof(InfoForClient), (char*)info);
+
+      printf("this is client server group name: %s\n",info->client_server_group_name);
+      
       SP_multicast(Mbox, AGREED_MESS, group, 2, sizeof(Update), (char*)to_be_sent);
     }
 
