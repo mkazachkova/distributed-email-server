@@ -408,31 +408,21 @@ static void Read_message() {
 
           service_type = 0;
 
+  char *tmp_buf = malloc(MAX_PACKET_LEN);
+  SP_receive(Mbox, &service_type, sender, 100, &num_groups, target_groups,
+                   &mess_type, &endian_mismatch, MAX_PACKET_LEN, (char*)tmp_buf);
+  printf("\nATTN: MESSAGE RECEIVED WITH SERVICE TYPE: %d\n", service_type);
+ 
   if (Is_caused_join_mess(service_type)) {
     printf("Join message received!\n");
-    char *tmp_buf = malloc(MAX_PACKET_LEN); 
-
-    //receive to relieve buffer
-    int ret = SP_receive(Mbox, &service_type, sender, 100, &num_groups, target_groups,
-                        &mess_type, &endian_mismatch, MAX_PACKET_LEN, (char*)tmp_buf);    
-
-    assert(ret >= 0);
-    printf("A join message was received. Here are the contents of target_groups...\n");
-    for (int i = 0; i < num_groups; i++) {
-      printf("%s\n", target_groups[i]);
-    }
-
     free(tmp_buf);
+    fflush(stdout);
     return;
   }
 
 
   //should be triggered when we receive something
-  InfoForClient *info = malloc(sizeof(InfoForClient)); 
-  SP_receive( Mbox, &service_type, sender, 100, &num_groups, target_groups,
-              &mess_type, &endian_mismatch, sizeof(InfoForClient), (char*)info); 
-
-  
+  InfoForClient *info = (InfoForClient *) tmp_buf;  
   printf("We have received a new info for client object of type %d\n", info->type);
 
 
@@ -588,7 +578,7 @@ static void print_header(Header *header) {
 
 //Takes in command-line args for spread name and user
 static void Usage(int argc, char *argv[]) {
-  sprintf(Client_name, "client_user_mk_ss");
+  sprintf(Client_name, "client_usero_mk_ss");
   sprintf(Spread_name, "10100");
 
   while (--argc > 0) {

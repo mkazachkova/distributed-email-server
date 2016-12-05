@@ -176,7 +176,7 @@ static void Respond_To_Message() {
   ret = SP_receive(Mbox, &service_type, sender, 100, &num_groups, target_groups,
                       &mess_type, &endian_mismatch, MAX_PACKET_LEN, (char*)tmp_buf);
 
-  printf("THIS IS SERVICE TYPE: ! %d\n", service_type);
+  printf("\nATTN: MESSAGE RECEIVED WITH SERVICE TYPE: %d\n", service_type);
 
 
   // **************************** PARSE MEMBERSHIP MESSAGES **************************** //
