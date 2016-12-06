@@ -183,6 +183,7 @@ static void User_command() {
 
       strcpy(curr_group_connected_to, ""); //curr_group_connected_to is blank again!
     }
+
     
     //Populate InfoForSever struct with information
     InfoForServer *connect_server_request = malloc(sizeof(InfoForServer));
@@ -200,7 +201,7 @@ static void User_command() {
     // Wait for secs_to_wait seconds (max) to receive a response from the server!
     // Start timer 
     int start_time = time(NULL);
-    int secs_to_wait = 1;
+    int secs_to_wait = 3;
     bool connection_established = false;
 
     //Loop for 1 seconds at 1/10-second intervals, checking if the mailbox has stuff in it
@@ -228,12 +229,27 @@ static void User_command() {
         //Receive information and check if it's the correct type!
         SP_receive(Mbox, &service_type, sender, 100, &num_groups, target_groups,
                    &mess_type, &endian_mismatch, sizeof(InfoForClient), (char*)info);
+        
+        if (Is_caused_leave_mess(service_type)) {
+          continue;
+        }
 
+
+
+        printf("this is service type: %d\n", service_type);
+        printf("this is info type: %d\nThis is sender: %s\n", info->type, sender);
+
+        
         if (info->type == 4) {
           //Now we connect to whatever name the server has sent back to us
           int join = SP_join(Mbox, info->client_server_group_name);
           printf("This is the client_server_group_name that is being joined: %s\n", info->client_server_group_name);
           strcpy(curr_group_connected_to, info->client_server_group_name);
+          printf("this is curr group connected to: %s", curr_group_connected_to);
+          printf("printing target groups\n");
+          for (int i = 0; i < num_groups; i++) {
+            printf("%s\n", target_groups[i]);
+          }
           assert(join == 0);
           free(info);
         } else {
@@ -429,7 +445,13 @@ static void Read_message() {
     return;
   }
 
-
+  if (Is_caused_leave_mess(service_type)) {
+    printf("Leave message received!\n");
+    free(tmp_buf);
+    fflush(stdout);
+    return;
+  }
+  
   //should be triggered when we receive something
   InfoForClient *info = (InfoForClient *) tmp_buf;  
   printf("We have received a new info for client object of type %d\n", info->type);

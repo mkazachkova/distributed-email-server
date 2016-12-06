@@ -41,7 +41,7 @@ int                 num_servers_in_partition = 0; //THIS MAY NOT BE CORRECT SO D
 int                 lamport_counter = 0;
 int                 num_emails_checked = 0;
 int                 min_seen_global = -1;
-
+int                 global_counter = 0;
 
 // Global variables used for sending header to client
 int                 message_number_stamp = 1;
@@ -178,7 +178,7 @@ static void Respond_To_Message() {
 
   printf("\nATTN: MESSAGE RECEIVED WITH SERVICE TYPE: %d\n", service_type);
 
-
+  printf("this is a sender: %s", sender);
   // **************************** PARSE MEMBERSHIP MESSAGES **************************** //
 
   //If transition message, do nothing
@@ -197,6 +197,16 @@ static void Respond_To_Message() {
     //servers_in_partition[num] = true;
     //num_servers_in_partition++;
     //printf("this is num servers in partition: %d\n", num_servers_in_partition);
+
+    //char first_char = (sender[0]);
+    printf("this is sender: %s", sender);
+    char first_char = sender[0];
+    printf("this is char first char %d\n", first_char);
+    if (first_char >= '0' && first_char <= '9') {
+      printf("received join message from non-server\n");
+      return; //this means client has joined the group you've alread joined. Do nothing
+    }
+    
     for (int i = 0; i < num_groups; i++) {
       int num = atoi(&(target_groups[i][strlen(target_groups[i]) - 1]));
       printf("Adding server with name %s into index %d...\n", target_groups[i], num);
@@ -214,6 +224,17 @@ static void Respond_To_Message() {
   //TODO: This isn't implemented fully yet (Low priority-- how do servers actually leave?)
   //TODO: If you get a leave message from a single client-server spread group, LEAVE THAT GROUP ALSO.
   } else if (Is_caused_leave_mess(service_type)) {
+
+    printf("this is sender: %s", sender);
+    char first_char = sender[0];
+    printf("this is char first char %d\n", first_char);
+    if (first_char >= '0' && first_char <= '9') {
+      printf("received leave message from non-server\n");
+      SP_leave(Mbox, sender);
+      return; //this means client has left group between client and server; also leave client group
+    }
+    return;
+    /*
     int num = atoi(&(target_groups[0][strlen(target_groups[0]) - 1]));
     printf("num in caused by leave: %d\n", num);
     for (int i = 0; i < num_groups; i++) {
@@ -226,7 +247,7 @@ static void Respond_To_Message() {
       printf("%d ", servers_in_partition[i]);
     }
     printf("\n");
-    return;
+    return; */
   }
 
 
@@ -398,7 +419,22 @@ static void Respond_To_Message() {
     //printf("about to print list\n and this is user list size: %d\n", users_list.num_nodes);
     //print_list(&users_list, print_user);
 
-    //now we want to send an update to all other machines ONLY IF A NEW USER WAS CREATED
+
+    InfoForClient *info_c = malloc(sizeof(InfoForClient));
+    info_c->type = 4;
+    char group_for_client[MAX_GROUP_NAME] = "test1";
+    //int seconds = ; //get current time
+    //global_counter++;
+    //sprintf(group_for_client, "%d", seconds);
+    SP_join(Mbox, group_for_client); //we've joined; now send to client
+    strcpy(info_c->client_server_group_name, group_for_client);
+    printf("this is client server group name: %s\n",info_c->client_server_group_name);
+    //Send message back to client confirming the connection occurred
+    SP_multicast(Mbox, AGREED_MESS, sender, 2, sizeof(InfoForClient), (char*)info_c);
+      
+
+
+
     if (created_new_user) {      
       //Dynamically create and send update
       Update *to_be_sent = malloc(sizeof(Update));
@@ -418,18 +454,7 @@ static void Respond_To_Message() {
       //THE BODY LATER!!!!!!
       
       //MUST send a info for client object back to client with unique name saying that connection was successful
-      InfoForClient *info = malloc(sizeof(InfoForClient));
-      info->type = 4;
-      char group_for_client[MAX_GROUP_NAME];
-      int seconds = time(NULL); //get current time
-      sprintf(group_for_client, "%d", seconds);
-      SP_join(Mbox, group_for_client); //we've joined; now send to client
-      strcpy(info->client_server_group_name, group_for_client);
-      printf("this is client server group name: %s\n",info->client_server_group_name);
-      //Send message back to client confirming the connection occurred
-      SP_multicast(Mbox, AGREED_MESS, sender, 2, sizeof(InfoForClient), (char*)info);
-      
-
+     
       //Send the Update to ALL OTHER SERVERS in the same partition
       SP_multicast(Mbox, AGREED_MESS, group, 2, sizeof(Update), (char*)to_be_sent);
     }
