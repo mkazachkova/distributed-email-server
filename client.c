@@ -275,12 +275,14 @@ static void User_command() {
       
   ////////////////////////////// LIST THE HEADERS OF RECEIVED MAIL ////////////////////////////
   case 'l': {
+    printf("l key selected.\n");
+    
     InfoForServer *header_request = malloc(sizeof(InfoForServer));
     header_request->type = 3; //for a list headers of received mail request
     sprintf(header_request->user_name, "%s", curr_user);  //populate who is sending the email
     
     SP_multicast(Mbox, AGREED_MESS, hardcoded_server_names[curr_server], 2, sizeof(InfoForServer), (char*) header_request);
-    free(header_request);
+    free(header_request); 
     
     break;
   }
@@ -300,7 +302,7 @@ static void User_command() {
     fgets(&subject[0], MAX_NAME_LEN, stdin);
     int subject_len = strlen(subject);
     subject[subject_len - 1] = '\0';
-      
+    
     //get MESSAGE: field from command line
     printf("Message: ");
     mess_len = 0;
@@ -431,7 +433,7 @@ static void Read_message() {
   char *tmp_buf = malloc(MAX_PACKET_LEN);
   SP_receive(Mbox, &service_type, sender, 100, &num_groups, target_groups,
                    &mess_type, &endian_mismatch, MAX_PACKET_LEN, (char*)tmp_buf);
-  printf("\nATTN: MESSAGE RECEIVED WITH SERVICE TYPE: %d\n", service_type);
+  printf("\nATTN: MESSAGE RECEIVED W/ SERVICE TYPE: %d FROM %s\n", service_type, sender);
  
   if (Is_caused_join_mess(service_type)) {
     printf("Join message received!\n");

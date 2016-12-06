@@ -479,6 +479,8 @@ static void Respond_To_Message() {
     //TODO: This is unimplemented
     //We know that the thing that was sent was of type InfoForServer, so we can cast it accordingly
     //    InfoForServer *info = (InfoForServer *) tmp_buf;    
+
+    printf("List headers message received!\n");
     InfoForServer *info = (InfoForServer*) tmp_buf;
     User *user = find(&(users_list), info->user_name, compare_users);
     
@@ -1079,6 +1081,7 @@ void add_to_struct_to_send(void *data) {
 void add_to_header(Email *email) {
   //Sends the header struct once it has been filled with 10 emails
   if (num_headers_added == 10) {
+    printf("Sending header!\n");
     SP_multicast(Mbox, AGREED_MESS, sender, 2, sizeof(InfoForClient), (char*)client_header_response);
     
     num_headers_added = 0;
