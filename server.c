@@ -131,18 +131,11 @@ int main(int argc, char *argv[]) {
     SP_error(ret);
   }
 
-
-  /*
-  ret = SP_join(Mbox, extra_group);
-  if (ret < 0) {
-    SP_error(ret);
-  }
-  */
   printf("Connected!\n");
 
   //Using E_attach is similar to putting the function in th 3rd argument in an infinite for loop
   E_init(); 
-  E_attach_fd( Mbox, READ_FD, Respond_To_Message, 0, NULL, LOW_PRIORITY );
+  E_attach_fd(Mbox, READ_FD, Respond_To_Message, 0, NULL, LOW_PRIORITY);
 
   fflush(stdout);
 
@@ -255,9 +248,23 @@ static void Respond_To_Message() {
 
 
   //This method is triggered whenever there is a change in membership detected!
-  if (Is_caused_network_mess(service_type)) {
+  if (Is_caused_network_mess(service_type)) {     
     printf("A change in membership has occurred!\n");
 
+    //If server gets a leave message from a single client-server spread group, LEAVE THAT GROUP ALSO.
+    printf("this is sender: %s", sender);
+    char first_char = sender[0];
+    printf("this is char first char %d\n", first_char);
+
+    //If number received, then a NON-server group was partitioned
+    if (first_char >= '0' && first_char <= '9') {
+      printf("Received network message from non-server.\n");
+      //this means client has joined the group you've already joined. Do NOT do reconciliation process!!!
+      return; 
+    }
+
+
+    printf("Entering reconciliation process\n");
     //Set all servers in partition to false
     for (int i = 0; i < NUM_SERVERS; i++) {
       servers_in_partition[i] = false;
@@ -538,8 +545,7 @@ static void Respond_To_Message() {
     SP_multicast(Mbox, AGREED_MESS, group, 2, sizeof(Update), (char*)to_be_sent);
     
   } else if (*type == 5) { //Server received a "DELETE MESSAGE" message from the client
-    //TODO: The implementation of this is not correct yet!!!
-    
+  
     //We know that the thing that was sent was of type InfoForServer, so we can cast it accordingly
     InfoForServer *info = (InfoForServer *) tmp_buf;    
 
@@ -592,7 +598,6 @@ static void Respond_To_Message() {
     SP_multicast(Mbox, AGREED_MESS, group, 2, sizeof(Update), (char*)to_be_sent);
 
   } else if (*type == 6) { //Server received a "READ MESSAGE" message from the client
-    //TODO: The implementation of this is not correct yet!!!
 
     //We know that the thing that was sent was of type InfoForServer, so we can cast it accordingly
     InfoForServer *info = (InfoForServer *) tmp_buf;    
@@ -637,7 +642,6 @@ static void Respond_To_Message() {
     SP_multicast(Mbox, AGREED_MESS, group, 2, sizeof(Update), (char*)to_be_sent);
 
 
-
     //TODO: send the actual email body back to client
     InfoForClient *info_for_client = malloc(sizeof(InfoForClient));
     info_for_client->type = 2; // this means that an email has been sent back for the client to read
@@ -662,15 +666,15 @@ static void Respond_To_Message() {
 
     for (int i = 0; i < NUM_SERVERS; i++) {
       if (servers_in_partition[i]) { //if the ith server is in our partition, add it to memb_identities
-	char my_machine_index_str[20];  
-	sprintf(my_machine_index_str, "%d", i + 10);
+        char my_machine_index_str[20];  
+        sprintf(my_machine_index_str, "%d", i + 10);
 
-	char name_to_concat_with[80] = "ssukard1mkazach1_server_";
-	strcat(name_to_concat_with, my_machine_index_str);
+        char name_to_concat_with[80] = "ssukard1mkazach1_server_";
+        strcat(name_to_concat_with, my_machine_index_str);
 
-	strcpy(info_for_client->memb_identities[i], name_to_concat_with);
+        strcpy(info_for_client->memb_identities[i], name_to_concat_with);
       } else { //otherwise, copy the empty string in
-	strcpy(info_for_client->memb_identities[i], "");
+        strcpy(info_for_client->memb_identities[i], "");
       }
     }
 

@@ -275,8 +275,6 @@ static void User_command() {
       
   ////////////////////////////// LIST THE HEADERS OF RECEIVED MAIL ////////////////////////////
   case 'l': {
-    printf("l key selected.\n");
-    
     InfoForServer *header_request = malloc(sizeof(InfoForServer));
     header_request->type = 3; //for a list headers of received mail request
     sprintf(header_request->user_name, "%s", curr_user);  //populate who is sending the email
@@ -434,6 +432,29 @@ static void Read_message() {
   int ret = SP_receive(Mbox, &service_type, sender, 100, &num_groups, target_groups,
                    &mess_type, &endian_mismatch, MAX_PACKET_LEN, (char*)tmp_buf);
   printf("\nATTN: MESSAGE RECEIVED W/ SERVICE TYPE: %d FROM %s SIZE %d\n", service_type, sender, ret);
+
+  if (Is_transition_mess(service_type)) {
+    printf("Transition message received.\n");
+
+    free(tmp_buf);
+    printf("User> ");
+    fflush(stdout);
+    return;
+  }
+
+  if (Is_caused_network_mess(service_type)) {
+    printf("Network message received- partition or merge occurred!\n");
+    printf("You have been disconnected from your server. Please try connecting to another one.\n");
+
+    //Make curr_group_connected_to back to empty string
+    SP_leave(Mbox, curr_group_connected_to);
+    strcpy(curr_group_connected_to, "");
+
+    free(tmp_buf);
+    printf("User> ");
+    fflush(stdout);
+    return;
+  }
   
   if (Is_caused_join_mess(service_type)) {
     printf("Join message received!\n");
