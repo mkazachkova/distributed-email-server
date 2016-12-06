@@ -104,7 +104,7 @@ int main(int argc, char *argv[]) {
 
   //Spread setup (copypasted from class_user sample code)
   sprintf(Server, "user_mk_ss");
-  sprintf(Spread_name, "10100");
+  sprintf(Spread_name, "10160");
 
   if (!SP_version(&mver, &miver, &pver)) {
     printf("main: Illegal variables passed to SP_version()\n");
@@ -420,10 +420,9 @@ static void Respond_To_Message() {
     // the connection was successfully established
     InfoForClient *info_c = malloc(sizeof(InfoForClient));
     info_c->type = 4;
-    char group_for_client[MAX_GROUP_NAME] = "test1";
-    //int seconds = ; //get current time
-    //global_counter++;
-    //sprintf(group_for_client, "%d", seconds);
+    char group_for_client[MAX_GROUP_NAME];
+    int seconds = time(NULL); //get current time
+    sprintf(group_for_client, "%d", seconds);
     SP_join(Mbox, group_for_client); //we've joined; now send to client
     strcpy(info_c->client_server_group_name, group_for_client);
     printf("this is client server group name: %s\n",info_c->client_server_group_name);
