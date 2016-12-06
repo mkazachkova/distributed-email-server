@@ -29,7 +29,7 @@ December 9, 2016
 // ******************* VARIABLES ******************* //
 #define MAX_NAME_LEN          50
 #define MAX_MESS_LEN          1000
-#define MAX_PACKET_LEN        2000
+#define MAX_PACKET_LEN        4000
 #define MAX_HEADERS_IN_PACKET 10
 #define NUM_SERVERS           5
 

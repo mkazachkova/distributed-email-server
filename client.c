@@ -431,10 +431,10 @@ static void Read_message() {
           service_type = 0;
 
   char *tmp_buf = malloc(MAX_PACKET_LEN);
-  SP_receive(Mbox, &service_type, sender, 100, &num_groups, target_groups,
+  int ret = SP_receive(Mbox, &service_type, sender, 100, &num_groups, target_groups,
                    &mess_type, &endian_mismatch, MAX_PACKET_LEN, (char*)tmp_buf);
-  printf("\nATTN: MESSAGE RECEIVED W/ SERVICE TYPE: %d FROM %s\n", service_type, sender);
- 
+  printf("\nATTN: MESSAGE RECEIVED W/ SERVICE TYPE: %d FROM %s SIZE %d\n", service_type, sender, ret);
+  
   if (Is_caused_join_mess(service_type)) {
     printf("Join message received!\n");
     free(tmp_buf);
