@@ -1119,6 +1119,7 @@ void add_to_header(Email *email) {
   }
 
   client_header_response->headers[num_headers_added].message_number = message_number_stamp;
+  client_header_response->headers[num_headers_added].read = email->read;
   strcpy(client_header_response->headers[num_headers_added].sender, email->emailInfo.from_field);
   strcpy(client_header_response->headers[num_headers_added].subject, email->emailInfo.subject);
   message_number_stamp++;
