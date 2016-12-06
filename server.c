@@ -189,24 +189,25 @@ static void Respond_To_Message() {
 
   //Parsing the server entering message (Should only be executed at the beginning of the program)
   if (Is_caused_join_mess(service_type)) {
-    printf("A join message was received. Here are the contents of target_groups...\n");
+    printf("A join message was received. Here are the contents of target_groups:\n");
     for (int i = 0; i < num_groups; i++) {
       printf("%s\n", target_groups[i]);
     }   
 
-    //servers_in_partition[num] = true;
-    //num_servers_in_partition++;
-    //printf("this is num servers in partition: %d\n", num_servers_in_partition);
-
-    //char first_char = (sender[0]);
     printf("this is sender: %s", sender);
     char first_char = sender[0];
-    printf("this is char first char %d\n", first_char);
+    printf("this is the first first char. of sender: %d\n", first_char);
+
+    //If number received, then a NON-server group was joined by a client.
     if (first_char >= '0' && first_char <= '9') {
-      printf("received join message from non-server\n");
-      return; //this means client has joined the group you've alread joined. Do nothing
+      printf("Received join message from non-server.\n");
+      return; //this means client has joined the group you've already joined. Do nothing
     }
     
+    //Otherwise, it is a server group.
+    printf("Received join message from server.\n");
+
+    //Change servers_in_partition array to reflect current servers in array
     for (int i = 0; i < num_groups; i++) {
       int num = atoi(&(target_groups[i][strlen(target_groups[i]) - 1]));
       printf("Adding server with name %s into index %d...\n", target_groups[i], num);
@@ -214,25 +215,27 @@ static void Respond_To_Message() {
       num_servers_in_partition++;
     }
 
-    printf("printing boolean array: \n");
+    //Print the servers_in_partition array    
+    printf("printing boolean servers_in_partition array: \n");
     for(int i = 0; i < NUM_SERVERS; i++) {
       printf("%d ", servers_in_partition[i]);
     }
     printf("\n"); 
     return;
 
-  //TODO: This isn't implemented fully yet (Low priority-- how do servers actually leave?)
-  //TODO: If you get a leave message from a single client-server spread group, LEAVE THAT GROUP ALSO.
   } else if (Is_caused_leave_mess(service_type)) {
-
+    //If server gets a leave message from a single client-server spread group, LEAVE THAT GROUP ALSO.
     printf("this is sender: %s", sender);
     char first_char = sender[0];
     printf("this is char first char %d\n", first_char);
+
+    //Received leave message from non-client server
     if (first_char >= '0' && first_char <= '9') {
-      printf("received leave message from non-server\n");
+      printf("Received leave message from non-server\n");
       SP_leave(Mbox, sender);
       return; //this means client has left group between client and server; also leave client group
     }
+
     return;
     /*
     int num = atoi(&(target_groups[0][strlen(target_groups[0]) - 1]));
@@ -252,7 +255,6 @@ static void Respond_To_Message() {
 
 
   //This method is triggered whenever there is a change in membership detected!
-  //TODO: debug with actual network partitions
   if (Is_caused_network_mess(service_type)) {
     printf("A change in membership has occurred!\n");
 
@@ -403,8 +405,7 @@ static void Respond_To_Message() {
   int *type = (int*) tmp_buf;
 
 
-  // ****************************** parse messages from client ***************************** //
-
+  ///////////////////////////////// parse messages from client ////////////////////////////////
   //If *type is of type 2-7, we have RECEIVED A MESSAGE FROM THE CLIENT.
 
   if (*type == 2) { // We received a "new user" message from the client
@@ -415,11 +416,8 @@ static void Respond_To_Message() {
     printf("type: %d\n", *type);
     bool created_new_user = create_user_if_nonexistent(info->user_name);
 
-    //For debug
-    //printf("about to print list\n and this is user list size: %d\n", users_list.num_nodes);
-    //print_list(&users_list, print_user);
-
-
+    // Send an InfoForClient object back to client with a unique group name saying that 
+    // the connection was successfully established
     InfoForClient *info_c = malloc(sizeof(InfoForClient));
     info_c->type = 4;
     char group_for_client[MAX_GROUP_NAME] = "test1";
@@ -431,10 +429,8 @@ static void Respond_To_Message() {
     printf("this is client server group name: %s\n",info_c->client_server_group_name);
     //Send message back to client confirming the connection occurred
     SP_multicast(Mbox, AGREED_MESS, sender, 2, sizeof(InfoForClient), (char*)info_c);
-      
-
-
-
+    
+    //Only send update to other servers if new user was created
     if (created_new_user) {      
       //Dynamically create and send update
       Update *to_be_sent = malloc(sizeof(Update));
@@ -445,16 +441,7 @@ static void Respond_To_Message() {
       to_be_sent->timestamp.message_index = update_index;
       to_be_sent->timestamp.machine_index = my_machine_index;
       strcpy(to_be_sent->user_name, info->user_name);
-      
-      //copy our row of the 2d array and send with update 
-      //REVISED: tbd what we're actually doing here
-
-      //NOTE: WHERE THIS IS IN THE BODY IS ONLY GOING TO SEND THIS MESSAGE
-      //WHENEVER A NEW USER IS CREATED. WE PROBABLY WANT TO PULL THIS OUT OF
-      //THE BODY LATER!!!!!!
-      
-      //MUST send a info for client object back to client with unique name saying that connection was successful
-     
+           
       //Send the Update to ALL OTHER SERVERS in the same partition
       SP_multicast(Mbox, AGREED_MESS, group, 2, sizeof(Update), (char*)to_be_sent);
     }
@@ -930,9 +917,12 @@ bool create_user_if_nonexistent(char name[MAX_NAME_LEN]) {
 }
 
 
+/////////////////////////////////////////////////////////////////////////////////////////////
 // *********** COMPARISON & PRINTING FUNCTION POINTERS FOR GENERIC LINKED LIST *********** //
+/////////////////////////////////////////////////////////////////////////////////////////////
 
-//Function pointers for linked list to use to insert into linked list correctly
+
+//Prints a user and their associated list of emails (For debugging)
 void print_user(void *user) {
   User *temp = (User*) user;
   printf("Username: %s", temp->name);
@@ -940,6 +930,7 @@ void print_user(void *user) {
 }
 
 
+//Returns if two users have the same name
 int compare_users(void* user1, void* user2) {
   printf("entered compare users\n");
   User *user_in_linked_list = (User*) user1;
@@ -955,6 +946,7 @@ int compare_users(void* user1, void* user2) {
 }
 
 
+//Prints an email (For debug)
 void print_email(void *email) {
   Email *temp_email = (Email*) email;
   printf("Email Timestamp- Counter: %d, machine_index: %d, message_index: %d\n",
@@ -967,6 +959,7 @@ void print_email(void *email) {
 }
 
 
+//Compares emails first by counter, and then by machine index as tiebreaker
 int compare_email(void* temp1, void* temp2) {
   Email *one = (Email*) temp1;
   Email *two = (Email*) temp2;
@@ -989,15 +982,14 @@ int compare_email(void* temp1, void* temp2) {
 }
 
 
-//TODO: create a compare email function that never returns 0 so that email is never inserted!!
-//Create a new method in linked list to insert into list only if new email (to be used in email insert)!
-
-
+//Prints updates (for debugging)
 void print_update(void* temp) {
   Update *update = (Update*) temp;
   printf("This is type: %d\nThis is message index: %d\n", update->type, update->timestamp.message_index);
 }
 
+
+//Compares updates by message index
 int compare_update(void* update1, void* update2) {
   Update *one = (Update*) update1;
   Update *two = (Update*) update2;
@@ -1013,6 +1005,7 @@ int compare_update(void* update1, void* update2) {
 }
 
 
+//Compares emails for the find method to get the nth email that exists and has not been deleted
 int compare_email_for_find(void* temp1, void* temp2) {
   //find the nth from end exisiting and undeleted email
   int *the_one_we_want = (int*) temp2;
@@ -1033,6 +1026,19 @@ int compare_email_for_find(void* temp1, void* temp2) {
 }
 
 
+//Simple max retrieval function
+int max(int first, int second) {
+  return first >= second ? first : second;
+}
+
+
+//Simple min retrieval function
+int min(int first, int second) {
+  return first <= second ? first : second;
+}
+
+
+//Adds to header ONLY when the email exists and is not deleted
 void add_to_struct_to_send(void *data) {
   Email *email = (Email*) data;
   if (email->exists && !email->deleted) {
@@ -1041,16 +1047,9 @@ void add_to_struct_to_send(void *data) {
 }
 
 
-int max(int first, int second) {
-  return first >= second ? first : second;
-}
-
-int min(int first, int second) {
-  return first <= second ? first : second;
-}
-
-
+//Adds an email to a header struct
 void add_to_header(Email *email) {
+  //Sends the header struct once it has been filled with 10 emails
   if (num_headers_added == 10) {
     SP_multicast(Mbox, AGREED_MESS, sender, 2, sizeof(InfoForClient), (char*)client_header_response);
     
@@ -1068,6 +1067,7 @@ void add_to_header(Email *email) {
   num_headers_added++;
 }
 
+//Send updates for a merge only if the message_index is strictly greater than min_seen_global
 void send_updates_for_merge(void* temp) {
   Update *might_be_sent = (Update*) temp;
   if (might_be_sent->timestamp.message_index > min_seen_global) {

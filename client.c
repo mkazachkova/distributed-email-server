@@ -441,6 +441,7 @@ static void Read_message() {
   if (Is_caused_join_mess(service_type)) {
     printf("Join message received!\n");
     free(tmp_buf);
+    printf("User> ");
     fflush(stdout);
     return;
   }
@@ -448,6 +449,7 @@ static void Read_message() {
   if (Is_caused_leave_mess(service_type)) {
     printf("Leave message received!\n");
     free(tmp_buf);
+    printf("User> ");
     fflush(stdout);
     return;
   }
