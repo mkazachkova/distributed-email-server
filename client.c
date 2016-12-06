@@ -418,6 +418,11 @@ static void User_command() {
     
   ///////////////////////////////////// EXIT THE PROGRAM ///////////////////////////////////
   case 'q': {
+    //TODO: send message to server saying that you're disconnecting; don't wait for a response
+    //server will receive this message
+    //OR
+    //maybe the server will automatically get a message? We need to test this.
+    //low priority though
     Bye();
     break;
   }

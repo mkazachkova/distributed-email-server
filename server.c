@@ -259,7 +259,12 @@ static void Respond_To_Message() {
     //If number received, then a NON-server group was partitioned
     if (first_char >= '0' && first_char <= '9') {
       printf("Received network message from non-server.\n");
+      //printf("this is sender of non-server thing: %s\n", sender);
+      //printf("this is target_groups: %s\n", target_groups[0]);
+      SP_leave(Mbox, sender);
+      printf("Server has received that the client has been disconnected from the client-server group due to partition. Server has also disconnected\n");
       //this means client has joined the group you've already joined. Do NOT do reconciliation process!!!
+      //I don''t think it means it joined ^^^ I think it means that it left...when it joins not a network message, right?
       return; 
     }
   
