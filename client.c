@@ -40,6 +40,9 @@ static char curr_group_connected_to[MAX_NAME_LEN] = "";
 static bool logged_in = false;
 
 
+static bool connected_to_server = false;
+
+
 int main(int argc, char *argv[]) {
   int     ret;
   int     mver, miver, pver;
@@ -138,7 +141,7 @@ static void User_command() {
     ret = sscanf( &command[2], "%s", curr_user);
     printf("this is curr user: %s\n", curr_user);
     
-    if (logged_in) {
+    if (logged_in && connected_to_server) { /*DOUBLE CHECK THIS. MY THINKING IS WE SHOULDNT SEND ANYTHING TO SERVER IF NOT CONNECTED*/
       //alert the server that a (potentially) new user might need to be created
       InfoForServer *new_user_request = malloc(sizeof(InfoForServer));
       new_user_request->type = 1; //for new user
@@ -176,6 +179,7 @@ static void User_command() {
       SP_leave(Mbox, curr_group_connected_to);
       printf("Disconnecting from spread group %s between single client and server\n", curr_group_connected_to);
       strcpy(curr_group_connected_to, ""); //curr_group_connected_to is blank again!
+      connected_to_server = false; //since breaking connection here
     }
 
     
@@ -246,7 +250,7 @@ static void User_command() {
           for (int i = 0; i < num_groups; i++) {
             printf("%s\n", target_groups[i]);
           }
-
+          connected_to_server = true;
           assert(join == 0);
           free(info);
         } else {
@@ -275,6 +279,10 @@ static void User_command() {
       
   ////////////////////////////// LIST THE HEADERS OF RECEIVED MAIL ////////////////////////////
   case 'l': {
+    if (!connected_to_server) {
+      printf("You must connect to a server before listing your inbox.\n");
+      break;
+    }
     InfoForServer *header_request = malloc(sizeof(InfoForServer));
     header_request->type = 3; //for a list headers of received mail request
     sprintf(header_request->user_name, "%s", curr_user);  //populate who is sending the email
@@ -287,6 +295,11 @@ static void User_command() {
       
   /////////////////////////////////// MAIL A MESSAGE TO A USER ////////////////////////////////
   case 'm': {
+    if (!connected_to_server) {
+      printf("You must connect to a server before sending and email.\n");
+      break;
+    }
+    
     //get TO: field from command line
     printf("To: ");
 
@@ -338,6 +351,10 @@ static void User_command() {
   ////////////////////////////////// DELETE A MAIL MESSAGE ////////////////////////////////
   case 'd': {
     //TODO: This method has not been implemented or tested yet
+    if (!connected_to_server) {
+      printf("You must connect to a server before deleting  message.\n");
+      break;
+    }
     
     InfoForServer *delete_request = malloc(sizeof(InfoForServer));
     delete_request->type = 5;                             //for a print membership request
@@ -359,6 +376,11 @@ static void User_command() {
     
   ////////////////////////////////////// READ AN EMAIL /////////////////////////////////////
   case 'r': {
+    if (!connected_to_server) {
+      printf("You must connect to a server before reading an email.\n");
+      break;
+    }
+    
     InfoForServer *read_request = malloc(sizeof(InfoForServer));
     read_request->type = 6;                             //for a print membership request
     sprintf(read_request->user_name, "%s", curr_user);  //populate the user_name field for who is sending the email
@@ -379,6 +401,11 @@ static void User_command() {
   /////////////////////////// PRINT MEMBERSHIP OF THE MAIL SERVERS /////////////////////////
   ////////////////////// IN THE CURRENT MAIL SERVER'S NETWORK COMPONENT ////////////////////
   case 'v': {
+    if (!connected_to_server) {
+      printf("You must connect to a server before listing members.\n");
+      break;
+    }
+    
     InfoForServer *membership_request = malloc(sizeof(InfoForServer));
     membership_request->type = 7; //for a print membership request
     sprintf(membership_request->user_name, "%s", curr_user);  //populate who is sending the email
@@ -450,6 +477,9 @@ static void Read_message() {
     SP_leave(Mbox, curr_group_connected_to);
     strcpy(curr_group_connected_to, "");
 
+    connected_to_server = false; //since we have been disconnected 
+
+    
     free(tmp_buf);
     printf("User> ");
     fflush(stdout);

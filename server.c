@@ -781,7 +781,15 @@ static void Respond_To_Message() {
       }
     
       printf("this is subject: %s\n", update->email.emailInfo.subject);
-    
+
+      /**
+         How is the above code working (printing the subject)? Are we sending the whole email? Aren't we just sending the timestamp?
+       **/
+
+      /*CODE NOT TESTED YET*/
+      create_user_if_nonexistent(update->user_name);
+      //ideally this will create the new user if it has not been made yet
+      
       User *temp = (User*) find(&users_list, (void*)update->user_name, compare_users);
       assert(temp != NULL);
       printf("User found! Here's their name: %s\n", temp->name);
@@ -848,7 +856,15 @@ static void Respond_To_Message() {
       }
     
       printf("this is subject: %s\n", update->email.emailInfo.subject);
-    
+
+
+      
+      /*CODE NOT TESTED YET*/
+      create_user_if_nonexistent(update->user_name);
+      //ideally this will create the new user if it has not been made yet
+
+
+      
       User *temp = (User*) find(&users_list, (void*)update->user_name, compare_users);
       assert(temp != NULL);
       printf("User found! Here's their name: %s\n", temp->name);
