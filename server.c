@@ -212,6 +212,7 @@ static void Respond_To_Message() {
     return;
 
   //TODO: This isn't implemented fully yet (Low priority-- how do servers actually leave?)
+  //TODO: If you get a leave message from a single client-server spread group, LEAVE THAT GROUP ALSO.
   } else if (Is_caused_leave_mess(service_type)) {
     int num = atoi(&(target_groups[0][strlen(target_groups[0]) - 1]));
     printf("num in caused by leave: %d\n", num);

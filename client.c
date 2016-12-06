@@ -35,7 +35,7 @@ static void print_header(Header *header);
 static int  curr_server = -1;
 static char curr_user[MAX_NAME_LEN];
 static char hardcoded_server_names[NUM_SERVERS][MAX_NAME_LEN];
-
+static char curr_group_connected_to[MAX_NAME_LEN] = "";
 
 static bool logged_in = false;
 
@@ -172,10 +172,18 @@ static void User_command() {
     }
   
     //TODO: WHAT IF WE'VE ALREADY CONNECTED TO A SERVER?
-    //WE MUST DISCONNECT FROM THAT SERVER AND CONNECT TO THE ANOTHER ONE !!!!
+    //WE MUST DISCONNECT FROM THAT SERVER AND CONNECT TO THE ANOTHER ONE!!!!
     //THIS CASE HAS NOT BEEN ACCOUNTED FOR!
     //THAT WILL BE SEEN VIA THE logged_in VARIABLE
 
+    //What about the SERVER spread group? What happens to it?
+    if (strcmp(curr_group_connected_to, "") != 0) { // some group was previously connected to
+      SP_leave(Mbox, curr_group_connected_to);
+      printf("Disconnecting from spread group %s between single client and server\n", curr_group_connected_to);
+
+      strcpy(curr_group_connected_to, ""); //curr_group_connected_to is blank again!
+    }
+    
     //Populate InfoForSever struct with information
     InfoForServer *connect_server_request = malloc(sizeof(InfoForServer));
     connect_server_request->type = 2; //for new user
@@ -225,6 +233,7 @@ static void User_command() {
           //Now we connect to whatever name the server has sent back to us
           int join = SP_join(Mbox, info->client_server_group_name);
           printf("This is the client_server_group_name that is being joined: %s\n", info->client_server_group_name);
+          strcpy(curr_group_connected_to, info->client_server_group_name);
           assert(join == 0);
           free(info);
         } else {
