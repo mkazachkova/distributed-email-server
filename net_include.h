@@ -102,7 +102,8 @@ typedef struct user {
 // Information from clients
 // * sent from clients to servers only
 typedef struct info_for_server {
-  int   type;                             // 2 is new user
+  int   type;                             // 1 is change of user
+                                          // 2 is connect to server
                                           // 3 is list headers 
                                           // 4 is mail message to user
                                           // 5 is delete message

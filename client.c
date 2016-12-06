@@ -141,7 +141,7 @@ static void User_command() {
     if (logged_in) {
       //alert the server that a (potentially) new user might need to be created
       InfoForServer *new_user_request = malloc(sizeof(InfoForServer));
-      new_user_request->type = 2; //for new user
+      new_user_request->type = 1; //for new user
       sprintf(new_user_request->user_name, "%s",curr_user); //to be changed when we implement getting the user name
       
       SP_multicast(Mbox, AGREED_MESS, hardcoded_server_names[curr_server], 2, sizeof(InfoForServer), (char*)new_user_request);
@@ -167,20 +167,14 @@ static void User_command() {
     curr_server = atoi(group) - 1;
       
     if (ret < 1) {
-      printf(" invalid group \n");
+      printf("Invalid group. \n");
       break;
     }
-  
-    //TODO: WHAT IF WE'VE ALREADY CONNECTED TO A SERVER?
-    //WE MUST DISCONNECT FROM THAT SERVER AND CONNECT TO THE ANOTHER ONE!!!!
-    //THIS CASE HAS NOT BEEN ACCOUNTED FOR!
-    //THAT WILL BE SEEN VIA THE logged_in VARIABLE
 
-    //What about the SERVER spread group? What happens to it?
+    // Set curr_group_connected_to back to the empty string
     if (strcmp(curr_group_connected_to, "") != 0) { // some group was previously connected to
       SP_leave(Mbox, curr_group_connected_to);
       printf("Disconnecting from spread group %s between single client and server\n", curr_group_connected_to);
-
       strcpy(curr_group_connected_to, ""); //curr_group_connected_to is blank again!
     }
 
@@ -230,7 +224,11 @@ static void User_command() {
         SP_receive(Mbox, &service_type, sender, 100, &num_groups, target_groups,
                    &mess_type, &endian_mismatch, sizeof(InfoForClient), (char*)info);
         
+
+        //Ignore the leave message from the server it was once connected to
+        ////!!! SUPER IMPORTANT !!!!
         if (Is_caused_leave_mess(service_type)) {
+          free(info);
           continue;
         }
 
@@ -248,6 +246,7 @@ static void User_command() {
           for (int i = 0; i < num_groups; i++) {
             printf("%s\n", target_groups[i]);
           }
+
           assert(join == 0);
           free(info);
         } else {
@@ -267,9 +266,7 @@ static void User_command() {
 
     if (!connection_established) {
       printf("The server is currently unavailable. Please try another server.\n");      
-    } else {
-      // printf("A connection has been successfully established!");
-    }  
+    }
     
     free(connect_server_request);
 

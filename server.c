@@ -406,11 +406,34 @@ static void Respond_To_Message() {
 
 
   ///////////////////////////////// parse messages from client ////////////////////////////////
-  //If *type is of type 2-7, we have RECEIVED A MESSAGE FROM THE CLIENT.
+  //If *type is of type 1-7, we have RECEIVED A MESSAGE FROM THE CLIENT.
 
-  if (*type == 2) { // We received a "new user" message from the client
+  if (*type == 1) {
+    InfoForServer *info = (InfoForServer*) tmp_buf;
+    printf("This is the username: %s\n", info->user_name);    
+    printf("type: %d\n", *type);
+    bool created_new_user = create_user_if_nonexistent(info->user_name);
 
-    //We know that the thing that was sent was of type InfoForServer, so we can cast it accordingly
+    //Only send update to other servers if new user was created
+    if (created_new_user) {      
+      //Dynamically create and send update
+      Update *new_user_update = malloc(sizeof(Update));
+ 
+     //Fill in relevant parameters
+      new_user_update->type = 13;
+      update_index++;
+      new_user_update->timestamp.message_index = update_index;
+      new_user_update->timestamp.machine_index = my_machine_index;
+      strcpy(new_user_update->user_name, info->user_name);
+           
+      //Send the Update to ALL OTHER SERVERS in the same partition
+      SP_multicast(Mbox, AGREED_MESS, group, 2, sizeof(Update), (char*)new_user_update);
+      free(new_user_update);
+    }
+
+  } else if (*type == 2) { // We received a "new user" message from the client
+
+    //We know that the message received was of type InfoForServer, so we can cast it accordingly
     InfoForServer *info = (InfoForServer*) tmp_buf;
     printf("This is the username: %s\n", info->user_name);    
     printf("type: %d\n", *type);
@@ -418,18 +441,24 @@ static void Respond_To_Message() {
 
     // Send an InfoForClient object back to client with a unique group name saying that 
     // the connection was successfully established
-    InfoForClient *info_c = malloc(sizeof(InfoForClient));
-    info_c->type = 4;
+    InfoForClient *info_client = malloc(sizeof(InfoForClient));
+    info_client->type = 4;
     char group_for_client[MAX_GROUP_NAME];
+
+    //Generate group name from current time to guarantee uniqueness
     int seconds = time(NULL); //get current time
     sprintf(group_for_client, "%d", seconds);
-    SP_join(Mbox, group_for_client); //we've joined; now send to client
-    strcpy(info_c->client_server_group_name, group_for_client);
-    printf("this is client server group name: %s\n",info_c->client_server_group_name);
+
+    //Join group and send to client
+    SP_join(Mbox, group_for_client); 
+    strcpy(info_client->client_server_group_name, group_for_client);
+    printf("this is client server group name: %s\n",info_client->client_server_group_name);
+
     //Send message back to client confirming the connection occurred
-    SP_multicast(Mbox, AGREED_MESS, sender, 2, sizeof(InfoForClient), (char*)info_c);
+    SP_multicast(Mbox, AGREED_MESS, sender, 2, sizeof(InfoForClient), (char*)info_client);
+    free(info_client);
     
-    //Only send update to other servers if new user was created
+    //Only send update to other servers if a new user was created
     if (created_new_user) {      
       //Dynamically create and send update
       Update *to_be_sent = malloc(sizeof(Update));
