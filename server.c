@@ -171,7 +171,7 @@ static void Respond_To_Message() {
 
   printf("\nATTN: MESSAGE RECEIVED WITH SERVICE TYPE: %d\n", service_type);
 
-  printf("this is a sender: %s", sender);
+  printf("this is a sender: %s\n", sender);
   // **************************** PARSE MEMBERSHIP MESSAGES **************************** //
 
   //If transition message, do nothing
@@ -187,9 +187,9 @@ static void Respond_To_Message() {
       printf("%s\n", target_groups[i]);
     }   
 
-    printf("this is sender: %s", sender);
+    //printf("this is sender: %s", sender);
     char first_char = sender[0];
-    printf("this is the first first char. of sender: %d\n", first_char);
+    //printf("this is the first first char. of sender: %d\n", first_char);
 
     //If number received, then a NON-server group was joined by a client.
     if (first_char >= '0' && first_char <= '9') {
@@ -218,9 +218,9 @@ static void Respond_To_Message() {
 
   } else if (Is_caused_leave_mess(service_type)) {
     //If server gets a leave message from a single client-server spread group, LEAVE THAT GROUP ALSO.
-    printf("this is sender: %s", sender);
+    //printf("this is sender: %s", sender);
     char first_char = sender[0];
-    printf("this is char first char %d\n", first_char);
+    //printf("this is char first char %d\n", first_char);
 
     //Received leave message from non-client server
     if (first_char >= '0' && first_char <= '9') {
@@ -252,7 +252,7 @@ static void Respond_To_Message() {
     printf("A change in membership has occurred!\n");
 
     //If server gets a leave message from a single client-server spread group, LEAVE THAT GROUP ALSO.
-    printf("this is sender: %s", sender);
+    //printf("this is sender: %s", sender);
     char first_char = sender[0];
     printf("this is char first char %d\n", first_char);
 
@@ -262,8 +262,10 @@ static void Respond_To_Message() {
       //this means client has joined the group you've already joined. Do NOT do reconciliation process!!!
       return; 
     }
-
-
+  
+    //Should we leave the group that the client and server are in in the above process ^^
+    //so that the group isn't rejoined when the partition no longer persists
+    
     printf("Entering reconciliation process\n");
     //Set all servers in partition to false
     for (int i = 0; i < NUM_SERVERS; i++) {
