@@ -201,7 +201,7 @@ static void User_command() {
     // Wait for secs_to_wait seconds (max) to receive a response from the server!
     // Start timer 
     int start_time = time(NULL);
-    int secs_to_wait = 3;
+    int secs_to_wait = 2;
     bool connection_established = false;
 
     //Loop for 1 seconds at 1/10-second intervals, checking if the mailbox has stuff in it
@@ -233,8 +233,6 @@ static void User_command() {
         if (Is_caused_leave_mess(service_type)) {
           continue;
         }
-
-
 
         printf("this is service type: %d\n", service_type);
         printf("this is info type: %d\nThis is sender: %s\n", info->type, sender);
@@ -610,7 +608,7 @@ static void print_header(Header *header) {
 //Takes in command-line args for spread name and user
 static void Usage(int argc, char *argv[]) {
   sprintf(Client_name, "client_usero_mk_ss");
-  sprintf(Spread_name, "10100");
+  sprintf(Spread_name, "10160");
 
   while (--argc > 0) {
     argv++;
