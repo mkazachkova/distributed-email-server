@@ -513,9 +513,7 @@ static void Read_message() {
   ////////////////////////// LIST HEADERS MESSAGE RECEIVED //////////////////////////
   //NOTE: Make sure to make all EMPTY HEADERS have a message_number of -1
 
-  if (info->type == 1) { //this is to "list headers" message received from server 
-    //TODO: implement!
-
+  if (info->type == 1) { //this is to "list headers" message received from server     
     for (int i = 0; i < MAX_HEADERS_IN_PACKET; i++) {
       if (info->headers[i].message_number != -1) {
         print_header(&(info->headers[i]));
@@ -657,7 +655,8 @@ static void Read_message() {
 }
 
 static void print_header(Header *header) {
-  printf("%d. From: %s\nSubject: %s\n", header->message_number, header->sender, header->subject);
+  printf("%d. %s\n", header->message_number, !(header->read) ? "***NEW MESSAGE!***" : "");
+  printf("From: %s\nSubject: %s\n", header->sender, header->subject);
 }
 
 //Takes in command-line args for spread name and user

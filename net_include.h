@@ -117,9 +117,10 @@ typedef struct info_for_server {
 
 
 typedef struct header {
-  int   message_number;
+  int   message_number;                 
   char  sender[MAX_NAME_LEN];
   char  subject[MAX_NAME_LEN];
+  bool  read;                             // whether the email was read or not
 } Header;
 
 
