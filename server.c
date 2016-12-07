@@ -247,6 +247,7 @@ static void Respond_To_Message() {
   }
 
 
+  //************************** RECONCILIATION PROCESS *************************//
   //This method is triggered whenever there is a change in membership detected!
   if (Is_caused_network_mess(service_type)) {     
     //    num_matrices_received = 0;
@@ -267,8 +268,9 @@ static void Respond_To_Message() {
       //printf("this is target_groups: %s\n", target_groups[0]);
       SP_leave(Mbox, sender);
       printf("Server has received that the client has been disconnected from the client-server group due to partition. Server has also disconnected\n");
-      //this means client has joined the group you've already joined. Do NOT do reconciliation process!!!
+      //this means client has LEFT the group that ONLY you two are in. Do NOT do reconciliation process!!!
       //I don''t think it means it joined ^^^ I think it means that it left...when it joins not a network message, right?
+      //yea you're right lol i must have copypasted that from somewhere :P (made fixes in comment)
       return; 
     }
 
@@ -285,6 +287,7 @@ static void Respond_To_Message() {
     num_servers_in_partition = 0;
 
     //change in membership has occured
+    //populate servers_in_partition array with the new servers in the partition
     for (int i = 0; i < num_groups; i++) {
       int num = atoi(&(target_groups[i][strlen(target_groups[i]) - 1]));
       servers_in_partition[num] = true;
@@ -307,7 +310,7 @@ static void Respond_To_Message() {
     }
 
     //Print merge matrix sent (for debug)
-    printf("\n\nmerge matrix before merging:\n");
+    printf("\n\n\n/******** MERGE MATRIX BEFORE RECONCILIATION BEGUN: ********/\n\n\n");    
     for (int i = 0; i < NUM_SERVERS; i++) {
       for (int j = 0; j < NUM_SERVERS; j++) {
         printf("%d ", merge->matrix[i][j]);
@@ -342,7 +345,6 @@ static void Respond_To_Message() {
       num_matrices_received++;
 
       printf("*************this is number groups inside of the for loop: %d\n", num_groups);
-
 
       
       printf("\n\nPRINTING MERGE MATRIX RECEIVED from server: %d\n", merge->machine_index);
@@ -436,7 +438,7 @@ static void Respond_To_Message() {
 
     
     //Print merge matrix sent (for debug)
-    printf("\n\nmerge matrix after everything:\n");
+    printf("\n\n\n/******** MERGE MATRIX AFTER RECONCILIATION COMPLETED: ********/\n\n\n");
     for (int i = 0; i < NUM_SERVERS; i++) {
       for (int j = 0; j < NUM_SERVERS; j++) {
         printf("%d ", merge_matrix[i][j]);
@@ -450,7 +452,6 @@ static void Respond_To_Message() {
 
 
   // **************************** PARSE NON-MEMBERSHIP MESSAGES **************************** //
-
   //Cast first digit into integer to find out the type  
   int *type = (int*) tmp_buf;
 
