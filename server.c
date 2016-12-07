@@ -216,7 +216,7 @@ static void Respond_To_Message() {
     printf("\n"); 
     return;
 
-  } else if (Is_caused_leave_mess(service_type)) {
+  } else if (Is_caused_leave_mess(service_type) || Is_caused_disconnect_mess(service_type)) {
     //If server gets a leave message from a single client-server spread group, LEAVE THAT GROUP ALSO.
     //printf("this is sender: %s", sender);
     char first_char = sender[0];
@@ -224,7 +224,7 @@ static void Respond_To_Message() {
 
     //Received leave message from non-client server
     if (first_char >= '0' && first_char <= '9') {
-      printf("Received leave message from non-server\n");
+      printf("Received %s message from non-server\n", Is_caused_disconnect_mess(service_type) ? "disconnect" : "leave");
       SP_leave(Mbox, sender);
       return; //this means client has left group between client and server; also leave client group
     }
