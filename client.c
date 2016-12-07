@@ -509,32 +509,38 @@ static void Read_message() {
     fflush(stdout);
     return;
   }
-  
-  //should be triggered when we receive something
-  InfoForClient *info = (InfoForClient *) tmp_buf;  
-  printf("We have received a new info for client object of type %d\n", info->type);
 
+  
+  int *type = (int*) tmp_buf;
 
   ////////////////////////// LIST HEADERS MESSAGE RECEIVED //////////////////////////
   //NOTE: Make sure to make all EMPTY HEADERS have a message_number of -1
 
-  if (info->type == 1) { //this is to "list headers" message received from server     
+  if (*type == 1) { //this is to "list headers" message received from server     
+    //should be triggered when we receive something
+    HeaderForClient *info_header = (HeaderForClient *) tmp_buf;  
+
     for (int i = 0; i < MAX_HEADERS_IN_PACKET; i++) {
-      if (info->headers[i].message_number != -1) {
-        print_header(&(info->headers[i]));
+      if (info_header->headers[i].message_number != -1) {
+        print_header(&(info_header->headers[i]));
         printf("\n");
       }
     }
 
   //////////////////////// PRINT EMAIL BODY MESSAGE RECEIVED ////////////////////////
-  } else if (info->type == 2) { //"print email body" message received from server (mark as read server side)
+  } else if (*type == 2) { //"print email body" message received from server (mark as read server side)
+    //should be triggered when we receive something
+    InfoForClient *info = (InfoForClient *) tmp_buf;  
+
     printf("To: %s\nFrom: %s\nSubject: %s\nBody: %s\n",
             info->email.emailInfo.to_field, info->email.emailInfo.from_field, 
             info->email.emailInfo.subject, info->email.emailInfo.message);
 
 
   //////////////////////// PRINT MEMBERSHIP MESSAGE RECEIVED ////////////////////////
-  } else if (info->type == 3) { //print memberships
+  } else if (*type == 3) { //print memberships
+    //should be triggered when we receive something
+    InfoForClient *info = (InfoForClient *) tmp_buf;  
 
     //NOTE: Make sure to set unused servers to the empty string in server.c
     for (int i = 0; i < NUM_SERVERS; i++) {
