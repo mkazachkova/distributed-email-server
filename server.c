@@ -42,6 +42,8 @@ int                 lamport_counter = 0;
 int                 num_emails_checked = 0;
 int                 min_seen_global = -1;
 int                 global_counter = 0;
+int                 min_global = 0;
+
 
 // Global variables used for sending header to client
 int                 message_number_stamp = 1;
@@ -65,6 +67,7 @@ static void   print_update(void *update);
 static void   send_updates_for_merge(void *update);
 static void   add_to_struct_to_send(void *data);
 static void   add_to_header(Email *email);
+static bool   can_delete_update(void* update);
 static int    max(int one, int two);
 static int    min(int one, int two);
 
@@ -435,6 +438,25 @@ static void Respond_To_Message() {
       }
 
     }
+
+    //delete things in updates array that we no longer need
+    int min = INT_MAX;
+    bool can_move_forward = true;
+    for (int i = 0; i < NUM_SERVERS; i++) {
+      for (int j = 0; j < NUM_SERVERS; j++) {
+        if (min_array[j][i] < min) {
+          min = min_array[j][i];
+        }
+      }
+      min_global = min;
+      //for index i in updates array delete up until and including the update with the min value
+      can_move_forward = true;
+      while(can_move_forward) {
+        can_move_forward = remove_from_beginning(&(array_of_updates_list[i]), can_delete_update);
+      }
+    }
+
+
 
     
     //Print merge matrix sent (for debug)
@@ -1170,6 +1192,16 @@ void send_updates_for_merge(void* temp) {
   if (might_be_sent->timestamp.message_index > min_seen_global) {
     SP_multicast(Mbox, AGREED_MESS, group, 2, sizeof(Update), (char*)might_be_sent);
   }
+}
+
+
+
+bool can_delete_update(void* temp) {
+  Update *update = (Update*) temp;
+  if (update->timestamp.message_index <= min_global) {
+    return true; //this means we can delete since the index on the update is less than what everyone has
+  }
+  return false;
 }
 
 
