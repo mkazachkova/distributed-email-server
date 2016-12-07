@@ -52,8 +52,8 @@ int main() {
   remove_from_end(&list2);
   print_list(&list2, printInt);
 
-  remove_from_beginning(&list2);
-  print_list(&list2, printInt);
+  //  remove_from_beginning(&list2);
+  //  print_list(&list2, printInt);
 
   //Insert several more elements
   int my_int7 = 6;
