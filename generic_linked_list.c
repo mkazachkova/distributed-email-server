@@ -41,7 +41,7 @@ void add_to_end(List *list, void *data) {
   return;
 }
 
-
+/*
 void remove_from_beginning(List *list) {
   if (list->num_nodes == 0) {
     printf("You cannot remove from an empty list!\n");
@@ -62,7 +62,43 @@ void remove_from_beginning(List *list) {
   list->num_nodes--;
 
   return;
+} 
+*/
+
+
+
+bool remove_from_beginning(List *list, int (*delete_or_not_func)(void *)) {
+  if (list->num_nodes == 0) {
+    printf("You cannot remove from an empty list!\n");
+    return false; //do nothing-> there is nothing to remove
+  }
+
+  assert(list->num_nodes > 0);
+
+  Node *temp = list->head;
+  assert(temp != NULL);
+
+  //If it receives 0, does NOT remove anything 
+  if ((*delete_or_not_func)(temp->data) == 0) {
+    return false;
+  }
+  
+  Node *n = list->head;
+  list->head = n->next;
+
+  if (list->num_nodes == 1) {
+    list->tail = NULL;
+  } else {
+    list->head->prev = NULL;
+  }
+
+  free(n);
+  list->num_nodes--;
+
+  return true;
 }
+
+
 
 
 void remove_from_end(List *list) {
