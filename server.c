@@ -249,6 +249,10 @@ static void Respond_To_Message() {
 
   //This method is triggered whenever there is a change in membership detected!
   if (Is_caused_network_mess(service_type)) {     
+    //    num_matrices_received = 0;
+
+
+    int number_of_groups = num_groups;
     printf("A change in membership has occurred!\n");
 
     //If server gets a leave message from a single client-server spread group, LEAVE THAT GROUP ALSO.
@@ -267,7 +271,9 @@ static void Respond_To_Message() {
       //I don''t think it means it joined ^^^ I think it means that it left...when it joins not a network message, right?
       return; 
     }
-  
+
+
+    printf("\nTHIS IS NUM GROUPS after receiving network message %d\n", num_groups);
     //Should we leave the group that the client and server are in in the above process ^^
     //so that the group isn't rejoined when the partition no longer persists
     
@@ -301,6 +307,7 @@ static void Respond_To_Message() {
     }
 
     //Print merge matrix sent (for debug)
+    printf("\n\nmerge matrix before merging:\n");
     for (int i = 0; i < NUM_SERVERS; i++) {
       for (int j = 0; j < NUM_SERVERS; j++) {
         printf("%d ", merge->matrix[i][j]);
@@ -334,6 +341,18 @@ static void Respond_To_Message() {
                  &mess_type, &endian_mismatch, sizeof(MergeMatrix), (char*)merge);
       num_matrices_received++;
 
+      printf("*************this is number groups inside of the for loop: %d\n", num_groups);
+
+
+      
+      printf("\n\nPRINTING MERGE MATRIX RECEIVED from server: %d\n", merge->machine_index);
+      for (int i = 0; i < NUM_SERVERS; i++) {
+        for (int j = 0; j < NUM_SERVERS; j++) {
+          printf("%d ", merge->matrix[i][j]);
+        }
+        printf("\n");
+      }
+      
       //Process MergeMatrix
       for (int i = 0; i < NUM_SERVERS; i++) {
         for (int j = 0; j < NUM_SERVERS; j++) {
@@ -343,9 +362,10 @@ static void Respond_To_Message() {
           merge_matrix[i][j] = max(merge_matrix[i][j], merge->matrix[i][j]);
         }
       }
-
+      free(merge);
+      merge = NULL;
       //Exit loop once num_groups merge matrices have been received
-      if (num_matrices_received == num_groups) {
+      if (num_matrices_received == number_of_groups) {
         break;
       }
     }
@@ -372,6 +392,11 @@ static void Respond_To_Message() {
             max_seen = merge_matrix[j][i];
             who_sends[i] = j;
           }
+        }
+      }
+      for (int k = 0; k < NUM_SERVERS; k++) {
+        if (servers_in_partition[k]) {
+          merge_matrix[k][i] = max_seen;
         }
       }
       //reset max_seen back to 0
@@ -408,6 +433,17 @@ static void Respond_To_Message() {
       }
 
     }
+
+    
+    //Print merge matrix sent (for debug)
+    printf("\n\nmerge matrix after everything:\n");
+    for (int i = 0; i < NUM_SERVERS; i++) {
+      for (int j = 0; j < NUM_SERVERS; j++) {
+        printf("%d ", merge_matrix[i][j]);
+      }
+      printf("\n");
+    }
+
 
     return;
   }
