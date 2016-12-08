@@ -428,6 +428,18 @@ static void Respond_To_Message() {
       max_seen = 0;
     }
 
+
+    /*
+      The above code is the issue with doing cascading merges. Since we update to max seen under the assumption
+      there is a chance that each process won't get all of the updates that it says it has....
+      what if...before we start the reconcililng thing we change our row in the merge matrix with the 
+      number that we have up to for each index in our updates array. That way when we reconcile each process
+      knows a correct representation of what updates other processes have
+     */
+
+
+
+    
     //For debug: Print the who sends array to see who is sending what updates
     printf("printing who sends array!\n");
     for (int i = 0; i < NUM_SERVERS; i++) {
