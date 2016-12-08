@@ -172,23 +172,22 @@ static void Respond_To_Message() {
   ret = SP_receive(Mbox, &service_type, sender, 100, &num_groups, target_groups,
                       &mess_type, &endian_mismatch, MAX_PACKET_LEN, (char*)tmp_buf);
 
-  printf("\nATTN: MESSAGE RECEIVED WITH SERVICE TYPE: %d\n", service_type);
+  printf("\nATTN: MESSAGE RECEIVED WITH SERVICE TYPE: %d From Sender: %s\n", service_type, sender);
 
-  printf("this is a sender: %s\n", sender);
   // **************************** PARSE MEMBERSHIP MESSAGES **************************** //
 
   //If transition message, do nothing
   if (Is_transition_mess(service_type)) {
-    printf("Transition message received!\n");
+    //  printf("Transition message received!\n");
     return;
   }
 
   //Parsing the server entering message (Should only be executed at the beginning of the program)
   if (Is_caused_join_mess(service_type)) {
-    printf("A join message was received. Here are the contents of target_groups:\n");
-    for (int i = 0; i < num_groups; i++) {
-      printf("%s\n", target_groups[i]);
-    }   
+    // printf("A join message was received. Here are the contents of target_groups:\n");
+    //for (int i = 0; i < num_groups; i++) {
+    //printf("%s\n", target_groups[i]);
+    //}   
 
     //printf("this is sender: %s", sender);
     char first_char = sender[0];
@@ -196,17 +195,17 @@ static void Respond_To_Message() {
 
     //If number received, then a NON-server group was joined by a client.
     if (first_char >= '0' && first_char <= '9') {
-      printf("Received join message from non-server.\n");
+      //printf("Received join message from non-server.\n");
       return; //this means client has joined the group you've already joined. Do nothing
     }
     
     //Otherwise, it is a server group.
-    printf("Received join message from server.\n");
+    //printf("Received join message from server.\n");
 
     //Change servers_in_partition array to reflect current servers in array
     for (int i = 0; i < num_groups; i++) {
       int num = atoi(&(target_groups[i][strlen(target_groups[i]) - 1]));
-      printf("Adding server with name %s into index %d...\n", target_groups[i], num);
+      //printf("Adding server with name %s into index %d...\n", target_groups[i], num);
       servers_in_partition[num] = true;
       num_servers_in_partition++;
     }
@@ -227,7 +226,7 @@ static void Respond_To_Message() {
 
     //Received leave message from non-client server
     if (first_char >= '0' && first_char <= '9') {
-      printf("Received %s message from non-server\n", Is_caused_disconnect_mess(service_type) ? "disconnect" : "leave");
+      //printf("Received %s message from non-server\n", Is_caused_disconnect_mess(service_type) ? "disconnect" : "leave");
       SP_leave(Mbox, sender);
       return; //this means client has left group between client and server; also leave client group
     }
@@ -257,12 +256,12 @@ static void Respond_To_Message() {
 
 
     int number_of_groups = num_groups;
-    printf("A change in membership has occurred!\n");
+    //printf("A change in membership has occurred!\n");
 
     //If server gets a leave message from a single client-server spread group, LEAVE THAT GROUP ALSO.
     //printf("this is sender: %s", sender);
     char first_char = sender[0];
-    printf("this is char first char %d\n", first_char);
+    //printf("this is char first char %d\n", first_char);
 
     //If number received, then a NON-server group was partitioned
     if (first_char >= '0' && first_char <= '9') {
@@ -278,7 +277,7 @@ static void Respond_To_Message() {
     }
 
 
-    printf("\nTHIS IS NUM GROUPS after receiving network message %d\n", num_groups);
+    //printf("\nTHIS IS NUM GROUPS after receiving network message %d\n", num_groups);
     //Should we leave the group that the client and server are in in the above process ^^
     //so that the group isn't rejoined when the partition no longer persists
     
@@ -298,9 +297,9 @@ static void Respond_To_Message() {
     }
 
     //Print all values in target_group (all the members in our partition) -- for debug
-    for (int i = 0; i < num_groups; i++) {
-      printf("%s\n", target_groups[i]);
-    }
+    //for (int i = 0; i < num_groups; i++) {
+    //printf("%s\n", target_groups[i]);
+    //}
 
     //Allocate space for and populate MergeMatrix sent to other servers
     MergeMatrix *merge = malloc(sizeof(MergeMatrix));
@@ -313,13 +312,14 @@ static void Respond_To_Message() {
     }
 
     //Print merge matrix sent (for debug)
-    printf("\n\n\n/******** MERGE MATRIX BEFORE RECONCILIATION BEGUN: ********/\n\n\n");    
-    for (int i = 0; i < NUM_SERVERS; i++) {
+    
+    //printf("\n\n\n/******** MERGE MATRIX BEFORE RECONCILIATION BEGUN: ********/\n\n\n");    
+    /*for (int i = 0; i < NUM_SERVERS; i++) {
       for (int j = 0; j < NUM_SERVERS; j++) {
         printf("%d ", merge->matrix[i][j]);
       }
       printf("\n");
-    }
+    }*/
 
     //send 2d MergeMatrix array to everyone else
     SP_multicast(Mbox, AGREED_MESS, group, 2, sizeof(MergeMatrix), (char*)merge);
@@ -349,12 +349,12 @@ static void Respond_To_Message() {
 
       
       char first_char = sender[0];
-      printf("this is char first char %d\n", first_char);
+      //printf("this is char first char %d\n", first_char);
       
       //If number received, then a NON-server group was partitioned
       if (first_char >= '0' && first_char <= '9') {
-        printf("message received from nonserver during merge matrix. This is service type: %d", service_type);
-        printf("Received network message from non-server.\n");
+        //printf("message received from nonserver during merge matrix. This is service type: %d", service_type);
+        //printf("Received network message from non-server.\n");
         //printf("this is sender of non-server thing: %s\n", sender);
         //printf("this is target_groups: %s\n", target_groups[0]);
         // SP_leave(Mbox, sender);
@@ -367,16 +367,16 @@ static void Respond_To_Message() {
       
       num_matrices_received++;
 
-      printf("*************this is number groups inside of the for loop: %d\n", num_groups);
+      //printf("*************this is number groups inside of the for loop: %d\n", num_groups);
 
       
-      printf("\n\nPRINTING MERGE MATRIX RECEIVED from server: %d\n", merge->machine_index);
-      for (int i = 0; i < NUM_SERVERS; i++) {
-        for (int j = 0; j < NUM_SERVERS; j++) {
-          printf("%d ", merge->matrix[i][j]);
-        }
-        printf("\n");
-      }
+      printf("\n\nMERGE MATRIX RECEIVED from server: %d\n", merge->machine_index);
+      //for (int i = 0; i < NUM_SERVERS; i++) {
+      //for (int j = 0; j < NUM_SERVERS; j++) {
+      //  printf("%d ", merge->matrix[i][j]);
+      //}
+      //printf("\n");
+      //}
       
       //Process MergeMatrix
       for (int i = 0; i < NUM_SERVERS; i++) {
@@ -403,9 +403,9 @@ static void Respond_To_Message() {
     printf("This is servers in partition array: \n");
     
     //For debug: print servers in our new partition
-    for (int i = 0; i < NUM_SERVERS; i++) {
-      printf("%d ", servers_in_partition[i]);
-    }
+    //for (int i = 0; i < NUM_SERVERS; i++) {
+    //printf("%d ", servers_in_partition[i]);
+    //}
 
     //Find which server has the maximum
     for (int i = 0; i < NUM_SERVERS; i++) {
@@ -435,6 +435,8 @@ static void Respond_To_Message() {
       printf("%d ", who_sends[i]);
     }
 
+    printf("\n");
+    
     //Do the actual sending of messages
     int min_seen = INT_MAX;
     for (int i = 0; i < NUM_SERVERS; i++) {
@@ -533,8 +535,8 @@ static void Respond_To_Message() {
 
   if (*type == 1) {
     InfoForServer *info = (InfoForServer*) tmp_buf;
-    printf("This is the username: %s\n", info->user_name);    
-    printf("type: %d\n", *type);
+    //printf("This is the username: %s\n", info->user_name);    
+    //printf("type: %d\n", *type);
     bool created_new_user = create_user_if_nonexistent(info->user_name);
 
     //Only send update to other servers if new user was created
@@ -558,8 +560,8 @@ static void Respond_To_Message() {
 
     //We know that the message received was of type InfoForServer, so we can cast it accordingly
     InfoForServer *info = (InfoForServer*) tmp_buf;
-    printf("This is the username: %s\n", info->user_name);    
-    printf("type: %d\n", *type);
+    //printf("This is the username: %s\n", info->user_name);    
+    //printf("type: %d\n", *type);
     bool created_new_user = create_user_if_nonexistent(info->user_name);
 
     // Send an InfoForClient object back to client with a unique group name saying that 
@@ -575,7 +577,7 @@ static void Respond_To_Message() {
     //Join group and send to client
     SP_join(Mbox, group_for_client); 
     strcpy(info_client->client_server_group_name, group_for_client);
-    printf("this is client server group name: %s\n",info_client->client_server_group_name);
+    //printf("this is client server group name: %s\n",info_client->client_server_group_name);
 
     //Send message back to client confirming the connection occurred
     SP_multicast(Mbox, AGREED_MESS, sender, 2, sizeof(InfoForClient), (char*)info_client);
@@ -602,7 +604,7 @@ static void Respond_To_Message() {
     //We know that the thing that was sent was of type InfoForServer, so we can cast it accordingly
     //    InfoForServer *info = (InfoForServer *) tmp_buf;    
 
-    printf("List headers message received!\n");
+    //printf("List headers message received!\n");
     InfoForServer *info = (InfoForServer*) tmp_buf;
     User *user = find(&(users_list), info->user_name, compare_users);
     
@@ -652,11 +654,11 @@ static void Respond_To_Message() {
     //memcpy(to_be_sent->updates_array, merge_matrix[my_machine_index], sizeof(merge_matrix[my_machine_index]));
     
     //Print the contents of the email that was received for debugging purposes
-    printf("Sending an email update to other servers! \nHere's the Email:\n");
-    printf("TO: %s\n", to_be_sent->email.emailInfo.to_field);
-    printf("FROM: %s\n", to_be_sent->email.emailInfo.from_field);
-    printf("SUBJECT: %s\n", to_be_sent->email.emailInfo.subject);
-    printf("MESSAGE: %s\n", to_be_sent->email.emailInfo.message);
+    //printf("Sending an email update to other servers! \nHere's the Email:\n");
+    //printf("TO: %s\n", to_be_sent->email.emailInfo.to_field);
+    //printf("FROM: %s\n", to_be_sent->email.emailInfo.from_field);
+    //printf("SUBJECT: %s\n", to_be_sent->email.emailInfo.subject);
+    //printf("MESSAGE: %s\n", to_be_sent->email.emailInfo.message);
     
     //Send the Update to ALL OTHER SERVERS in the same partition
     SP_multicast(Mbox, AGREED_MESS, group, 2, sizeof(Update), (char*)to_be_sent);
@@ -680,21 +682,21 @@ static void Respond_To_Message() {
     
     //set global variable back equal to zero
     num_emails_checked = 0;
-    printf("this is user's name: %s\n", user->name);
-    printf("this is user email list:\n");
-    print_list(&(user->email_list), print_email);
-    printf("this is message to delete: %d\n", info->message_to_delete);
+    //printf("this is user's name: %s\n", user->name);
+    //printf("this is user email list:\n");
+    //print_list(&(user->email_list), print_email);
+    //printf("this is message to delete: %d\n", info->message_to_delete);
     Email *email = find_backwards(&(user->email_list), (void*)&(info->message_to_delete), compare_email_for_find);
 
     if (email == NULL) {
-      printf("Error: should not be null yet!\n");
+      //printf("Error: should not be null yet!\n");
       //CHECK IF NULL AND SEND ERROR MESSAGE BACK TO USER
-
+      //do we actually need o do this or can we leave it the way it is??
       return;
     }
 
     TimeStamp timestamp = email->emailInfo.timestamp;
-    printf("THIS IS THE EMAIL TIMESTAMP COUNTER: %d\n\n", timestamp.counter);
+    //printf("THIS IS THE EMAIL TIMESTAMP COUNTER: %d\n\n", timestamp.counter);
     to_be_sent->timestamp_of_email = timestamp;
 
     
@@ -702,12 +704,12 @@ static void Respond_To_Message() {
     //merge_matrix[my_machine_index][my_machine_index] = update_index;
     //memcpy(to_be_sent->updates_array, merge_matrix[my_machine_index], sizeof(merge_matrix[my_machine_index]));
 
-    printf("\nPrinting merge matrix: \n");
+    //printf("\nPrinting merge matrix: \n");
     for (int i = 0; i < NUM_SERVERS; i++) {
       for (int j = 0; j < NUM_SERVERS; j++) {
-        printf("%d ", merge_matrix[i][j]);
+        //  printf("%d ", merge_matrix[i][j]);
       }
-      printf("\n");
+      //printf("\n");
     }
     
     
@@ -733,21 +735,21 @@ static void Respond_To_Message() {
     
     //set global variable back equal to zero
     num_emails_checked = 0;
-    printf("this is user's name: %s\n", user->name);
-    printf("this is user email list:\n");
+    //printf("this is user's name: %s\n", user->name);
+    //printf("this is user email list:\n");
     print_list(&(user->email_list), print_email);
-    printf("this is message to read: %d\n", info->message_to_read);
+    //printf("this is message to read: %d\n", info->message_to_read);
     Email *email = find_backwards(&(user->email_list), (void*)&(info->message_to_read), compare_email_for_find);
 
     if (email == NULL) {
-      printf("Error: should not be null yet!\n");
+      //printf("Error: should not be null yet!\n");
       //CHECK IF NULL AND SEND ERROR MESSAGE BACK TO USER
 
       return;
     }
 
     TimeStamp timestamp = email->emailInfo.timestamp;
-    printf("THIS IS THE EMAIL TIMESTAMP COUNTER: %d\n\n", timestamp.counter);
+    //printf("THIS IS THE EMAIL TIMESTAMP COUNTER: %d\n\n", timestamp.counter);
     to_be_sent->timestamp_of_email = timestamp;
 
     
@@ -764,12 +766,12 @@ static void Respond_To_Message() {
     info_for_client->type = 2; // this means that an email has been sent back for the client to read
     info_for_client->email = *email;
 
-    printf("\nPrinting merge matrix: \n");
+    //printf("\nPrinting merge matrix: \n");
     for (int i = 0; i < NUM_SERVERS; i++) {
       for (int j = 0; j < NUM_SERVERS; j++) {
-        printf("%d ", merge_matrix[i][j]);
+        //  printf("%d ", merge_matrix[i][j]);
       }
-      printf("\n");
+      //printf("\n");
     }
     
     SP_multicast(Mbox, AGREED_MESS, sender, 2, sizeof(InfoForClient), (char*)info_for_client);
@@ -804,7 +806,7 @@ static void Respond_To_Message() {
   } else if (*type == 10) { //server received a NEW EMAIL update from another server
     //Cast into Update type
     Update *update = (Update*) tmp_buf;
-    printf("we have received an update for a new email!\n");
+    //printf("we have received an update for a new email!\n");
     create_user_if_nonexistent(update->email.emailInfo.to_field); //create new user if new user doesn't exist yet
     print_list(&users_list, print_user);
 
@@ -818,6 +820,7 @@ static void Respond_To_Message() {
       }
     }
 
+    /*
     printf("\nPrinting merge matrix: \n");
     for (int i = 0; i < NUM_SERVERS; i++) {
       for (int j = 0; j < NUM_SERVERS; j++) {
@@ -825,7 +828,7 @@ static void Respond_To_Message() {
       }
       printf("\n");
     }
-    
+    */
 
     //insert(&(array_of_updates_list[update->timestamp.machine_index]), (void*)update, compare_update);
 
@@ -841,44 +844,45 @@ static void Respond_To_Message() {
     assert(user_found != NULL); //should never be null because we just created it if it's null
     Email *temp = find(&(user_found->email_list), (void*)&(update->email), compare_email);
     if (temp != NULL) {
-      printf("Have received an update for an email that we already have! IGNORING!!!!!");
+      //printf("Have received an update for an email that we already have! IGNORING!!!!!");
       //email exists so don't want to process it
       return;
     }
     
     if (existing_update != NULL) {
-      printf("Update already exists! Should only show up in a merge!!\n");
+      //printf("Update already exists! Should only show up in a merge!!\n");
       return;
     } else {
       //update is new! We want to insert it into our array!!!!
       insert(&(array_of_updates_list[update->timestamp.machine_index]), (void*)update, compare_update);
 
+      
       printf("Printing array of updates list: \n");
       for (int i = 0; i < NUM_SERVERS; i++) {
         printf("This is the linked list for index %d: \n", i);
         print_list(&(array_of_updates_list[i]), print_update);
       }
     
-      printf("this is subject: %s\n", update->email.emailInfo.subject);
+      //printf("this is subject: %s\n", update->email.emailInfo.subject);
     
       User *temp = find(&users_list, (void*)update->email.emailInfo.to_field, compare_users);
       assert(temp != NULL);
-      printf("User found! Here's their name: %s\n", temp->name);
+      //printf("User found! Here's their name: %s\n", temp->name);
 
 
-      printf("\nTHIS IS THE LAMPORT COUNTER THAT WE ARE GOING TO BE INSERTING: \n");
-      printf("This is counter: %d and message index: %d and machine index: %d\n",
-             update->email.emailInfo.timestamp.counter, update->email.emailInfo.timestamp.message_index, update->email.emailInfo.timestamp.machine_index);
+      //printf("\nTHIS IS THE LAMPORT COUNTER THAT WE ARE GOING TO BE INSERTING: \n");
+      //printf("This is counter: %d and message index: %d and machine index: %d\n",
+      //     update->email.emailInfo.timestamp.counter, update->email.emailInfo.timestamp.message_index, update->email.emailInfo.timestamp.machine_index);
 
       insert(&(temp->email_list),(void*) &(update->email), compare_email);
-      printf("inserted into user's email. Now printing user's email inbox: \n");
-      print_list(&(temp->email_list), print_email);
+      //printf("inserted into user's email. Now printing user's email inbox: \n");
+      //print_list(&(temp->email_list), print_email);
     }
 
   } else if (*type == 11) { //server received a READ EMAIL update from another server
     //Cast into Update type
     Update *update = (Update*) tmp_buf;
-    printf("we have received an update for a new email!\n");
+    //printf("we have received an update for a new email!\n");
 
     //TODO: updates_array needs to be taken into account; update our 2d array
     for (int i = 0; i < NUM_SERVERS; i++) {
@@ -887,6 +891,7 @@ static void Respond_To_Message() {
       }
     }
 
+    /*
     printf("\nPrinting merge matrix: \n");
     for (int i = 0; i < NUM_SERVERS; i++) {
       for (int j = 0; j < NUM_SERVERS; j++) {
@@ -894,12 +899,12 @@ static void Respond_To_Message() {
       }
       printf("\n");
     }
-   
+    */
     //insert(&(array_of_updates_list[update->timestamp.machine_index]), (void*)update, compare_update);
 
     Update *existing_update = find(&(array_of_updates_list[update->timestamp.machine_index]),(void*)update, compare_update);
     if (existing_update != NULL) {
-      printf("Update already exists! Should only show up in a merge!!\n");
+      //printf("Update already exists! Should only show up in a merge!!\n");
       return;
     } else {
       //update is new! We want to insert it into our array!!!!
@@ -911,7 +916,7 @@ static void Respond_To_Message() {
         print_list(&(array_of_updates_list[i]), print_update);
       }
     
-      printf("this is subject: %s\n", update->email.emailInfo.subject);
+      //printf("this is subject: %s\n", update->email.emailInfo.subject);
 
       /**
          How is the above code working (printing the subject)? Are we sending the whole email? Aren't we just sending the timestamp?
@@ -923,7 +928,7 @@ static void Respond_To_Message() {
       
       User *temp = (User*) find(&users_list, (void*)update->user_name, compare_users);
       assert(temp != NULL);
-      printf("User found! Here's their name: %s\n", temp->name);
+      //printf("User found! Here's their name: %s\n", temp->name);
 
       printf("timestamp of email (just counter and machine index): %d %d\n", update->timestamp_of_email.counter, update->timestamp_of_email.machine_index);
 
@@ -952,7 +957,7 @@ static void Respond_To_Message() {
   } else if (*type == 12) { //server received a DELETE EMAIL update from another server
     //Cast into Update type
     Update *update = (Update*) tmp_buf;
-    printf("we have received an update for a new email!\n");
+    //printf("we have received an update for a new email!\n");
 
     //TODO: updates_array needs to be taken into account; update our 2d array
     for (int i = 0; i < NUM_SERVERS; i++) {
@@ -961,6 +966,7 @@ static void Respond_To_Message() {
       }
     }
 
+    /*
     printf("\nPrinting merge matrix: \n");
     for (int i = 0; i < NUM_SERVERS; i++) {
       for (int j = 0; j < NUM_SERVERS; j++) {
@@ -968,13 +974,13 @@ static void Respond_To_Message() {
       }
       printf("\n");
     }
-   
+    */
     //insert(&(array_of_updates_list[update->timestamp.machine_index]), (void*)update, compare_update);
 
     Update *existing_update = find(&(array_of_updates_list[update->timestamp.machine_index]),(void*)update, compare_update);
     if (existing_update != NULL) {
       //ignore update; not new!
-      printf("Update already exists! Should only show up in a merge!!\n");
+      //printf("Update already exists! Should only show up in a merge!!\n");
       return;
     } else {      
       //update is new! We want to insert it into our array and process!!!!
@@ -986,7 +992,7 @@ static void Respond_To_Message() {
         print_list(&(array_of_updates_list[i]), print_update);
       }
     
-      printf("this is subject: %s\n", update->email.emailInfo.subject);
+      //printf("this is subject: %s\n", update->email.emailInfo.subject);
 
 
       
@@ -998,7 +1004,7 @@ static void Respond_To_Message() {
       
       User *temp = (User*) find(&users_list, (void*)update->user_name, compare_users);
       assert(temp != NULL);
-      printf("User found! Here's their name: %s\n", temp->name);
+      //printf("User found! Here's their name: %s\n", temp->name);
 
       printf("timestamp of email (just counter and machine index): %d %d\n", update->timestamp_of_email.counter, update->timestamp_of_email.machine_index);
 
@@ -1030,9 +1036,9 @@ static void Respond_To_Message() {
   } else if (*type == 13) { //server received a NEW USER update from another server
 
     Update *update = (Update*) tmp_buf;
-    printf("we have received an update for a new user with name: %s\n", update->user_name);
+    //printf("we have received an update for a new user with name: %s\n", update->user_name);
     create_user_if_nonexistent(update->user_name);
-    print_list(&users_list, print_user);
+    //print_list(&users_list, print_user);
 
     //now we want to process the array that we received and update our own 2d array with the info
     //memcpy(merge_matrix[update->timestamp.machine_index], update->updates_array, sizeof(update->updates_array));
@@ -1046,19 +1052,19 @@ static void Respond_To_Message() {
         merge_matrix[i][update->timestamp.machine_index] = update->timestamp.message_index;
       }
     }
-
+    /*
     printf("\nPrinting merge matrix: \n");
     for (int i = 0; i < NUM_SERVERS; i++) {
       for (int j = 0; j < NUM_SERVERS; j++) {
         printf("%d ", merge_matrix[i][j]);
       }
       printf("\n");
-    }
+      }*/
 
     //can't just insert it; want to check if we have the update already
     Update *existing_update = find(&(array_of_updates_list[update->timestamp.machine_index]),(void*)update, compare_update);
     if (existing_update != NULL) {
-      printf("Update already exists! Should only show up in a merge!!\n");
+      //printf("Update already exists! Should only show up in a merge!!\n");
       return;
     } else {
       //update is new! We want to insert it into our array!!!!
@@ -1073,7 +1079,7 @@ static void Respond_To_Message() {
   // **************************** parse reconciliation message **************************** //    
   } else if (*type == 20) { //server received a MERGEMATRIX from another server
 
-
+    //why is this here?????
 
   } else { //unknown type!
     printf("Unknown type received! Exiting program...\n");
@@ -1091,10 +1097,10 @@ bool create_user_if_nonexistent(char name[MAX_NAME_LEN]) {
     //create new user
     User *user_to_insert = malloc(sizeof(User));
     strcpy(user_to_insert->name, name);
-    printf("before creating email list for user\n");
+    //printf("before creating email list for user\n");
     create_list(&(user_to_insert->email_list), sizeof(Email));
     add_to_end(&users_list, user_to_insert);
-    printf("new user created!\n");
+    //printf("new user created!\n");
     return true;
   }
 
@@ -1110,22 +1116,22 @@ bool create_user_if_nonexistent(char name[MAX_NAME_LEN]) {
 //Prints a user and their associated list of emails (For debugging)
 void print_user(void *user) {
   User *temp = (User*) user;
-  printf("Username: %s", temp->name);
+  //printf("Username: %s", temp->name);
   print_list(&(temp->email_list), print_email);
 }
 
 
 //Returns if two users have the same name
 int compare_users(void* user1, void* user2) {
-  printf("entered compare users\n");
+  //printf("entered compare users\n");
   User *user_in_linked_list = (User*) user1;
   if (user_in_linked_list->name == NULL) {
-    printf("user is null\n");
+    //printf("user is null\n");
   }
 
   char *user_search = (char*) user2;
-  printf("comparing %s and %s", (user_in_linked_list->name), user_search);
-  printf("with strcmp value: %d\n", strcmp(user_in_linked_list->name, user_search));
+  //printf("comparing %s and %s", (user_in_linked_list->name), user_search);
+  //printf("with strcmp value: %d\n", strcmp(user_in_linked_list->name, user_search));
 
   return strcmp(user_in_linked_list->name, user_search); 
 }
@@ -1197,9 +1203,9 @@ int compare_email_for_find(void* temp1, void* temp2) {
   Email *email_being_checked = (Email*) temp1;
 
 
-  printf("Email being checked: %s\n", email_being_checked->emailInfo.subject);
-  printf("This is the one we want %d\n", *the_one_we_want);
-  printf("This is num emails checked: %d\n", num_emails_checked);
+  //printf("Email being checked: %s\n", email_being_checked->emailInfo.subject);
+  //printf("This is the one we want %d\n", *the_one_we_want);
+  //printf("This is num emails checked: %d\n", num_emails_checked);
   //global var called num_emails_checked
   if (email_being_checked->exists && !email_being_checked->deleted) {
     num_emails_checked++;
@@ -1236,7 +1242,7 @@ void add_to_struct_to_send(void *data) {
 void add_to_header(Email *email) {
   //Sends the header struct once it has been filled with 10 emails
   if (num_headers_added == 10) {
-    printf("Sending header!\n");
+    //printf("Sending header!\n");
     SP_multicast(Mbox, AGREED_MESS, sender, 2, sizeof(HeaderForClient), (char*)client_header_response);
     
     num_headers_added = 0;
@@ -1266,7 +1272,7 @@ void send_updates_for_merge(void* temp) {
 
 bool can_delete_update(void* temp) {
   Update *update = (Update*) temp;
-  printf("entered can delete update!\nThis is message index on timestamp: %d\nThis is min_global: %d\n", update->timestamp.message_index, min_global);
+  //printf("entered can delete update!\nThis is message index on timestamp: %d\nThis is min_global: %d\n", update->timestamp.message_index, min_global);
   if (update->timestamp.message_index <= min_global) {
     return true; //this means we can delete since the index on the update is less than what everyone has
   }

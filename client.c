@@ -41,7 +41,7 @@ static bool logged_in = false;
 
 
 static bool connected_to_server = false;
-
+static bool can_print_user = true;
 
 int main(int argc, char *argv[]) {
   int     ret;
@@ -342,7 +342,7 @@ static void User_command() {
     }
 
     //for debug
-    printf("this is to: %s\nThis is subject: %s\nThis is message: %s\n", to, subject, mess);
+    //printf("this is to: %s\nThis is subject: %s\nThis is message: %s\n", to, subject, mess);
 
     //Send the new message to the server
     InfoForServer *new_message_request = malloc(sizeof(InfoForServer));
@@ -445,9 +445,12 @@ static void User_command() {
     break;
   }
   }
-  
-  printf("\nUser> ");
-  fflush(stdout);
+
+
+  if (can_print_user) {
+    printf("\nUser> ");
+    fflush(stdout);
+  }
 }
 
 
@@ -477,7 +480,7 @@ static void Read_message() {
   printf("\nATTN: MESSAGE RECEIVED W/ SERVICE TYPE: %d FROM %s SIZE %d\n", service_type, sender, ret);
 
   if (Is_transition_mess(service_type)) {
-    printf("Transition message received.\n");
+    //printf("Transition message received.\n");
 
     free(tmp_buf);
     printf("User> ");
@@ -486,8 +489,8 @@ static void Read_message() {
   }
 
   if (Is_caused_network_mess(service_type)) {
-    printf("Network message received- partition or merge occurred!\n");
-    printf("You have been disconnected from your server. Please try connecting to another one.\n");
+    //printf("Network message received- partition or merge occurred!\n");
+    printf("**********You have been disconnected from your server. Please try connecting to another one**********.\n");
 
     //Make curr_group_connected_to back to empty string
     SP_leave(Mbox, curr_group_connected_to);
@@ -503,7 +506,7 @@ static void Read_message() {
   }
   
   if (Is_caused_join_mess(service_type)) {
-    printf("Join message received!\n");
+    //printf("Join message received!\n");
     free(tmp_buf);
     printf("User> ");
     fflush(stdout);
@@ -527,12 +530,16 @@ static void Read_message() {
   if (*type == 1) { //this is to "list headers" message received from server     
     //should be triggered when we receive something
     HeaderForClient *info_header = (HeaderForClient *) tmp_buf;  
-
+    //can_print_user = false;
     for (int i = 0; i < MAX_HEADERS_IN_PACKET; i++) {
       if (info_header->headers[i].message_number != -1) {
         print_header(&(info_header->headers[i]));
         printf("\n");
-      }
+      } //else {
+        //can_print_user = true;
+        //break;
+      //}
+      
     }
 
   //////////////////////// PRINT EMAIL BODY MESSAGE RECEIVED ////////////////////////
@@ -540,7 +547,7 @@ static void Read_message() {
     //should be triggered when we receive something
     InfoForClient *info = (InfoForClient *) tmp_buf;  
 
-    printf("To: %s\nFrom: %s\nSubject: %s\nBody: %s\n",
+    printf("****************************************\nTO: %s\nFROM: %s\nSUBJECT: %s\n\nBODY: %s\n****************************************\n",
             info->email.emailInfo.to_field, info->email.emailInfo.from_field, 
             info->email.emailInfo.subject, info->email.emailInfo.message);
 
