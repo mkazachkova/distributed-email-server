@@ -129,6 +129,7 @@ typedef struct header {
 typedef struct header_for_client {
   int    type;                                       // 1 is list header
   Header headers[MAX_HEADERS_IN_PACKET];             // used for sending headers
+  bool   done; //might be used for telling the client whether it needs to receive another one of these 
 } HeaderForClient;
 
 typedef struct info_for_client {

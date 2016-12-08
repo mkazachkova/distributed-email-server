@@ -534,19 +534,46 @@ static void Read_message() {
 
   if (*type == 1) { //this is to "list headers" message received from server     
     //should be triggered when we receive something
+   
+
+
+
     HeaderForClient *info_header = (HeaderForClient *) tmp_buf;  
+
+    bool done = info_header->done;
+    
     //can_print_user = false;
     for (int i = 0; i < MAX_HEADERS_IN_PACKET; i++) {
       if (info_header->headers[i].message_number != -1) {
         print_header(&(info_header->headers[i]));
         printf("\n");
-      } //else {
+      }
+
+      //else {
         //can_print_user = true;
         //break;
       //}
       
     }
+    
+    while (!done) {
+      HeaderForClient *info_header_t = malloc(sizeof(HeaderForClient)); 
+      SP_receive(Mbox, &service_type, sender, 100, &num_groups, target_groups,
+                 &mess_type, &endian_mismatch, sizeof(HeaderForClient), (char*)info_header_t);
 
+      for (int i = 0; i < MAX_HEADERS_IN_PACKET; i++) {
+        if (info_header_t->headers[i].message_number != -1) {
+          print_header(&(info_header_t->headers[i]));
+          printf("\n");
+        }
+        
+      }
+      done = info_header_t->done;
+      free(info_header_t);
+      info_header_t = NULL;
+    }
+
+    
   //////////////////////// PRINT EMAIL BODY MESSAGE RECEIVED ////////////////////////
   } else if (*type == 2) { //"print email body" message received from server (mark as read server side)
     //should be triggered when we receive something

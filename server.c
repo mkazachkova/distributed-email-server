@@ -614,11 +614,13 @@ static void Respond_To_Message() {
     //Initializing stuff for backwards iterator
     message_number_stamp = 1;
     num_headers_added = 0;
+    client_header_response->done = false;
     backward_iterator(&(user->email_list), add_to_struct_to_send);
     //send the very last one
     for (int i = num_headers_added; i < 10; i++) {
       client_header_response->headers[i].message_number = -1;
     }
+    client_header_response->done = true;
     SP_multicast(Mbox, AGREED_MESS, sender, 2, sizeof(HeaderForClient), (char*)client_header_response);
     free(client_header_response);
     client_header_response = NULL;
@@ -1234,7 +1236,7 @@ void add_to_struct_to_send(void *data) {
   Email *email = (Email*) data;
   if (email->exists && !email->deleted) {
     add_to_header(email);
-  }
+  } 
 }
 
 
@@ -1250,6 +1252,7 @@ void add_to_header(Email *email) {
     client_header_response = NULL;
     client_header_response = malloc(sizeof(HeaderForClient));
     client_header_response->type = 1;
+    client_header_response->done = false;
   }
 
   client_header_response->headers[num_headers_added].message_number = message_number_stamp;
