@@ -24,14 +24,16 @@ December 9, 2016
 
 #include "generic_linked_list.h"
 
-#define PORT                  10160
+#define PORT                   10160
 
 // ******************* VARIABLES ******************* //
-#define MAX_NAME_LEN          50
-#define MAX_MESS_LEN          1000
-#define MAX_PACKET_LEN        3000
-#define MAX_HEADERS_IN_PACKET 10
-#define NUM_SERVERS           5
+#define MAX_NAME_LEN           50
+#define MAX_MESS_LEN           1000
+#define MAX_PACKET_LEN         3000
+#define MAX_HEADERS_IN_PACKET  10
+#define NUM_SERVERS            5
+
+#define NUM_FOR_DELETE_UPDATES 5
 
 // **************** DATA STRUCTURES **************** //
 
