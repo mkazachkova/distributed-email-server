@@ -437,6 +437,11 @@ static void User_command() {
     Bye();
     break;
   }
+
+  case 's': {
+    printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
+    break;
+  }
       
   //////////////////////////////////////// DEFAULT CASE ////////////////////////////////////
   default: {
