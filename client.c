@@ -139,7 +139,15 @@ static void User_command() {
   ///////////////////////////////////// LOGIN WITH A USERNAME ///////////////////////////////////
   case 'u': {
     ret = sscanf( &command[2], "%s", curr_user);
-    printf("this is curr user: %s\n", curr_user);
+    //printf("this is curr user: %s\n", curr_user);
+
+    // char temp_buff[50] = "";
+    //sscanf( &command[strlen(curr_user) + 2], "%s", temp_buff);
+    //    printf("this is temp_buff: %s\n", temp_buff);
+    //printf("this is the third command thing: %d\n", command[3]);
+
+    //strcat(curr_user, temp_buff);
+    printf("This is curr user: %s\n", curr_user);
     
     if (logged_in && connected_to_server) { /*DOUBLE CHECK THIS. MY THINKING IS WE SHOULDNT SEND ANYTHING TO SERVER IF NOT CONNECTED*/
       //alert the server that a (potentially) new user might need to be created
@@ -666,8 +674,10 @@ static void Read_message() {
 }
 
 static void print_header(Header *header) {
-  printf("%d. %s\n", header->message_number, !(header->read) ? "***NEW MESSAGE!***" : "");
-  printf("From: %s\nSubject: %s\n", header->sender, header->subject);
+  //printf("%d. %s\n", header->message_number, !(header->read) ? "***NEW MESSAGE!***" : "");
+  printf("*****************   MESSAGE NUMBER: %d   *******************\n", header->message_number);
+  printf("From: %s\nSubject: %s\nRead: %d\n", header->sender, header->subject, header->read);
+  printf("------------------------------------------------------------\n");
 }
 
 //Takes in command-line args for spread name and user
