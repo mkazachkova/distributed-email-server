@@ -43,7 +43,7 @@ int                 num_emails_checked = 0;
 int                 min_seen_global = -1;
 int                 global_counter = 0;
 int                 min_global = 0;
-
+int                 num_updates_received = 0;
 
 // Global variables used for sending header to client
 int                 message_number_stamp = 1;
@@ -342,9 +342,29 @@ static void Respond_To_Message() {
     //Iterate until all (num_groups number of) merge matrices have been processed
     for (;;) {
       //Allocate space for a MergeMatrix and receive it from sender
+
       MergeMatrix *merge = malloc(sizeof(MergeMatrix));
       SP_receive(Mbox, &service_type, sender, 100, &num_groups, target_groups,
                  &mess_type, &endian_mismatch, sizeof(MergeMatrix), (char*)merge);
+
+      
+      char first_char = sender[0];
+      printf("this is char first char %d\n", first_char);
+      
+      //If number received, then a NON-server group was partitioned
+      if (first_char >= '0' && first_char <= '9') {
+        printf("message received from nonserver during merge matrix. This is service type: %d", service_type);
+        printf("Received network message from non-server.\n");
+        //printf("this is sender of non-server thing: %s\n", sender);
+        //printf("this is target_groups: %s\n", target_groups[0]);
+        // SP_leave(Mbox, sender);
+        //printf("Server has received that the client has been disconnected from the client-server group due to partition. Server has also disconnected\n");
+        //this means client has LEFT the group that ONLY you two are in. Do NOT do reconciliation process!!!
+        //I don''t think it means it joined ^^^ I think it means that it left...when it joins not a network message, right?
+        //yea you're right lol i must have copypasted that from somewhere :P (made fixes in comment)
+        continue; 
+      }
+      
       num_matrices_received++;
 
       printf("*************this is number groups inside of the for loop: %d\n", num_groups);
@@ -439,13 +459,15 @@ static void Respond_To_Message() {
 
     }
 
+    /*
+    
     //delete things in updates array that we no longer need
     int min = INT_MAX;
     bool can_move_forward = true;
     for (int i = 0; i < NUM_SERVERS; i++) {
       for (int j = 0; j < NUM_SERVERS; j++) {
-        if (min_array[j][i] < min) {
-          min = min_array[j][i];
+        if (merge_matrix[j][i] < min) {
+          min = merge_matrix[j][i];
         }
       }
       min_global = min;
@@ -456,7 +478,7 @@ static void Respond_To_Message() {
       }
     }
 
-
+    */
 
     
     //Print merge matrix sent (for debug)
@@ -477,7 +499,35 @@ static void Respond_To_Message() {
   //Cast first digit into integer to find out the type  
   int *type = (int*) tmp_buf;
 
+  if (*type >= 10 && *type <= 13 ) {
+    Update *temp = (Update*) tmp_buf;
+    Update *existing_update = find(&(array_of_updates_list[temp->timestamp.machine_index]),(void*)temp, compare_update);
+    if (existing_update == NULL) {
+      num_updates_received++;                   
+    }
+  }
 
+  if (num_updates_received >= NUM_FOR_DELETE_UPDATES) {
+    num_updates_received = 0;
+    //delete things in updates array that we no longer need
+    int min = INT_MAX;
+    bool can_move_forward = true;
+    for (int i = 0; i < NUM_SERVERS; i++) {
+      for (int j = 0; j < NUM_SERVERS; j++) {
+        if (merge_matrix[j][i] < min) {
+          min = merge_matrix[j][i];
+        }
+      }
+      min_global = min;
+      //for index i in updates array delete up until and including the update with the min value
+      can_move_forward = true;
+      while(can_move_forward) {
+        can_move_forward = remove_from_beginning(&(array_of_updates_list[i]), can_delete_update);
+      }
+    }
+
+  }
+  
   ///////////////////////////////// parse messages from client ////////////////////////////////
   //If *type is of type 1-7, we have RECEIVED A MESSAGE FROM THE CLIENT.
 
@@ -779,7 +829,23 @@ static void Respond_To_Message() {
 
     //insert(&(array_of_updates_list[update->timestamp.machine_index]), (void*)update, compare_update);
 
+
+    //this logic is used in the chance that we receive an update for an email that we already have; we ignore it!
     Update *existing_update = find(&(array_of_updates_list[update->timestamp.machine_index]),(void*)update, compare_update);
+    //User *user = find(&(users_list), update->user_name, compare_users);
+    //if (user == NULL) {
+    //create_user_if_nonexistent(update->user_name);
+    //}
+
+    User *user_found = find(&(users_list), update->email.emailInfo.to_field, compare_users);
+    assert(user_found != NULL); //should never be null because we just created it if it's null
+    Email *temp = find(&(user_found->email_list), (void*)&(update->email), compare_email);
+    if (temp != NULL) {
+      printf("Have received an update for an email that we already have! IGNORING!!!!!");
+      //email exists so don't want to process it
+      return;
+    }
+    
     if (existing_update != NULL) {
       printf("Update already exists! Should only show up in a merge!!\n");
       return;
@@ -868,13 +934,13 @@ static void Respond_To_Message() {
 
       if (email == NULL) {
         printf("\n\nNEW EMAIL IS BEING CREATED!!\n\n");
-        Email* new_email = malloc(sizeof(Email));
+        Email *new_email = malloc(sizeof(Email));
         new_email->emailInfo.timestamp = update->timestamp_of_email;
         new_email->read = true;
         new_email->exists = false;
         new_email->deleted = false;
             
-        insert(&(temp->email_list),(void*) &(new_email), compare_email);      
+        insert(&(temp->email_list),(void*)(new_email), compare_email);      
       } else {
         email->read = true;
       }
@@ -943,13 +1009,15 @@ static void Respond_To_Message() {
 
       if (email == NULL) {
         printf("\n\nNEW EMAIL IS BEING CREATED!!\n\n");
-        Email* new_email = malloc(sizeof(Email));
+        Email *new_email = malloc(sizeof(Email));
         new_email->emailInfo.timestamp = update->timestamp_of_email;
+        //new_email->emailInfo.timestamp.counter = update->timestamp_of_email.counter;
+        //new_email->emailInfo.timestamp.machine_index = update->timestamp_of_email.machine_index
         new_email->read = false;
         new_email->exists = false;
         new_email->deleted = true;
             
-        insert(&(temp->email_list),(void*) &(new_email), compare_email);      
+        insert(&(temp->email_list),(void*) (new_email), compare_email);      
       } else {
         email->deleted = true;
       }
@@ -1198,6 +1266,7 @@ void send_updates_for_merge(void* temp) {
 
 bool can_delete_update(void* temp) {
   Update *update = (Update*) temp;
+  printf("entered can delete update!\nThis is message index on timestamp: %d\nThis is min_global: %d\n", update->timestamp.message_index, min_global);
   if (update->timestamp.message_index <= min_global) {
     return true; //this means we can delete since the index on the update is less than what everyone has
   }

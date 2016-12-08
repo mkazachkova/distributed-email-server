@@ -72,7 +72,7 @@ bool remove_from_beginning(List *list, bool (*delete_or_not_func)(void *)) {
     printf("You cannot remove from an empty list!\n");
     return false; //do nothing-> there is nothing to remove
   }
-
+  printf("in the deleting method!\n");
   assert(list->num_nodes > 0);
 
   Node *temp = list->head;
@@ -82,7 +82,8 @@ bool remove_from_beginning(List *list, bool (*delete_or_not_func)(void *)) {
   if ((*delete_or_not_func)(temp->data) == 0) {
     return false;
   }
-  
+
+  printf("removing node now!\n");
   Node *n = list->head;
   list->head = n->next;
 
