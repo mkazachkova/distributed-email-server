@@ -260,3 +260,19 @@ void print_list_backwards(List *list, void (*fptr)(void *)) {
   printf("\n");
   return;
 }
+
+void* get_head(List *list) {
+  if (list->num_nodes == 0) {
+    return NULL;
+  }
+
+  return list->head->data;
+}
+
+void* get_tail(List *list) {
+  if (list->num_nodes == 0) {
+    return NULL:
+  }
+
+  return list->tail->data;
+}

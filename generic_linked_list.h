@@ -42,3 +42,5 @@ void backward_iterator(List *list, void (*fptr)(void *));
 // (last element is a fxn ptr)
 void print_list(List *list, void (*fptr)(void *));
 void print_list_backwards(List *list, void (*fptr)(void *));
+void* get_head(List *list);
+void* get_tail(list *list);
