@@ -385,7 +385,7 @@ static void User_command() {
     sscanf(&command[2], "%s", group);
     int to_be_deleted = atoi(group);
 
-    //Make sure the user inputs a valid email number to read
+    //Make sure the user inputs a valid email number to delete
     if (to_be_deleted > headers_list.num_nodes || to_be_deleted <= 0) {
       printf("Invalid email number to delete.\n");
     }
@@ -394,7 +394,7 @@ static void User_command() {
     delete_request->type = 5;                             //for a print membership request
     sprintf(delete_request->user_name, "%s", curr_user);  //populate the user_name field for who is sending the email
 
-    //set the request's message_to_read field
+    //set the request's message_to_delete field
     TimeStamp *nth_timestamp = get_timestamp_associated_with_header(to_be_deleted);
     assert(nth_timestamp != NULL); //this should never be null since we error check it's in bounds above
 
@@ -416,7 +416,7 @@ static void User_command() {
     }
     
     if (headers_list.num_nodes == 0) {
-      printf("You must first list headers in order to choose to delete a particular message.\n");
+      printf("You must first list headers in order to choose to read a particular message.\n");
     }
 
     //Retrieve which email we want to read from command-line input
