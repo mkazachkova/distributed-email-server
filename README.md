@@ -116,7 +116,18 @@ typedef struct mergematrix {
 
 The `MergeMatrix` is what is used to get servers that were once in different partitions back "up to speed" (so to speak). There will be more discussion of this later in the elaboration of the protocol.
 
-### Other Important Variables
+### Important Variables  
+Variables that individual clients will contain:
+* `int  curr_server = -1;` contains the current server to which a client is connected.
+* `char curr_user[MAX_NAME_LEN];` contains the current user that the client is logged in as.
+* `char hardcoded_server_names[NUM_SERVERS][MAX_NAME_LEN];` contains the public names of the servers, and is indexed into using `curr_server` when deciding which server to send messages to.
+* `char curr_group_connected_to[MAX_NAME_LEN] = "";` contains the name of the current server connected to for the client-server only group (which contains only a single client and server).
+* `bool logged_in = false;` contains the state of the user; that is, whether the user is logged in or not.  
+* `bool connected_to_server = false;` contains whether the user is connected to a server.
+* `bool can_print_user = true;` contains a bool dictating whether we can print `User >` when listing headers.
+* `List headers_list;` contains the persistent list of headers, repopulated whenever the person using the client program types in 'l'.
+
+
 Variables that individual servers will contain:
 *   
 *  
@@ -125,14 +136,7 @@ Variables that individual servers will contain:
 *   
 *  
 
-Variables that individual clients will contain:
-*  
-*  
-*  
-*   
-*  
-*   
-*  
+
 
 ## System Design  
 
@@ -197,16 +201,34 @@ The names of the methods are quite self-explanatory, and are extensively used to
 ## Algorithm Description  
 ### Client-Side
 ##### Login as user: `u <username>`
+*
+*
+*
 
 ##### Connect to specific mail server: `c <1 - 5>`
+*
+*
+*
 
 ##### List headers of received mail: `l`
+*
+*
+*
 
 ##### Delete a message: `d <#>
+*
+*
+*
 
 ##### Read a message: `r <#>
+*
+*
+*
 
 ##### Print membership identities: `v`
+*
+*
+*
 
 ### Server-Side
 #### Client-Server Methods
