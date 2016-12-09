@@ -379,7 +379,7 @@ static void User_command() {
     }
     
     if (headers_list.num_nodes == 0) {
-      printf("You must first list headers in order to choose to delete a particular message.\n");
+      printf("Email deletion index invalid. NOTE: You must first list headers in order to choose to delete a particular message.\n");
       break;
     }
 
@@ -418,7 +418,7 @@ static void User_command() {
     }
     
     if (headers_list.num_nodes == 0) {
-      printf("You must first list headers in order to choose to read a particular message.\n");
+      printf("Email read index invalid. NOTE: You must first list headers in order to choose to delete a particular message.\n");
       break;
     }
 
