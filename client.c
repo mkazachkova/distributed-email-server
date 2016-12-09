@@ -430,6 +430,7 @@ static void User_command() {
     //Make sure the user inputs a valid email number to read
     if (to_be_read > headers_list.num_nodes || to_be_read <= 0) {
       printf("Invalid email number to read.\n");
+      break;
     }
 
     InfoForServer *read_request = malloc(sizeof(InfoForServer));
