@@ -100,6 +100,12 @@ typedef struct update {
 
 This `Update` contains a lamport timestamp for ordering purposes (as well as contains an additional field of the server from whence it originated). It also contains an `Email` if a new email has been sent, as well as other potentially useful information depending on the update type. 
 
+#### InfoForServer
+
+#### InfoForClient
+
+#### HeaderForCleint
+
 #### MergeMatrix  
 Another message unit that is sent between servers during the process of reconciliation is the `MergeMatrix`. This is what is sent whenever a server detects that there is a change in membership. The struct is declared as below:  
 ```
@@ -115,6 +121,7 @@ typedef struct mergematrix {
 * `int matrix[NUM_SERVERS][NUM_SERVERS]` is the `mergematrix` itself: a NUM_SERVERS * NUM_SERVERS dimensional matrix.
 
 The `MergeMatrix` is what is used to get servers that were once in different partitions back "up to speed" (so to speak). There will be more discussion of this later in the elaboration of the protocol.
+
 
 ### Important Variables  
 Variables that individual clients will contain:
@@ -223,34 +230,67 @@ The names of the methods are quite self-explanatory, and are extensively used to
 ### Client-Side
 #### User-Input Operations
 ##### Login as user: `u <username>`
-*  
-*  
-*  
+* Retrieve the user name input into the command line.
+* Empty the persistent linked list containing headers listed (since that was for the previous user).
+* Only if the user is logged in and connected to some server, create an `InfoForServer` request. Populate it with type 1, write the name of the user logged into the client onto the `user_name` field, and send a message to the server to which it is connected.
+* Otherwise, if the user was not logged in, then set the `logged_in` field equal to true.
 
 ##### Connect to specific mail server: `c <1 - 5>`
-*  
-*  
-*  
+* If the user has not been logged in, prompt the user to log in and break.
+* Otherwise, parse the input and store in `curr_server`.
+* If `curr_group_connected_to` is not the empty string, disconnect from `curr_group_connected_to`, set `curr_group_connected_to` to the empty string, and set `connected_to_server` to false.
+* Then, prepare `InfoForServer`, populating it with type 2 and the `curr_user`. Send the server connection request to the server.  
+* Begin a timer and enter into a loop.
+* While the timer is less than `secs_to_wait` seconds, go through the loop.
+  * `SP_poll` on the mailbox.
+  * If `SP_poll` returns a value less than 0, print that an error occurred and exit.
+  * If `SP_poll` returns a value greater than 0, receive the information using `SP_receive` into an `InfoForClient` object. 
+    * If the the thing received was an `Is_caused_leave_mess` message, ignore it.
+    * Otherwise, join the group in the `client_server_group_name` field of the `InfoForClient` object that was received. Set the `connected_to_server` and `connection_established` flag to true and break out of the loop.
+  * If `SP_poll` returns 0, usleep for 1/10th of a second and enter the loop again.
+* If a connection has not yet been established after `secs_to_wait` seconds, print that a server could not be connected to.  
 
 ##### List headers of received mail: `l`
-*  
-*  
-*  
+* If the user has not yet connected to the server, prompt the user to connect and break.  
+* Otherwise, create a `InfoForServer` request, populating it with type 3 and the `curr_user`.  
+* Send the request to the server to which it is connected.  
+* Empty the persistent `headers_list` and print the User Name and Responding Server to the client, as specified in the design document.  
+
+##### Mail a message: `m`
+* If the user has not yet connected to the server, prompt the user to connect and break.  
+* Otherwise, get the TO, SUBJECT, and MESSAGE fields from the user.
+* Then, create a new `InfoForServer` request, populating it with type 4 and filling in the TO, FROM, SUBJECT, and MESSAGE fields.
+* Sent the request to the server to which the client is connected.
 
 ##### Delete a message: `d <#>`
-*  
-*  
-*  
+* If the user has not yet connected to the server, prompt the user to connect and break.  
+* If the amount of nodes in the `headers_list` is 0, print a statement to the user that they cannot delete any messages and break.
+* Otherwise, take in the number inputed by the user of the email that the user would like to delete as command-line input.
+* If the number they would like to delete is greater than the number of nodes on the `headers_list` or less than 0, print that the number that the user requested is invalid. and break.
+* Create a new `InfoForServer` request, populating it with type 5 and the `curr_user`. Set the request's `message_to_delete` field with the lamport timestamp retrieved from the persistent headers list saved when the user typed in 'l'.
+* Send the request to the server to which the client is connected.
 
 ##### Read a message: `r <#>`
-*  
-*  
-*  
+* If the user has not yet connected to the server, prompt the user to connect and break.  
+* If the amount of nodes in the `headers_list` is 0, print a statement to the user that they cannot read any messages and break.
+* Otherwise, take in the number inputed by the user of the email that the user would like to read as command-line input.
+* If the number they would like to read is greater than the number of nodes on the `headers_list` or less than 0, print that the number that the user requested is invalid. and break.
+* Create a new `InfoForServer` request, populating it with type 6 and the `curr_user`. Set the request's `message_to_read` field with the lamport timestamp retrieved from the persistent headers list saved when the user typed in 'l'.
+* Send the request to the server to which the client is connected.
 
 ##### Print membership identities: `v`
-*  
-*  
-*  
+* If the user has not yet connected to the server, prompt the user to connect and break.  
+* Otherwise, create a new `InfoForServer` request, populating it with type 7 and the `curr_user`. 
+* Send the request to the server to which the client is connected.
+
+##### Quit: `q`
+* Call the `Bye()` method from `class_user.c` to exit gracefully.
+
+##### Clear: `s`
+* Print several new line characters to clear the screen.
+
+##### Undefined Command
+* Print the menu again.
 
 #### Information-Receiving Operations
 ##### Receive Networking-Related Message  

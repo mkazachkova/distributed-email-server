@@ -146,7 +146,6 @@ static void User_command() {
   case 'u': {
     ret = sscanf( &command[2], "%s", curr_user);
 
-    printf("This is curr user: %s\n", curr_user);
     empty_list(&headers_list);
     
     /*DOUBLE CHECK THIS. MY THINKING IS WE SHOULDNT SEND ANYTHING TO SERVER IF NOT CONNECTED*/
@@ -190,7 +189,6 @@ static void User_command() {
       strcpy(curr_group_connected_to, ""); //curr_group_connected_to is blank again!
       connected_to_server = false; //since breaking connection here
     }
-
     
     //Populate InfoForServer struct with information
     InfoForServer *connect_server_request = malloc(sizeof(InfoForServer));
@@ -389,7 +387,6 @@ static void User_command() {
     TimeStamp *nth_timestamp = get_timestamp_associated_with_header(to_be_deleted);
     assert(nth_timestamp != NULL); //this should never be null since we error check it's in bounds above
 
-    //set the request's message_to_delete field
     delete_request->message_to_delete = *nth_timestamp; 
     SP_multicast(Mbox, AGREED_MESS, hardcoded_server_names[curr_server], 2, sizeof(InfoForServer), (char*) delete_request);
 
@@ -478,7 +475,6 @@ static void User_command() {
     break;
   }
   }
-
 
   if (can_print_user) {
     printf("\nUser> ");
