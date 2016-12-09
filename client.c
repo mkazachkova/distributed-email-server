@@ -607,7 +607,7 @@ static void Read_message() {
           print_header(&(info_header_t->headers[i]));
 
           //add header to persistent headers linked list
-          add_header(&(info_header->headers[i])); 
+          add_header(&(info_header_t->headers[i])); 
           printf("\n");
         }
         
@@ -618,7 +618,6 @@ static void Read_message() {
       info_header_t = NULL;
     }
 
-    
   //////////////////////// PRINT EMAIL BODY MESSAGE RECEIVED ////////////////////////
   } else if (*type == 2) { //"print email body" message received from server (mark as read server side)
     //should be triggered when we receive something
