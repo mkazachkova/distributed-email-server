@@ -39,7 +39,7 @@ int                 update_index = 0;
 bool                servers_in_partition[NUM_SERVERS] = { false };
 int                 num_servers_in_partition = 0; //THIS MAY NOT BE CORRECT SO DO NOT USE
 int                 lamport_counter = 0;
-int                 num_emails_checked = 0;
+//int                 num_emails_checked = 0;
 int                 min_seen_global = -1;
 int                 global_counter = 0;
 int                 min_global = 0;
@@ -62,6 +62,9 @@ bool done_sending_for_merge[NUM_SERVERS] = { true };
 int current_i = -1; //this one expecially makes me think this flow control idea is dumb
 int num_updates_received_from_myself = 0;
 int who_sends[NUM_SERVERS] = { -1 };
+int num_sent_in_each_round = 0;
+
+
 
 //Our own methods 
 static void   Respond_To_Message();
@@ -69,7 +72,7 @@ static void   Bye();
 static int    compare_users(void *user1, void *user2);
 static int    compare_email(void *temp, void *temp2);
 static int    compare_update(void* update1, void* update2);
-static int    compare_email_for_find(void* email1, void* email2);
+//static int    compare_email_for_find(void* email1, void* email2);
 static bool   create_user_if_nonexistent(char *name);
 static void   print_user(void *user);
 static void   print_email(void *email);
@@ -476,7 +479,8 @@ static void Respond_To_Message() {
     }
 
     printf("\n");
-    
+
+    num_sent_in_each_round = 0;
     //Do the actual sending of messages
     int min_seen = INT_MAX;
     for (int i = 0; i < NUM_SERVERS; i++) {
@@ -560,8 +564,9 @@ static void Respond_To_Message() {
   }
 
 
-   if (num_updates_received_from_myself % 10 == 0) {
+   if (num_updates_received_from_myself == num_sent_in_each_round) {
     //time to keep on sending. boo
+     num_sent_in_each_round = 0;
      for(int i = 0; i < NUM_SERVERS; i++) {
        if(who_sends[i] == my_machine_index) { //one of the indexes i'm responsible for; keep sending
          if (!done_sending_for_merge[i]) { //means we have more to send for this machine
@@ -1239,6 +1244,8 @@ int compare_update(void* update1, void* update2) {
 
 
 //Compares emails for the find method to get the nth email that exists and has not been deleted
+/*
+
 int compare_email_for_find(void* temp1, void* temp2) {
   //find the nth from end exisiting and undeleted email
   int *the_one_we_want = (int*) temp2;
@@ -1256,7 +1263,7 @@ int compare_email_for_find(void* temp1, void* temp2) {
   }
   return -1;
 }
-
+*/
 
 //Simple max retrieval function
 int max(int first, int second) {
@@ -1311,6 +1318,7 @@ bool send_updates_for_merge(void* temp) {
          might_be_sent->timestamp.message_index, min_update_global[current_i], num_updates_sent_so_far[current_i], max_update_global[current_i]);
   if ((might_be_sent->timestamp.message_index > min_update_global[current_i]) && (num_updates_sent_so_far[current_i] <= 10)) {
     //TODO: need to set that the machine's index onto the update in a new field
+    num_sent_in_each_round++;
     might_be_sent->index_of_machine_resending_update = my_machine_index;
     SP_multicast(Mbox, AGREED_MESS, group, 2, sizeof(Update), (char*)might_be_sent);
     num_updates_sent_so_far[current_i] = num_updates_sent_so_far[current_i] + 1; //im so tired...is this okay to do?
