@@ -7,11 +7,31 @@ December 9, 2016
 ## Premise  
 We aim to write a fault-tolerant distributed mail service for users over a network of computers that is resilient to network partitions and merges. It provides a client with the ability to connect ot a server, send emails to users, list headers of received mail, read messages, delete messages, and print membership of servers in the server's current network component.  
 ## Files Included  
-*  
-*  
-*  
+#### Linked List Files
+* `generic_linked_list.c`: The logic for the generic linked list.
+* `generic_linked_list.h`: The generic linked list header file.
+* `test_linkedlist.c`: Tests for the basic linked list.
+* `test_servermethod.c`: Tests for the linked list on server methods.
+#### Spread Files
+* `spread`: The given file for setting up the spread network.
+* `spmonitor`: The given file for simulating network partitions and merges.
+### Main Program Files
+* `net_include.h`: The header file containing structs used by the client and server to pass information amongst and within each other.
+* `client.c`: The file containing logic for the client. This class was written to be as lightweight and "dumb" as possible, and queries the server when the user inputs in text.
+* `server.c`: The file containing logic for the backend server.
+* `makefile`: The makefile to compile all the files.
+#### Miscellaneous
+* `README.pdf`: The design document
+
 
 ## To Run  
+* To run the spread network, type in `./spread`.
+  * NOTE: This must be done on all 5 machines (ugrad 10-14) before running any clients or servers!
+* To run the server, type in `./server [1 - 5]`. 
+  * No more input is necessary, but it is vital that all the servers are set up and run before clients begin connecting to it. These mail servers processes are meant to be daemons that run forever.
+* To run the client, type in `./client`.
+  * A menu will pop up with options to send, read, and delete mail, as well as join other servers and print membership.
+
 
 ## Overview  
 
