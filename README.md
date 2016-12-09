@@ -143,12 +143,12 @@ Variables that individual servers will contain:
 * `int num_updates_received = 0;` contains [INSERT TEXT HERE]
 * `char sender[MAX_GROUP_NAME];` contains [INSERT TEXT HERE]
 
-# Global Variables used for Sending Headers to Clients
+#### Global Variables used for Sending Headers to Clients
 * `int message_number_stamp = 1;` contains [INSERT TEXT HERE]
 * `int num_headers_added;` contains [INSERT TEXT HERE]
 * `HeaderForClient *client_header_response;` contains [INSERT TEXT HERE]
 
-#Fucking Variables for Fucking Flow Control
+#### Fucking Variables for Fucking Flow Control
 * `int min_update_global[NUM_SERVERS] = { -1 };` contains [INSERT TEXT HERE] 
 * `int max_update_global[NUM_SERVERS] = { -1 };` contains [INSERT TEXT HERE]
 * `int num_updates_sent_so_far[NUM_SERVERS] = { 0 };` contains [INSERT TEXT HERE]
@@ -195,7 +195,7 @@ The use of the wrapper to contain the list is especially nice, since it keeps th
 
 The generic linked list contains function pointers which "outsource" comparisons, printing, etc. to specific node types. There are also several unit tests we wrote to make sure the linked list worked; these can be run by typing in `make test`. The methods that this generic linked list has are listed below:
 
-#### List manipulation methods
+#### List Manipulation Methods
 ```
 void create_list(List *list, size_t data_size);
 void add_to_end(List *list, void *data);
@@ -209,7 +209,7 @@ void backward_iterator(List *list, void (*fptr)(void *));
 void empty_list(List *list);
 ```
 
-#### Accessor methods
+#### Accessor Methods
 ````
 void print_list(List *list, void (*fptr)(void *));
 void print_list_backwards(List *list, void (*fptr)(void *));
@@ -221,6 +221,7 @@ The names of the methods are quite self-explanatory, and are extensively used to
 
 ## Algorithm Description  
 ### Client-Side
+#### User-Input Operations
 ##### Login as user: `u <username>`
 *  
 *  
@@ -248,6 +249,23 @@ The names of the methods are quite self-explanatory, and are extensively used to
 
 ##### Print membership identities: `v`
 *  
+*  
+*  
+
+#### Information-Receiving Operations
+##### Receive Networking-Related Message  
+*  
+*  
+
+##### Receive "List Headers" message from Server
+*  
+*  
+
+##### Receive "Read Message" message from Server
+*  
+*  
+
+##### Receive "Print Membership" message from Server
 *  
 *  
 
