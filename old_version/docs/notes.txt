@@ -1,0 +1,19 @@
+PROTOCOL RELATED
+- If receive update (read, delete) for email that we don't have yet we put an empty node where the email should be with null data (so that we don't print it) and then when we get the email we can just fill the data in the null node  
+* ok
+- Server shouldn't be doing any printing; sends information to client and client prints the information  
+* so everything must be sent in character arrays
+- Can we assume that membership changes happen semifrequently? Would it be better to check for and delete up to what every one has ever time an update is received? how about every n updates? what about just every time there is a change in membership?  
+* a hybrid method
+- So when we are changing membership, and updating our view of what someone we just joined with has, is it ok to just put the max value of values in our new partition, or should we have like some kind of confirmation that is sent?  
+* The former is fine (algorithmically determining it rather than sending confirmation)
+- So we only send the 2d matrix instead of just our items (during a merge) so we know what we can safely delete up to? or is there another use for sending the entire 2d matrix?  
+* Correct, no further use to sending 2d matrix
+
+SPREAD USAGE RELATED
+- How do we make a privage group between a client and a server? (when user selects to join a server, use sp_join, but what group do we pass it?) 
+ie. we think it creates a group if it doesn't already exist... just use username for group?
+* clients send message to a public group that a server itself is in (do not join that group-- only 1 member in that public group)
+* all servers are together in a private group 
+- SP_connect returns the name of a private group. Use that private group to join the group between client and server. But who joins first? I was thinking that the client joins the group first using sp_connect, and then the server joins using the name that is returned from sp_connect...?
+- Will groups contain all of the servers that are currently in the new partition when a REG_MEMB_MESS is sent? So that's how we know who is now in our partition?

@@ -1,0 +1,140 @@
+                            Distributed Systems Final Project
+                            =================================
+
+The goal of the final project is to produce a distributed software system that 
+demonstrates what you have learned in this class and provides a useful service.
+The focus of your project should be on the distributed aspects and correctness 
+of the system and not the graphical, GUI, or other peripheral issues.
+
+General Requirements
+--------------------
+- Efficient use of messages - Don't send messages unnecessarily.
+
+- A detailed description of the algorithm and the system design should be
+  provided. The initial design should be in the first design document.
+  The final report should include an enhanced and updated design document.
+
+- A system that produces correct results for all inputs. 
+
+- An organized Makefile is required.
+
+Delivery Date
+-------------
+Initial design document is due Thursday Nov 10 before class. 
+Final delivery date is Friday December 9, noon. 
+
+
+============================================================
+Project description: Fault-tolerant distributed mail service
+============================================================
+
+Construct a reliable and efficient mail service for users over a 
+network of computers. The service will comprise a mail server and
+a mail client programs.
+
+The service:
+------------
+Every user can connect via a mail client to any one of the replicated servers. 
+
+The mail service provides the following capabilities; each capability
+is one option of a client program's top level menu:
+
+1. Login with a user name. Example: "u Tom". 
+   The user needs to login with a user name to perform any of the tasks below.
+   You should allow the user to login with a different name as part of the 
+   menu at any time, by specifying the new user name in this option ("u Yair").
+
+2. Connecting to a specific mail server. Example: "c 3" will connect to server 3.
+   The client needs to connect to a mail server to perform any of the tasks below.
+
+   You should allow the client program to change its mail server as
+   part of the menu, by specifying the mail server's index. 
+
+   * At any point, the client program may be connected to one mail server only.
+   * To connect to a mail server, all a client needs to do is to set this
+     mail server as its serving server. Client/Server communication should
+     be done using Spread via the client's private group, and a public group
+     with only that mail server in it (used by connected client programs to send
+     messages to that mail server).
+
+3. List the headers of received mail (The service should distinguish between 
+   mail messages that were already read, and unread mail messages): "l"
+   Result: 
+	The result should display the user name, the responding mail server index and 
+	a list of messages. The messages in the list will be numbered (1, 2, 3, ...) 
+    and the sender and subject of each message will be displayed.
+
+	* Each request for a list should result in the most up to date information 
+	  that is possible.
+
+4. Mail a message to a user: "m"
+   	to:  <user name>
+        subject:  <subject string>
+        <msg string>           
+
+          * 'to' and 'subject' are fields that should be added
+            as part of the header, as in the Unix mail service.
+            Note that the size of the msg string can be bounded to 1000 bytes.
+
+5. Delete a mail message (read or unread): Example "d 10" will delete the
+   10th message in the current list of messages.
+
+6. Read a received mail message (read or unread): Example "r 5" will display
+   the content of the 5th message in the current list of messages. 
+   The message should be marked as read thereafter.
+
+7. Print the membership (identities) of the mail servers in the current mail server's 
+   network component. Example "v".
+
+
+The mail servers:
+-----------------
+
+A mail client connects to one of the mail server processes.
+
+Each of the mail server processes is a daemon that runs "forever". The mail server 
+may crash and may subsequently recover. The network between the mail servers may 
+partition and re-merge. The overall set of mail servers is fixed - there are 
+exactly five mail servers, each running on a different ugrad machine.
+
+The mail server is started with its id as a parameter:
+	$ ./server [1-5]
+
+The client programs must always receive a consistent view of their mail, 
+regardless of which mail server is consulted (of course, as consistent  
+as possible, according to the network connectivity). Multiple client programs can be
+logged in as the same user at the same time.
+
+The list of mail messages should be consistent as to which messages have been 
+received, read or deleted. Each mail server should save information separately 
+on disk. Note that mail servers can be eventually consistent even if they are never 
+directly connected (think about eventual path propagation). 
+
+If mail is sent, read, or deleted, possibly in different network partitions, the 
+resulting mailbox should appear in a consistent manner, once the partition is healed 
+(as much as possible based on network connectivity).
+
+
+The membership emulation:
+-------------------------
+The membership emulation will be managed by spmonitor, an interactive program 
+provided with the Spread toolkit. spmonitor can redefine the membership configuration 
+at any time by defining for each Spread daemon which network component it 
+belongs to, or defining some daemons as crashed. Note that spmonitor will generate 
+Spread daemon partitions and crashes, but your program should also handle 
+user-induced crashes (Ctrl+C) of the Spread daemons, mail servers, and mail clients.  
+
+When a Spread daemon crashes, the mail server attached to it has to crash (exit) 
+also. A crashed mail server exits the program immediately! It is not allowed to 
+write to disk after a mail server loses its connection to Spread!
+
+When a mail server crashes, clients connected to that mail server will report the 
+loss of connection to the user, so that the user can connect to another mail server 
+and continue mailing/receiving messages. 
+
+Important note:  The users are not known beforehand, and their number is not bounded.
+
+CS 600.337 students can assume that no mail server or Spread daemon crashes ever. 
+They only need to handle network partitions and merges. Therefore, they do not 
+need to write to or read from disk. This also simplifies the rest of the project.
+
