@@ -53,6 +53,16 @@ HeaderForClient     *client_header_response;
 char                sender[MAX_GROUP_NAME];
 
 
+
+//fucking variables for fucking flow control
+int min_update_global[NUM_SERVERS] = { -1 };
+int max_update_global[NUM_SERVERS] = { -1 };
+int num_updates_sent_so_far[NUM_SERVERS] = { 0 };
+bool done_sending_for_merge[NUM_SERVERS] = { true };
+int current_i = -1; //this one expecially makes me think this flow control idea is dumb
+int num_updates_received_from_myself = 0;
+int who_sends[NUM_SERVERS] = { -1 };
+
 //Our own methods 
 static void   Respond_To_Message();
 static void   Bye();
@@ -64,7 +74,7 @@ static bool   create_user_if_nonexistent(char *name);
 static void   print_user(void *user);
 static void   print_email(void *email);
 static void   print_update(void *update);
-static void   send_updates_for_merge(void *update);
+static bool   send_updates_for_merge(void *update);
 static void   add_to_struct_to_send(void *data);
 static void   add_to_header(Email *email);
 static bool   can_delete_update(void* update);
@@ -274,6 +284,7 @@ static void Respond_To_Message() {
       //I don''t think it means it joined ^^^ I think it means that it left...when it joins not a network message, right?
       //yea you're right lol i must have copypasted that from somewhere :P (made fixes in comment)
       return; 
+
     }
 
 
@@ -408,9 +419,16 @@ static void Respond_To_Message() {
 
     //now both (current merge_matrix and min_array) arrays loaded
     //it's time to figure out which machine needs to send updates
-    int who_sends[NUM_SERVERS] = { -1 }; //array of who must send updates
+    //int who_sends[NUM_SERVERS] = { -1 }; //array of who must send updates
     int max_seen = 0;
     printf("This is servers in partition array: \n");
+
+    //resetting since now global
+    for (int i = 0; i < NUM_SERVERS; i++) {
+      who_sends[i] = -1;
+    }
+
+
     
     //For debug: print servers in our new partition
     //for (int i = 0; i < NUM_SERVERS; i++) {
@@ -472,13 +490,19 @@ static void Respond_To_Message() {
             min_seen = min_array[j][i];
           }
         }
-
+        min_update_global[i] = min_seen; //where we start from
+        Update *last = get_tail(&(array_of_updates_list[i]));
+        max_update_global[i] = last->timestamp.message_index; //where we end
+        done_sending_for_merge[i] = false; //so that we know we are still sending
+        current_i = i; //so that we know which index to use when using our NUMEROUS global arrays (fuck this, again)
+        
         //Set the min_seen_global variable to the minimum we have seen 
         //(global only set here for safety)
         min_seen_global = min_seen;
 
-        // now we actually do the sending
-        forward_iterator(&(array_of_updates_list[i]), send_updates_for_merge);
+        // now we start to send
+        bool more_to_send  = forward_iterator(&(array_of_updates_list[i]), send_updates_for_merge);
+        done_sending_for_merge[i] = !more_to_send; 
       }
 
     }
@@ -529,8 +553,28 @@ static void Respond_To_Message() {
     if (existing_update == NULL) {
       num_updates_received++;                   
     }
+    if (temp->index_of_machine_resending_update == my_machine_index) { //have received an update from ourselves that we resent
+      num_updates_received_from_myself++;
+    }
   }
 
+
+   if (num_updates_received_from_myself % 10 == 0) {
+    //time to keep on sending. boo
+     for(int i = 0; i < NUM_SERVERS; i++) {
+       if(who_sends[i] == my_machine_index) { //one of the indexes i'm responsible for; keep sending
+         if (!done_sending_for_merge[i]) { //means we have more to send for this machine
+           current_i = i; //set our global variable
+           num_updates_sent_so_far[i] = 0; //set this back to zero since it will be incrmemented in interator method
+           bool more_to_send  = forward_iterator(&(array_of_updates_list[i]), send_updates_for_merge);
+           done_sending_for_merge[i] = !more_to_send;
+         }
+       }
+     }
+     
+   }
+
+  
   if (num_updates_received >= NUM_FOR_DELETE_UPDATES) {
     num_updates_received = 0;
     //delete things in updates array that we no longer need
@@ -1258,12 +1302,19 @@ void add_to_header(Email *email) {
 }
 
 //Send updates for a merge only if the message_index is strictly greater than min_seen_global
-void send_updates_for_merge(void* temp) {
+bool send_updates_for_merge(void* temp) {
   Update *might_be_sent = (Update*) temp;
-  if (might_be_sent->timestamp.message_index > min_seen_global) {
+  if (might_be_sent->timestamp.message_index > min_update_global[current_i] && num_updates_sent_so_far[current_i] <= 10) {
+    //TODO: need to set that the machine's index onto the update in a new field
+    might_be_sent->index_of_machine_resending_update = my_machine_index;
     SP_multicast(Mbox, AGREED_MESS, group, 2, sizeof(Update), (char*)might_be_sent);
+    num_updates_sent_so_far[current_i] = num_updates_sent_so_far[current_i] + 1; //im so tired...is this okay to do?
+    min_update_global[current_i] = min_update_global[current_i] + 1; //we do this so that when we start again we aren't resending
+    if (num_updates_sent_so_far[current_i] == 10 && (min_update_global[current_i] < max_update_global[current_i])) { //we've sent our max and need to keep sending
+      return true; //this means we have more to send!!!!!
+    }
   }
-  
+  return false;
 }
 
 

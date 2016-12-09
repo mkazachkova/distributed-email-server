@@ -81,6 +81,7 @@ typedef struct update {
 
   //TODO: We don't need this any more. remove it later?  
   int         updates_array[NUM_SERVERS]; // one-dimensional array containing server's current "view" of updates received
+  int         index_of_machine_resending_update; //will need to inialize to -1 for all updates when we originally send them 
 } Update;
 
 
