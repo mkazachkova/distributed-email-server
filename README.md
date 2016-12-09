@@ -129,13 +129,34 @@ Variables that individual clients will contain:
 
 
 Variables that individual servers will contain:
-*   
-*  
-*   
-*  
-*   
-*  
+#### General Core Variables
+* `List users_list;` contains [INSERT TEXT HERE]
+* `List array_of_updates_list[NUM_SERVERS];` contains [INSERT TEXT HERE]
+* `int my_machine_index;` contains [INSERT TEXT HERE]
+* `int merge_matrix[NUM_SERVERS][NUM_SERVERS];` contains [INSERT TEXT HERE]
+* `int update_index = 0;` contains [INSERT TEXT HERE]
+* `bool servers_in_partition[NUM_SERVERS] = { false };` contains [INSERT TEXT HERE]
+* `int lamport_counter = 0;` contains [INSERT TEXT HERE]
+* `int min_seen_global = -1;` contains [INSERT TEXT HERE]
+* `int global_counter = 0;` contains [INSERT TEXT HERE]
+* `int min_global = 0;` contains [INSERT TEXT HERE]
+* `int num_updates_received = 0;` contains [INSERT TEXT HERE]
+* `char sender[MAX_GROUP_NAME];` contains [INSERT TEXT HERE]
 
+# Global Variables used for Sending Headers to Clients
+* `int message_number_stamp = 1;` contains [INSERT TEXT HERE]
+* `int num_headers_added;` contains [INSERT TEXT HERE]
+* `HeaderForClient *client_header_response;` contains [INSERT TEXT HERE]
+
+#Fucking Variables for Fucking Flow Control
+* `int min_update_global[NUM_SERVERS] = { -1 };` contains [INSERT TEXT HERE] 
+* `int max_update_global[NUM_SERVERS] = { -1 };` contains [INSERT TEXT HERE]
+* `int num_updates_sent_so_far[NUM_SERVERS] = { 0 };` contains [INSERT TEXT HERE]
+* `bool done_sending_for_merge[NUM_SERVERS] = { true };` contains [INSERT TEXT HERE]
+* `int current_i = -1;` contains [INSERT TEXT HERE]
+* `int num_updates_received_from_myself = 0;` contains [INSERT TEXT HERE]
+* `int who_sends[NUM_SERVERS] = { -1 };` contains [INSERT TEXT HERE]
+* `int num_sent_in_each_round = 0;` contains [INSERT TEXT HERE]
 
 
 ## System Design  
@@ -170,7 +191,7 @@ typedef struct {
 } List;
 ```
 
-The use of the wrapper to contain the lists is especially nice, since it keeps the linked list self-contained and the actual methods abstracted.
+The use of the wrapper to contain the list is especially nice, since it keeps the linked list self-contained and abstracted away.
 
 The generic linked list contains function pointers which "outsource" comparisons, printing, etc. to specific node types. There are also several unit tests we wrote to make sure the linked list worked; these can be run by typing in `make test`. The methods that this generic linked list has are listed below:
 
@@ -201,34 +222,34 @@ The names of the methods are quite self-explanatory, and are extensively used to
 ## Algorithm Description  
 ### Client-Side
 ##### Login as user: `u <username>`
-*
-*
-*
+*  
+*  
+*  
 
 ##### Connect to specific mail server: `c <1 - 5>`
-*
-*
-*
+*  
+*  
+*  
 
 ##### List headers of received mail: `l`
-*
-*
-*
+*  
+*  
+*  
 
-##### Delete a message: `d <#>
-*
-*
-*
+##### Delete a message: `d <#>`
+*  
+*  
+*  
 
-##### Read a message: `r <#>
-*
-*
-*
+##### Read a message: `r <#>`
+*  
+*  
+*  
 
 ##### Print membership identities: `v`
-*
-*
-*
+*  
+*  
+*  
 
 ### Server-Side
 #### Client-Server Methods
