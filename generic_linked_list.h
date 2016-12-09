@@ -36,7 +36,7 @@ void* find(List *list, void* data, int (*fptr)(void *, void *));
 void* find_backwards(List *list, void* data, int (*fptr)(void *, void *));
 void forward_iterator(List *list, void (*fptr)(void *));
 void backward_iterator(List *list, void (*fptr)(void *));
-
+void empty_list(List *list);
 
 // Accessor methods
 // (last element is a fxn ptr)

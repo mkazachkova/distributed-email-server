@@ -628,7 +628,9 @@ static void Respond_To_Message() {
     num_headers_added = 0;
     client_header_response->done = false;
     backward_iterator(&(user->email_list), add_to_struct_to_send);
-    //send the very last one
+
+    //send the very last few messages, initializing remaining slots on header to have 
+    //a message_number of -1
     for (int i = num_headers_added; i < 10; i++) {
       client_header_response->headers[i].message_number = -1;
     }
@@ -1269,6 +1271,8 @@ void add_to_header(Email *email) {
 
   client_header_response->headers[num_headers_added].message_number = message_number_stamp;
   client_header_response->headers[num_headers_added].read = email->read;
+  client_header_response->headers[num_headers_added].timestamp = email->emailInfo.timestamp;
+  
   strcpy(client_header_response->headers[num_headers_added].sender, email->emailInfo.from_field);
   strcpy(client_header_response->headers[num_headers_added].subject, email->emailInfo.subject);
   message_number_stamp++;

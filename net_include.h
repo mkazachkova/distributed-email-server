@@ -104,25 +104,28 @@ typedef struct user {
 // Information from clients
 // * sent from clients to servers only
 typedef struct info_for_server {
-  int   type;                             // 1 is change of user
+  int       type;                         // 1 is change of user
                                           // 2 is connect to server
                                           // 3 is list headers 
                                           // 4 is mail message to user
                                           // 5 is delete message
                                           // 6 is read message 
                                           // 7 is print membership
-  char  user_name[MAX_NAME_LEN];          // for new user (?)
-  Email email;
-  int   message_to_delete;
-  int   message_to_read;
+  char      user_name[MAX_NAME_LEN];      // for new user (?)
+  Email     email;
+  TimeStamp message_to_read;              //the timestamp of the EMAIL to delete.
+  TimeStamp message_to_delete;            //the timestamp of the EMAIL to delete.
+  // int   message_to_delete;
+  // int   message_to_read;
 } InfoForServer;
 
 
 typedef struct header {
-  int   message_number;                 
-  char  sender[MAX_NAME_LEN];
-  char  subject[MAX_NAME_LEN];
-  bool  read;                             // whether the email was read or not
+  int       message_number;                 
+  char      sender[MAX_NAME_LEN];
+  char      subject[MAX_NAME_LEN];
+  bool      read;                         // whether the email was read or not
+  TimeStamp timestamp;                    //the lamport timestamp of the email associated with the header
 } Header;
 
 
