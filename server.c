@@ -288,6 +288,16 @@ static void Respond_To_Message() {
     }
     num_servers_in_partition = 0;
 
+
+    //IN THE EVENT OF CASCADING MERGES
+    for (int i = 0; i < NUM_SERVERS; i++) {
+      Update *t = get_tail(&(array_of_updates_list[i]));
+      if (t != NULL) {
+        merge_matrix[my_machine_index][i] = t->timestamp.message_index;
+      }
+    }
+
+    
     //change in membership has occured
     //populate servers_in_partition array with the new servers in the partition
     for (int i = 0; i < num_groups; i++) {
@@ -1281,6 +1291,7 @@ void send_updates_for_merge(void* temp) {
   if (might_be_sent->timestamp.message_index > min_seen_global) {
     SP_multicast(Mbox, AGREED_MESS, group, 2, sizeof(Update), (char*)might_be_sent);
   }
+  
 }
 
 
