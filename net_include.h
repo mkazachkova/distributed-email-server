@@ -114,7 +114,7 @@ typedef struct info_for_server {
                                           // 7 is print membership
   char      user_name[MAX_NAME_LEN];      // for new user (?)
   Email     email;
-  TimeStamp message_to_read;              //the timestamp of the EMAIL to delete.
+  TimeStamp message_to_read;              //the timestamp of the EMAIL to read.
   TimeStamp message_to_delete;            //the timestamp of the EMAIL to delete.
 } InfoForServer;
 

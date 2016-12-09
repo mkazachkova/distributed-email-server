@@ -101,10 +101,66 @@ typedef struct update {
 This `Update` contains a lamport timestamp for ordering purposes (as well as contains an additional field of the server from whence it originated). It also contains an `Email` if a new email has been sent, as well as other potentially useful information depending on the update type. 
 
 #### InfoForServer
+The message unit for messages that are sent from clients to servers. This is what is sent whenever the user inputs anything into the client program. The program parses the user input and then packages it into an `InfoForServer` object to request the necessary information from the user. The `InfoForServer` struct is declared as below:
+```
+typedef struct info_for_server {
+  int       type;
+  char      user_name[MAX_NAME_LEN];
+  Email     email;
+  TimeStamp message_to_read;
+  TimeStamp message_to_delete;
+} InfoForServer;
+```
+
+* `int type` is an integer that defines how the client will process the `InfoForServer` object. 1 refers to a change of user, 2 refers to a request to connect to the server, 3 refers to a request to list headers, 4 refers to a request to mail a message to another user, 5 refers to a delete message request, 6 refers to a read message request, and 7 refers to a print membership request.
+* `char user_name` contains the name of the user who sent the request.
+* `Email email` contains the email that the user wants to send to another user, for a request of type 4.
+* `TimeStamp message_to_read` contains the lamport timestamp of the email to read, for a request of type 6.
+* `TimeStamp message_to_delete` contains the lamport timestamp of the email to delete, for a request of type 5.
 
 #### InfoForClient
+The message unit for messages that are sent from servers to clients. This is what is sent from the server back to the client so that that client can print things onto the screen for the person using the client program. Thi includes headers, messages to be read, and membership messages that tell who else is in the client's current partition. The `InfoForClient` struct is declared as below:
 
-#### HeaderForCleint
+```
+typedef struct info_for_client {
+  int    type; 
+  Email  email;     
+  char   memb_identities[NUM_SERVERS][MAX_NAME_LEN]; 
+  char   client_server_group_name[MAX_NAME_LEN];
+} InfoForClient;
+```
+* `int type` is an integer that defines how the server will process the `InfoForClient` object. 2 refers to a message containing an email body that the client has requested, 3 refers to memberships that a client has requested, and 4 refers to the confirmation from a server that it has successfully connected to a client.
+* `Email email` contains the contents of the email that a client has requested.
+* `char memb_identities` contains the membership identities, responding to when a client requests memberships.
+* char client_server_group_name` contains the name of the group to which the client is to connect when it successfully connects to a server.  
+
+#### HeaderForClient
+A specialized message unit containing only headers for a client to print out to a user. This has been separated from the `InfoForClient` object as to stay within the limits of the size of a packet of under 1600 bytes. The `HeaderForClient` struct is declared as below:
+
+```
+typedef struct header_for_client {
+  int    type;                                       // 1 is list header
+  Header headers[MAX_HEADERS_IN_PACKET];             // used for sending headers
+  bool   done; //might be used for telling the client whether it needs to receive another one of these 
+} HeaderForClient;
+```
+
+The HeaderForClient object contains a type of 1 to identify it when the client is processing things that were sent to it. It contains an array of headers, as well as a boolean for determining when the server has finished sending its last header packet. The individual header struct is declared as below:
+
+```
+typedef struct header {
+  int       message_number;                 
+  char      sender[MAX_NAME_LEN];
+  char      subject[MAX_NAME_LEN];
+  bool      read;                         // whether the email was read or not
+  TimeStamp timestamp;                    //the lamport timestamp of the email associated with the header
+} Header;
+```
+* `int message_number` is the message number of the message that was sent.
+* `char sender` is who sent the message.
+* `char subject` is the subject of the message.
+* `bool read` contains whether the message was read or not.
+* `TimeStamp timestamp` is the lamport timestamp of the email, used to uniquely identify the email.
 
 #### MergeMatrix  
 Another message unit that is sent between servers during the process of reconciliation is the `MergeMatrix`. This is what is sent whenever a server detects that there is a change in membership. The struct is declared as below:  
