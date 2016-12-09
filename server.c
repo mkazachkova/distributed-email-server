@@ -759,7 +759,7 @@ static void Respond_To_Message() {
     info_for_client->type = 2; // this means that an email has been sent back for the client to read
 
     Email *dummy = malloc(sizeof(Email));
-    dummy->emailInfo.timestamp = update->timestamp_of_email;
+    dummy->emailInfo.timestamp = info->message_to_read;
   
     Email *email_to_read = find_backwards(&(user->email_list), (void*)dummy, compare_email);
     free(dummy);
