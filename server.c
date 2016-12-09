@@ -501,8 +501,8 @@ static void Respond_To_Message() {
         min_seen_global = min_seen;
 
         // now we start to send
-        bool more_to_send  = forward_iterator(&(array_of_updates_list[i]), send_updates_for_merge);
-        done_sending_for_merge[i] = !more_to_send; 
+        bool done  = forward_iterator(&(array_of_updates_list[i]), send_updates_for_merge);
+        done_sending_for_merge[i] = done; 
       }
 
     }
@@ -554,20 +554,23 @@ static void Respond_To_Message() {
       num_updates_received++;                   
     }
     if (temp->index_of_machine_resending_update == my_machine_index) { //have received an update from ourselves that we resent
+      printf("\n\nHAVE RECEIVED AN UPDATE THAT WE RESENT!!!!!\\n\n");
       num_updates_received_from_myself++;
     }
   }
 
 
-   if (num_updates_received_from_myself % 10 == 0) {
+   if (num_updates_received_from_myself % 1 == 0) {
     //time to keep on sending. boo
      for(int i = 0; i < NUM_SERVERS; i++) {
        if(who_sends[i] == my_machine_index) { //one of the indexes i'm responsible for; keep sending
          if (!done_sending_for_merge[i]) { //means we have more to send for this machine
            current_i = i; //set our global variable
            num_updates_sent_so_far[i] = 0; //set this back to zero since it will be incrmemented in interator method
-           bool more_to_send  = forward_iterator(&(array_of_updates_list[i]), send_updates_for_merge);
-           done_sending_for_merge[i] = !more_to_send;
+           //bool more_to_send  = forward_iterator(&(array_of_updates_list[i]), send_updates_for_merge);
+           //done_sending_for_merge[i] = !more_to_send;
+           bool done  = forward_iterator(&(array_of_updates_list[i]), send_updates_for_merge);
+           done_sending_for_merge[i] = done;
          }
        }
      }
@@ -1304,17 +1307,22 @@ void add_to_header(Email *email) {
 //Send updates for a merge only if the message_index is strictly greater than min_seen_global
 bool send_updates_for_merge(void* temp) {
   Update *might_be_sent = (Update*) temp;
-  if (might_be_sent->timestamp.message_index > min_update_global[current_i] && num_updates_sent_so_far[current_i] <= 10) {
+  printf("^^^^^^^^^^^^^^^^^^^^^^\nHave entered send_update_for_merge\nThis is curr message index: %d\nThis is min update global: %d\nThis is updates sent so far: %d\nThis is what we want to send up to: %d\n",
+         might_be_sent->timestamp.message_index, min_update_global[current_i], num_updates_sent_so_far[current_i], max_update_global[current_i]);
+  if ((might_be_sent->timestamp.message_index > min_update_global[current_i]) && (num_updates_sent_so_far[current_i] <= 10)) {
     //TODO: need to set that the machine's index onto the update in a new field
     might_be_sent->index_of_machine_resending_update = my_machine_index;
     SP_multicast(Mbox, AGREED_MESS, group, 2, sizeof(Update), (char*)might_be_sent);
     num_updates_sent_so_far[current_i] = num_updates_sent_so_far[current_i] + 1; //im so tired...is this okay to do?
     min_update_global[current_i] = min_update_global[current_i] + 1; //we do this so that when we start again we aren't resending
     if (num_updates_sent_so_far[current_i] == 10 && (min_update_global[current_i] < max_update_global[current_i])) { //we've sent our max and need to keep sending
-      return true; //this means we have more to send!!!!!
+      return false; //this means we have more to send!!!!!
+    }
+    if ((min_update_global[current_i] == max_update_global[current_i])) {
+      return true; //done sending
     }
   }
-  return false;
+  return true; //done sending
 }
 
 

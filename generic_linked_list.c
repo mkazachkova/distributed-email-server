@@ -215,9 +215,10 @@ void* find_backwards(List *list, void* data, int (*compare)(void *, void *)) {
 
 bool forward_iterator(List *list, bool (*modifying_func)(void *)) {
   Node *temp = list->head;
+  // bool temp = false;
   while (temp != NULL) {
     if(!(*modifying_func)(temp->data)) {
-      return false;
+      return false; //means we aren't done sending
     }
     temp = temp->next;
   }
