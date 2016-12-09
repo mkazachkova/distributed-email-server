@@ -377,7 +377,7 @@ static void User_command() {
       break;
     }
     
-    if (headers_list->num_nodes == 0) {
+    if (headers_list.num_nodes == 0) {
       printf("You must first list headers in order to choose to delete a particular message.\n");
     }
 
@@ -386,7 +386,7 @@ static void User_command() {
     int to_be_deleted = atoi(group);
 
     //Make sure the user inputs a valid email number to read
-    if (to_be_deleted > headers_list->num_nodes || to_be_deleted <= 0) {
+    if (to_be_deleted > headers_list.num_nodes || to_be_deleted <= 0) {
       printf("Invalid email number to delete.\n");
     }
 
@@ -415,7 +415,7 @@ static void User_command() {
       break;
     }
     
-    if (headers_list->num_nodes == 0) {
+    if (headers_list.num_nodes == 0) {
       printf("You must first list headers in order to choose to delete a particular message.\n");
     }
 
@@ -424,7 +424,7 @@ static void User_command() {
     int to_be_read = atoi(group);
 
     //Make sure the user inputs a valid email number to read
-    if (to_be_read > headers_list->num_nodes || to_be_read <= 0) {
+    if (to_be_read > headers_list.num_nodes || to_be_read <= 0) {
       printf("Invalid email number to read.\n");
     }
 

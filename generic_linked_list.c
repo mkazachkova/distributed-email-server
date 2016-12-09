@@ -273,7 +273,7 @@ void empty_list(List *list) {
     iterator_ptr = temp;
   }  
 
-  num_nodes = 0;
+  list->num_nodes = 0;
 
   //For safety's sake
   list->head = NULL;
