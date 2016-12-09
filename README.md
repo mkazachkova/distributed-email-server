@@ -85,10 +85,10 @@ The core message unit that is sent between servers is the `Update`. This is what
 typedef struct update {
   int         type;
   TimeStamp   timestamp;
-  Email       email;                      // used for new emails
-  char        user_name[MAX_NAME_LEN];    // used for new user created
-  TimeStamp   timestamp_of_email;         // used for email read or email deleted
-  int         index_of_machine_resending_update; //will need to inialize to -1 for all updates when we originally send them 
+  Email       email;
+  char        user_name[MAX_NAME_LEN];
+  TimeStamp   timestamp_of_email;
+  int         index_of_machine_resending_update;
 } Update;
 ```
 * `int type` is an integer used to specify the type of the update. 10 refers to a new email, 11 refers to an email being read, 12 refers to an email being deleted, and 13 refers to a new user being created.
@@ -139,9 +139,9 @@ A specialized message unit containing only headers for a client to print out to 
 
 ```
 typedef struct header_for_client {
-  int    type;                                       // 1 is list header
-  Header headers[MAX_HEADERS_IN_PACKET];             // used for sending headers
-  bool   done; //might be used for telling the client whether it needs to receive another one of these 
+  int    type; 
+  Header headers[MAX_HEADERS_IN_PACKET];
+  bool   done;
 } HeaderForClient;
 ```
 
@@ -152,8 +152,8 @@ typedef struct header {
   int       message_number;                 
   char      sender[MAX_NAME_LEN];
   char      subject[MAX_NAME_LEN];
-  bool      read;                         // whether the email was read or not
-  TimeStamp timestamp;                    //the lamport timestamp of the email associated with the header
+  bool      read;
+  TimeStamp timestamp;
 } Header;
 ```
 * `int message_number` is the message number of the message that was sent.
@@ -189,7 +189,6 @@ Variables that individual clients will contain:
 * `bool connected_to_server = false;` contains whether the user is connected to a server.
 * `bool can_print_user = true;` contains a bool dictating whether we can print `User >` when listing headers.
 * `List headers_list;` contains the persistent list of headers, repopulated whenever the person using the client program types in 'l'.
-
 
 Variables that individual servers will contain:
 #### General Core Variables
@@ -350,20 +349,19 @@ The names of the methods are quite self-explanatory, and are extensively used to
 
 #### Information-Receiving Operations
 ##### Receive Networking-Related Message  
-*  
-*  
+* If it is a transition, join, or leave message, print `User >` and return.
+* If it is a network message, leave the group stored in `curr_group_connected_to` (the client-server spread group must have partitioned, where the client was partitioned from the server to which it was connected), set `connected_to_server` to false, print `User >`, and return.
 
 ##### Receive "List Headers" message from Server
-*  
-*  
+* Process the first one received. Print the headers and save the header printed to the persistent linked list.
+* While there remain headers to be received, keep processing them, printing them, and saving them to the persistent linked list.
 
 ##### Receive "Read Message" message from Server
-*  
-*  
+* If the email has been deleted, print that the user cannot view the email. 
+* Otherwise, print the contents of the email.  
 
 ##### Receive "Print Membership" message from Server
-*  
-*  
+* Look through the `memb_identities` array of "strings" (char arrays). If it is not empty string, print the membership.
 
 ### Server-Side
 #### Client-Server Methods
