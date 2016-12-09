@@ -154,6 +154,7 @@ static void User_command() {
 
     //strcat(curr_user, temp_buff);
     printf("This is curr user: %s\n", curr_user);
+    empty_list(&headers_list);
     
     if (logged_in && connected_to_server) { /*DOUBLE CHECK THIS. MY THINKING IS WE SHOULDNT SEND ANYTHING TO SERVER IF NOT CONNECTED*/
       //alert the server that a (potentially) new user might need to be created
