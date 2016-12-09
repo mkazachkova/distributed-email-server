@@ -169,8 +169,9 @@ typedef struct {
 The use of the wrapper to contain the lists is especially nice, since it keeps the linked list self-contained and the actual methods abstracted.
 
 The generic linked list contains function pointers which "outsource" comparisons, printing, etc. to specific node types. There are also several unit tests we wrote to make sure the linked list worked; these can be run by typing in `make test`. The methods that this generic linked list has are listed below:
+
+#### List manipulation methods
 ```
-// List manipulation methods
 void create_list(List *list, size_t data_size);
 void add_to_end(List *list, void *data);
 bool remove_from_beginning(List *list, bool (*delete_or_not_func)(void *));
@@ -181,23 +182,48 @@ void* find_backwards(List *list, void* data, int (*fptr)(void *, void *));
 bool forward_iterator(List *list, bool (*fptr)(void *));
 void backward_iterator(List *list, void (*fptr)(void *));
 void empty_list(List *list);
+```
 
-// Accessor methods
-// (last element is a fxn ptr)
+#### Accessor methods
+````
 void print_list(List *list, void (*fptr)(void *));
 void print_list_backwards(List *list, void (*fptr)(void *));
 void* get_head(List *list);
 void* get_tail(List *list);
 ```
 
-The names of the methods are quite self-explanatory.
+The names of the methods are quite self-explanatory, and are extensively used to modify lists in both the client and server program.
 
 ## Algorithm Description  
 ### Client-Side
+##### Login as user: `u <username>`
+
+##### Connect to specific mail server: `c <1 - 5>`
+
+##### List headers of received mail: `l`
+
+##### Delete a message: `d <#>
+
+##### Read a message: `r <#>
+
+##### Print membership identities: `v`
 
 ### Server-Side
+#### Client-Server Methods
+
+
+#### Server-Server Methods
+
+
+#### Reconciliation
+
+
+#### Flow Control
+
 
 ## Discussion  
 
+
 ## Final Thoughts  
+
 
