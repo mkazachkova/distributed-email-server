@@ -390,6 +390,7 @@ static void User_command() {
     //Make sure the user inputs a valid email number to delete
     if (to_be_deleted > headers_list.num_nodes || to_be_deleted <= 0) {
       printf("Invalid email number to delete.\n");
+      break;
     }
 
     InfoForServer *delete_request = malloc(sizeof(InfoForServer));
@@ -418,7 +419,7 @@ static void User_command() {
     }
     
     if (headers_list.num_nodes == 0) {
-      printf("Email read index invalid. NOTE: You must first list headers in order to choose to delete a particular message.\n");
+      printf("Email read index invalid. NOTE: You must first list headers in order to choose to read a particular message.\n");
       break;
     }
 
@@ -622,10 +623,13 @@ static void Read_message() {
     //should be triggered when we receive something
     InfoForClient *info = (InfoForClient *) tmp_buf;  
 
-    printf("****************************************\nTO: %s\nFROM: %s\nSUBJECT: %s\n\nBODY: %s\n****************************************\n",
-            info->email.emailInfo.to_field, info->email.emailInfo.from_field, 
-            info->email.emailInfo.subject, info->email.emailInfo.message);
-
+    if (info->email.deleted) {
+      printf("You cannot read this message: It has already been deleted!\n");
+    } else {      
+      printf("****************************************\nTO: %s\nFROM: %s\nSUBJECT: %s\n\nBODY: %s\n****************************************\n",
+             info->email.emailInfo.to_field, info->email.emailInfo.from_field, 
+             info->email.emailInfo.subject, info->email.emailInfo.message);
+    }
 
   //////////////////////// PRINT MEMBERSHIP MESSAGE RECEIVED ////////////////////////
   } else if (*type == 3) { //print memberships
