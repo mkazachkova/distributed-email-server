@@ -18,13 +18,13 @@ We aim to write a fault-tolerant distributed mail service for users over a netwo
 * `spread`: The given file for setting up the spread network.
 * `spmonitor`: The given file for simulating network partitions and merges.  
 
-### Main Program Files
+#### Main Program Files
 * `net_include.h`: The header file containing structs used by the client and server to pass information amongst and within each other.
 * `client.c`: The file containing logic for the client. This class was written to be as lightweight and "dumb" as possible, and queries the server when the user inputs in text.
 * `server.c`: The file containing logic for the backend server.
 * `makefile`: The makefile to compile all the files.
 
-#### Miscellaneous  
+#### Miscellaneous Files  
 * `README.pdf`: The design document
 
 ## To Run  
@@ -39,7 +39,7 @@ We aim to write a fault-tolerant distributed mail service for users over a netwo
 
 ### Data Structures (Structs)
 #### TimeStamp
-Updates and email structs each contain TimeStamps: this is a lamport timestamp with an additional `message_index` field to make it generalizable. This will eventually become used in protocols in order to ensure ordering of emails. The struct is declared as below:  
+Updates and email structs each contain `TimeStamp`s: this is a lamport timestamp with an additional `message_index` field to make it generalizable. This will eventually become used in protocols in order to ensure ordering of emails. The struct is declared as below:  
 
 ```
 typedef struct timestamp {
@@ -75,7 +75,7 @@ typedef struct emailinfo {
   TimeStamp           timestamp;
 } EmailInfo;
 ```
-* EmailInfo contains characters array with text containing contents as specified by the name of the character array.  
+* `EmailInfo` contains characters array with text containing contents as specified by the name of the character array.  
 
 The `Email` is never sent by itself, but attached to other data structures that are sent. It contains necessary informational fields about an email as specified in the problem statement: a sender, a recipient, a subject, and a message. We have also given the email a lamport timestamp, to be used in ordering emails, as well as flags, to be used to decide how and whether to display an email to a client when emails are requested to be viewed.    
 
@@ -100,7 +100,8 @@ typedef struct update {
 
 This `Update` contains a lamport timestamp for ordering purposes (as well as contains an additional field of the server from whence it originated). It also contains an `Email` if a new email has been sent, as well as other potentially useful information depending on the update type. 
 
-* Another message unit that is sent between servers during the process of reconciliation is the `mergematrix`. This is what is sent whenever a server detects that there is a change in membership. The struct is declared as below:  
+#### MergeMatrix  
+Another message unit that is sent between servers during the process of reconciliation is the `MergeMatrix`. This is what is sent whenever a server detects that there is a change in membership. The struct is declared as below:  
 ```
 typedef struct mergematrix {
   int type;                               // 20 is for the matrix
@@ -109,28 +110,42 @@ typedef struct mergematrix {
 } MergeMatrix;
 ```
 
-* `int type` is the type used to know that this is a `mergematrix`.
+* `int type` is the type used to know that this is a `mergematrix` so that we can cast it to the correct type.
 * `int machine_index` refers to the index that sent the `mergematrix`.
 * `int matrix[NUM_SERVERS][NUM_SERVERS]` is the `mergematrix` itself: a NUM_SERVERS * NUM_SERVERS dimensional matrix.
 
-The `MergeMatrix` is what is used to get servers that were once in different partitions back "up to speed" (so to speak).
+The `MergeMatrix` is what is used to get servers that were once in different partitions back "up to speed" (so to speak). There will be more discussion of this later in the elaboration of the protocol.
 
 ### Other Important Variables
 Variables that individual servers will contain:
 *   
 *  
+*   
+*  
+*   
+*  
+
+Variables that individual clients will contain:
+*  
+*  
+*  
+*   
+*  
+*   
+*  
 
 ## System Design  
 
-### Spread Group Architecture
-* There will be a spread group which contains all of the servers.
-* There will be a spread group which contains all clients that are logged into a particular server, as well as the server to which they are connected.
+### Spread Group Architecture  
+* There will be a spread group which contains all of the servers; this is the server's "private group".
+* There will be a public spread group that each server (and only each individual server) is in; this is the server's "public group" that clients know to contact.
+* There will be a spread group containing clients and servers which contains only a single client and a server. This has the current unix timestamp as its name (for guaranteed group name uniqueness) and is only used so clients and servers can tell when a network partition has occurred partitioning a client from the server to which it was once connected.  
 
-### Separation of Clients and Servers
-* We designed the client program to be very much "front-end", providing a GUI for the user and a way to communicate with the servers, but doing nothing "intelligent" on the client side and instead having all memory, ordering, and membership-related tasks delegated to the servers, which are very much the "brain" of the program.  
+### Separation of Clients and Servers  
+* We designed the client program to be very much "front-end", providing a GUI for the user and a way to communicate with the servers, but doing nothing "intelligent" on the client side and instead having all memory, ordering, and membership-related tasks delegated to the servers, which are very much the "brain" of the program. There is only one exception to the "memoryless"-ness of the client; this is that the client stores the most recent list of emails that the user has requested to be shown.  
 
 ### Generic Linked Lists
-* Since much of the program depends on linked lists to remove, insert, and modify messages, we implemented a generic doubly linked list (at the suggestion of Emily). The linked list can be found in `generic_linked_list.c`. 
+* Since much of the program depends on linked lists to remove, insert, and modify messages, we implemented a generic doubly linked list (at the astute suggestion of Emily). The linked list can be found in `generic_linked_list.c`. 
 
 The core unit of the linked list, of course, is the node:  
 ```
@@ -151,7 +166,31 @@ typedef struct {
 } List;
 ```
 
-The generic linked list contains function pointers which "outsource" comparisons, printing, etc. to specific node types. There are also several unit tests we wrote to make sure the linked list worked; these can be run by typing in `make test`.  
+The use of the wrapper to contain the lists is especially nice, since it keeps the linked list self-contained and the actual methods abstracted.
+
+The generic linked list contains function pointers which "outsource" comparisons, printing, etc. to specific node types. There are also several unit tests we wrote to make sure the linked list worked; these can be run by typing in `make test`. The methods that this generic linked list has are listed below:
+```
+// List manipulation methods
+void create_list(List *list, size_t data_size);
+void add_to_end(List *list, void *data);
+bool remove_from_beginning(List *list, bool (*delete_or_not_func)(void *));
+void remove_from_end(List *list);
+void insert(List *list, void *data, int (*fptr)(void *, void *));
+void* find(List *list, void* data, int (*fptr)(void *, void *));
+void* find_backwards(List *list, void* data, int (*fptr)(void *, void *));
+bool forward_iterator(List *list, bool (*fptr)(void *));
+void backward_iterator(List *list, void (*fptr)(void *));
+void empty_list(List *list);
+
+// Accessor methods
+// (last element is a fxn ptr)
+void print_list(List *list, void (*fptr)(void *));
+void print_list_backwards(List *list, void (*fptr)(void *));
+void* get_head(List *list);
+void* get_tail(List *list);
+```
+
+The names of the methods are quite self-explanatory.
 
 ## Algorithm Description  
 ### Client-Side
