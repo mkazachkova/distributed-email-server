@@ -10,6 +10,11 @@ December 9, 2016
 
 #define int32u unsigned int
 
+#define MAX_MESSLEN 102400
+#define MAX_VSSETS  10
+#define MAX_MEMBERS 100
+
+//Their variables (from class_user.c)
 static char         Client_name[80];
 static char         Spread_name[80];
 
@@ -19,17 +24,18 @@ static int          Num_sent;
 
 static int          To_exit = 0;
 
-#define MAX_MESSLEN 102400
-#define MAX_VSSETS  10
-#define MAX_MEMBERS 100
 
-static void Print_menu();
-static void User_command();
-static void Read_message();
-static void Usage( int argc, char *argv[] );
-static void Print_help();
-static void Bye();
-static void print_header(Header *header);
+//Methods
+static void       Print_menu();
+static void       User_command();
+static void       Read_message();
+static void       Usage(int argc, char *argv[]);
+static void       Print_help();
+static void       Bye();
+static void       print_header(Header *header);
+static void       add_header(Header *header);
+static TimeStamp* get_timestamp_associated_with_header(int header_num_requested);
+static int        compare_header_num(void* h1, void* h2);
 
 //Variables that I (Sarah) added
 static int  curr_server = -1;
@@ -38,17 +44,18 @@ static char hardcoded_server_names[NUM_SERVERS][MAX_NAME_LEN];
 static char curr_group_connected_to[MAX_NAME_LEN] = "";
 
 static bool logged_in = false;
-
-
 static bool connected_to_server = false;
 static bool can_print_user = true;
+
+//Persistent storage variables
+List        headers_list;
+
 
 int main(int argc, char *argv[]) {
   int     ret;
   int     mver, miver, pver;
   sp_time test_timeout;
 
-  
   test_timeout.sec = 5;
   test_timeout.usec = 0;
 
@@ -58,9 +65,10 @@ int main(int argc, char *argv[]) {
     strcpy(hardcoded_server_names[i], "ssukard1mkazach1_server_");
     sprintf(temp_server_num, "%d", i + 10);
     strcat(hardcoded_server_names[i], temp_server_num);
-
-    printf("%s\n", hardcoded_server_names[i]); // for debug
   }
+
+  //Initialize header list to be empty linked list
+  create_list(&headers_list, sizeof(Header));
 
   Usage(argc, argv);
 
@@ -120,8 +128,6 @@ static void User_command() {
   char         subject[MAX_NAME_LEN];
   char         group[80];
   unsigned int mess_len;
-  //char         groups[10][MAX_GROUP_NAME];
-  //int          num_groups;
 
   int ret;
   int i;
@@ -292,12 +298,16 @@ static void User_command() {
       printf("You must connect to a server before listing your inbox.\n");
       break;
     }
+
     InfoForServer *header_request = malloc(sizeof(InfoForServer));
     header_request->type = 3; //for a list headers of received mail request
     sprintf(header_request->user_name, "%s", curr_user);  //populate who is sending the email
     
     SP_multicast(Mbox, AGREED_MESS, hardcoded_server_names[curr_server], 2, sizeof(InfoForServer), (char*) header_request);
     free(header_request); 
+
+    //reset the persistent headers_list back to an empty list
+    empty_list(&headers_list);
 
     printf("User Name: %s\n", curr_user);
     printf("Responding Server: %d\n", curr_server + 1);
@@ -363,20 +373,33 @@ static void User_command() {
   case 'd': {
     //TODO: This method has not been implemented or tested yet
     if (!connected_to_server) {
-      printf("You must connect to a server before deleting  message.\n");
+      printf("You must connect to a server before deleting message.\n");
       break;
     }
     
-    InfoForServer *delete_request = malloc(sizeof(InfoForServer));
-    delete_request->type = 5;                             //for a print membership request
-    sprintf(delete_request->user_name, "%s", curr_user);  //populate the user_name field for who is sending the email
+    if (headers_list->num_nodes == 0) {
+      printf("You must first list headers in order to choose to delete a particular message.\n");
+    }
 
     //Retrieve which email we want to delete from command-line input
     sscanf(&command[2], "%s", group);
     int to_be_deleted = atoi(group);
 
+    //Make sure the user inputs a valid email number to read
+    if (to_be_deleted > headers_list->num_nodes || to_be_deleted <= 0) {
+      printf("Invalid email number to delete.\n");
+    }
+
+    InfoForServer *delete_request = malloc(sizeof(InfoForServer));
+    delete_request->type = 5;                             //for a print membership request
+    sprintf(delete_request->user_name, "%s", curr_user);  //populate the user_name field for who is sending the email
+
+    //set the request's message_to_read field
+    TimeStamp *nth_timestamp = get_timestamp_associated_with_header(to_be_deleted);
+    assert(nth_timestamp != NULL); //this should never be null since we error check it's in bounds above
+
     //set the request's message_to_delete field
-    delete_request->message_to_delete = to_be_deleted; 
+    delete_request->message_to_delete = *nth_timestamp; 
     SP_multicast(Mbox, AGREED_MESS, hardcoded_server_names[curr_server], 2, sizeof(InfoForServer), (char*) delete_request);
 
     free(delete_request);
@@ -392,16 +415,28 @@ static void User_command() {
       break;
     }
     
-    InfoForServer *read_request = malloc(sizeof(InfoForServer));
-    read_request->type = 6;                             //for a print membership request
-    sprintf(read_request->user_name, "%s", curr_user);  //populate the user_name field for who is sending the email
+    if (headers_list->num_nodes == 0) {
+      printf("You must first list headers in order to choose to delete a particular message.\n");
+    }
 
     //Retrieve which email we want to read from command-line input
     sscanf(&command[2], "%s", group);
     int to_be_read = atoi(group);
 
+    //Make sure the user inputs a valid email number to read
+    if (to_be_read > headers_list->num_nodes || to_be_read <= 0) {
+      printf("Invalid email number to read.\n");
+    }
+
+    InfoForServer *read_request = malloc(sizeof(InfoForServer));
+    read_request->type = 6;                             //for a print membership request
+    sprintf(read_request->user_name, "%s", curr_user);  //populate the user_name field for who is sending the email
+
     //set the request's message_to_read field
-    read_request->message_to_read = to_be_read; 
+    TimeStamp *nth_timestamp = get_timestamp_associated_with_header(to_be_read);
+    assert(nth_timestamp != NULL); //this should never be null since we error check it's in bounds above
+
+    read_request->message_to_read = *nth_timestamp;
     SP_multicast(Mbox, AGREED_MESS, hardcoded_server_names[curr_server], 2, sizeof(InfoForServer), (char*) read_request);
 
     free(read_request);
@@ -533,11 +568,7 @@ static void Read_message() {
   //NOTE: Make sure to make all EMPTY HEADERS have a message_number of -1
 
   if (*type == 1) { //this is to "list headers" message received from server     
-    //should be triggered when we receive something
-   
-
-
-
+    //should be triggered when we receive something  
     HeaderForClient *info_header = (HeaderForClient *) tmp_buf;  
 
     bool done = info_header->done;
@@ -545,7 +576,11 @@ static void Read_message() {
     //can_print_user = false;
     for (int i = 0; i < MAX_HEADERS_IN_PACKET; i++) {
       if (info_header->headers[i].message_number != -1) {
-        print_header(&(info_header->headers[i]));
+        //print the header on the screen for the client
+        print_header(&(info_header->headers[i])); 
+
+        //add header to persistent headers linked list
+        add_header(&(info_header->headers[i])); 
         printf("\n");
       }
 
@@ -556,6 +591,7 @@ static void Read_message() {
       
     }
     
+    //Receive the rest of the headers
     while (!done) {
       HeaderForClient *info_header_t = malloc(sizeof(HeaderForClient)); 
       SP_receive(Mbox, &service_type, sender, 100, &num_groups, target_groups,
@@ -564,10 +600,14 @@ static void Read_message() {
       for (int i = 0; i < MAX_HEADERS_IN_PACKET; i++) {
         if (info_header_t->headers[i].message_number != -1) {
           print_header(&(info_header_t->headers[i]));
+
+          //add header to persistent headers linked list
+          add_header(&(info_header->headers[i])); 
           printf("\n");
         }
         
       }
+
       done = info_header_t->done;
       free(info_header_t);
       info_header_t = NULL;
@@ -714,9 +754,27 @@ static void Read_message() {
 
 static void print_header(Header *header) {
   //printf("%d. %s\n", header->message_number, !(header->read) ? "***NEW MESSAGE!***" : "");
-  printf("*****************   MESSAGE NUMBER: %d   *******************\n", header->message_number);
+  printf("***************** MESSAGE NUMBER: %d *******************\n", header->message_number);
   printf("From: %s\nSubject: %s\nRead: %d\n", header->sender, header->subject, header->read);
-  printf("------------------------------------------------------------\n");
+  printf("--------------------------------------------------------\n");
+}
+
+static void add_header(Header *header) {
+  add_to_end(&headers_list, (void*) header);
+}
+
+static TimeStamp* get_timestamp_associated_with_header(int num) {
+  Header* found_header = (Header *) find(&headers_list, &num, compare_header_num);
+  return &(found_header->timestamp);
+} 
+
+
+//Returns if two users have the same name
+static int compare_header_num(void* h1, void* h2) {
+  Header *header_in_linked_list = (Header*) h1;
+  int *desired_header_num = (int*) h2;
+
+  return (header_in_linked_list->message_number == *desired_header_num) ? 0 : 1;
 }
 
 //Takes in command-line args for spread name and user

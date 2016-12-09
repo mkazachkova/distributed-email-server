@@ -261,6 +261,28 @@ void print_list_backwards(List *list, void (*fptr)(void *)) {
   return;
 }
 
+
+//Empty the linked list of it's contents
+void empty_list(List *list) {
+  Node* iterator_ptr = list->head;
+
+  //Iterate through list and free each node
+  while (iterator_ptr != NULL) {
+    Node* temp = iterator_ptr->next; 
+    free(iterator_ptr);
+    iterator_ptr = temp;
+  }  
+
+  num_nodes = 0;
+
+  //For safety's sake
+  list->head = NULL;
+  list->tail = NULL;
+
+  return;
+}
+
+//Retrieve the data associated with the head of the linked list
 void* get_head(List *list) {
   if (list->num_nodes == 0) {
     return NULL;
@@ -269,6 +291,7 @@ void* get_head(List *list) {
   return list->head->data;
 }
 
+//Retrieve the data associated with the tail of the linked list
 void* get_tail(List *list) {
   if (list->num_nodes == 0) {
     return NULL:
