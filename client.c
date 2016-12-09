@@ -759,6 +759,7 @@ static void print_header(Header *header) {
   printf("--------------------------------------------------------\n");
 }
 
+//All headers should be added in consecutive order
 static void add_header(Header *header) {
   add_to_end(&headers_list, (void*) header);
 }
