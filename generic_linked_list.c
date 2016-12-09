@@ -271,7 +271,7 @@ void* get_head(List *list) {
 
 void* get_tail(List *list) {
   if (list->num_nodes == 0) {
-    return NULL:
+    return NULL;
   }
 
   return list->tail->data;
