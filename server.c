@@ -480,7 +480,15 @@ static void Respond_To_Message() {
 
     printf("\n");
 
+    //reset. Not sure if needed
+    for (int i = 0; i < NUM_SERVERS; i++) {
+      done_sending_for_merge[i] = true;
+      min_update_global[i] = 0;
+      max_update_global[i] = 0;
+    }
+    
     num_sent_in_each_round = 0;
+    num_updates_received_from_myself = 0;
     //Do the actual sending of messages
     int min_seen = INT_MAX;
     for (int i = 0; i < NUM_SERVERS; i++) {
@@ -496,6 +504,10 @@ static void Respond_To_Message() {
         }
         min_update_global[i] = min_seen; //where we start from
         Update *last = get_tail(&(array_of_updates_list[i]));
+        if (last == NULL) {
+          done_sending_for_merge[i] = true;
+          continue;
+        }
         max_update_global[i] = last->timestamp.message_index; //where we end
         done_sending_for_merge[i] = false; //so that we know we are still sending
         current_i = i; //so that we know which index to use when using our NUMEROUS global arrays (fuck this, again)
@@ -567,6 +579,7 @@ static void Respond_To_Message() {
    if (num_updates_received_from_myself == num_sent_in_each_round) {
     //time to keep on sending. boo
      num_sent_in_each_round = 0;
+     num_updates_received_from_myself = 0;
      for(int i = 0; i < NUM_SERVERS; i++) {
        if(who_sends[i] == my_machine_index) { //one of the indexes i'm responsible for; keep sending
          if (!done_sending_for_merge[i]) { //means we have more to send for this machine
@@ -582,8 +595,17 @@ static void Respond_To_Message() {
      
    }
 
+   bool can_delete = true;
+   for (int i = 0; i < NUM_SERVERS; i++) {
+     if (!done_sending_for_merge[i]) {
+       can_delete = false;
+     }
+   }
+
+
+   
   
-  if (num_updates_received >= NUM_FOR_DELETE_UPDATES) {
+  if (num_updates_received >= NUM_FOR_DELETE_UPDATES && can_delete) {
     num_updates_received = 0;
     //delete things in updates array that we no longer need
     int min = INT_MAX;
