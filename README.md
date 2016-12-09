@@ -5,24 +5,27 @@ Mariya Kazachkova (mkazach1@jhu.edu)
 December 9, 2016  
 
 ## Premise  
-We aim to write a fault-tolerant distributed mail service for users over a network of computers that is resilient to network partitions and merges. It provides a client with the ability to connect ot a server, send emails to users, list headers of received mail, read messages, delete messages, and print membership of servers in the server's current network component.  
+We aim to write a fault-tolerant distributed mail service for users over a network of computers that is resilient to network partitions and merges. It provides a client with the ability to connect ot a server, send emails to users, list headers of received mail, read messages, delete messages, and print membership of servers in the server's current network component. 
+
 ## Files Included  
 #### Linked List Files
 * `generic_linked_list.c`: The logic for the generic linked list.
 * `generic_linked_list.h`: The generic linked list header file.
 * `test_linkedlist.c`: Tests for the basic linked list.
-* `test_servermethod.c`: Tests for the linked list on server methods.
+* `test_servermethod.c`: Tests for the linked list on server methods.  
+
 #### Spread Files
 * `spread`: The given file for setting up the spread network.
-* `spmonitor`: The given file for simulating network partitions and merges.
+* `spmonitor`: The given file for simulating network partitions and merges.  
+
 ### Main Program Files
 * `net_include.h`: The header file containing structs used by the client and server to pass information amongst and within each other.
 * `client.c`: The file containing logic for the client. This class was written to be as lightweight and "dumb" as possible, and queries the server when the user inputs in text.
 * `server.c`: The file containing logic for the backend server.
 * `makefile`: The makefile to compile all the files.
-#### Miscellaneous
-* `README.pdf`: The design document
 
+#### Miscellaneous  
+* `README.pdf`: The design document
 
 ## To Run  
 * To run the spread network, type in `./spread`.
@@ -32,19 +35,37 @@ We aim to write a fault-tolerant distributed mail service for users over a netwo
 * To run the client, type in `./client`.
   * A menu will pop up with options to send, read, and delete mail, as well as join other servers and print membership.
 
-
-## Overview  
+## Protocol Overview  
 
 ### Data Structures (Structs)
-* The most basic data structure we utilize is the `Email`. The struct (and another struct that it itself contains) is declared as below:  
+#### TimeStamp
+Updates and email structs each contain TimeStamps: this is a lamport timestamp with an additional `message_index` field to make it generalizable. This will eventually become used in protocols in order to ensure ordering of emails. The struct is declared as below:  
+
+```
+typedef struct timestamp {
+  int         counter;
+  int         machine_index;
+  int         message_index;
+} TimeStamp;
+```
+* `int counter` is [INSERT TEXT HERE]
+* `int machine_index` is [INSERT TEXT HERE]
+* `int message_index` is [INSERT TEXT HERE]
+
+#### Email
+The most basic data structure we utilize is the `Email`. The struct (and another struct that it itself contains) is declared as below:  
 ```
 typedef struct email {
-  EmailInfo           emailInfo;
-  bool                read;
-  bool                deleted;
+  EmailInfo         emailInfo;
+  bool              read;
+  bool              deleted;
+  bool              exists;
 } Email;
 ```
-
+* `EmailInfo emailInfo` contains the actual information contained in the email (the sender, recipient, subject, and message).  
+* `bool read` contains whether the email has been read or not.
+* `bool deleted` contains whether the email has been deleted or not.
+* `bool exists` contains whether the email even exists yet or not.
 ```
 typedef struct emailinfo {
   char[MAX_NAME_LEN]  to_field;
@@ -54,33 +75,45 @@ typedef struct emailinfo {
   TimeStamp           timestamp;
 } EmailInfo;
 ```
+* EmailInfo contains characters array with text containing contents as specified by the name of the character array.  
 
-The `Email` is never sent by itself, but attached to other data structures that are sent; ie. attached to an update of type `1`. It contains necessary informational fields about an email as specified in the problem statement.  
+The `Email` is never sent by itself, but attached to other data structures that are sent. It contains necessary informational fields about an email as specified in the problem statement: a sender, a recipient, a subject, and a message. We have also given the email a lamport timestamp, to be used in ordering emails, as well as flags, to be used to decide how and whether to display an email to a client when emails are requested to be viewed.    
 
-* The core message unit that is sent between servers is the `Update`. This is what is sent whenever anything is updated, such as when an email is sent, marked as read, or deleted (this does NOT include changes in grouping; ie. partitions are merges). The `update` struct is declared as below:  
+#### Update
+The core message unit that is sent between servers is the `Update`. This is what is sent whenever anything is updated, such as when an email is sent, marked as read, or deleted (this does NOT include changes in grouping; ie. partitions are merges). The `update` struct is declared as below:  
 ```
 typedef struct update {
-
-  int                 type;               //1: new email. 2: email read. 3: email deleted. 4: new user created.
-  TimeStamp           timestamp;
-  Email               email;              //used for new emails
-  char[MAX_NAME_LEN]  user_name;          //used for new user created
-  TimeStamp           timestamp_of_email; //used for email read or email deleted
-  int[NUM_SERVERS]    updates_array;
+  int         type;
+  TimeStamp   timestamp;
+  Email       email;                      // used for new emails
+  char        user_name[MAX_NAME_LEN];    // used for new user created
+  TimeStamp   timestamp_of_email;         // used for email read or email deleted
+  int         index_of_machine_resending_update; //will need to inialize to -1 for all updates when we originally send them 
 } Update;
 ```
+* `int type` is an integer used to specify the type of the update. 10 refers to a new email, 11 refers to an email being read, 12 refers to an email being deleted, and 13 refers to a new user being created.
+* `TimeStamp timestamp` is the timestamp used to order updates. The `message_index` of the timestamp is used to order updates. 
+* `Email email` is filled whenever a new email is created (type 10).
+* `char user_name[MAX_NAME_LEN]` is the field containing the name of the user bing created for a type 13 update.
+* `TimeStamp timestamp_of_email` is the field containing the lamport timestamp of a particular email being searched for, for a type 11 or 12 update.
+* `int index_of_machine_resending_update` is the field containing the index of the machine resending the update, used only during reconciliation.
 
-This `Update` contains a lamport timestamp for ordering purposes (as well as contains an additional field of the server from whence it originated). It also contains an `Email` if a new email has been sent, as well as other potentially useful information depending on the update type. Most notably, it contains an `updates_array` of integers, where it periodically signals what it has received up to from every server. This is attached to every update and not just sent during partitions as the occurrence of a partition/merge is unpredictable and thus it is safest to send this `updates_array` whenever there is an update. The array will be used to update each server's 5 X 5 matrix (elaborated later in the discussion of Other Important Variables) and eventually used during merges and for eventual path propagation.  
+This `Update` contains a lamport timestamp for ordering purposes (as well as contains an additional field of the server from whence it originated). It also contains an `Email` if a new email has been sent, as well as other potentially useful information depending on the update type. 
 
-* Finally, the last message unit that is sent between servers is the `mergematrix`. This is what is sent whenever a server detects that there is a change in membership. The struct is declared as below:  
+* Another message unit that is sent between servers during the process of reconciliation is the `mergematrix`. This is what is sent whenever a server detects that there is a change in membership. The struct is declared as below:  
 ```
 typedef struct mergematrix {
-  int machine_index;                      //index from which it came
-  int[NUM_SERVERS][NUM_SERVERS] matrix;   //the 2-dimensional 5 x 5 reconciliation matrix
+  int type;                               // 20 is for the matrix
+  int machine_index;                      // index from which it came
+  int matrix[NUM_SERVERS][NUM_SERVERS];   // the 2-dimensional 5 x 5 reconciliation matrix
 } MergeMatrix;
 ```
 
-The machine index from which the server originated is sent. The important piece of information is the `matrix`; that is, the 2-dimensional 5 x 5 reconciliation matrix. This is what is used to get servers that were once in different partitions back "up to speed" (so to speak).
+* `int type` is the type used to know that this is a `mergematrix`.
+* `int machine_index` refers to the index that sent the `mergematrix`.
+* `int matrix[NUM_SERVERS][NUM_SERVERS]` is the `mergematrix` itself: a NUM_SERVERS * NUM_SERVERS dimensional matrix.
+
+The `MergeMatrix` is what is used to get servers that were once in different partitions back "up to speed" (so to speak).
 
 ### Other Important Variables
 Variables that individual servers will contain:
