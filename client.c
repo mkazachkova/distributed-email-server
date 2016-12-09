@@ -379,6 +379,7 @@ static void User_command() {
     
     if (headers_list.num_nodes == 0) {
       printf("You must first list headers in order to choose to delete a particular message.\n");
+      break;
     }
 
     //Retrieve which email we want to delete from command-line input
@@ -417,6 +418,7 @@ static void User_command() {
     
     if (headers_list.num_nodes == 0) {
       printf("You must first list headers in order to choose to read a particular message.\n");
+      break;
     }
 
     //Retrieve which email we want to read from command-line input
