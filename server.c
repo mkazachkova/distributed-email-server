@@ -624,9 +624,6 @@ static void Respond_To_Message() {
     
   } else if (*type == 3) { //We received a "list headers" message from the client
     //We know that the thing that was sent was of type InfoForServer, so we can cast it accordingly
-    //    InfoForServer *info = (InfoForServer *) tmp_buf;    
-
-    //printf("List headers message received!\n");
     InfoForServer *info = (InfoForServer*) tmp_buf;
     User *user = find(&(users_list), info->user_name, compare_users);
     
@@ -638,7 +635,9 @@ static void Respond_To_Message() {
     num_headers_added = 0;
     client_header_response->done = false;
     backward_iterator(&(user->email_list), add_to_struct_to_send);
-    //send the very last one
+
+    //send the very last few messages, initializing remaining slots on header to have 
+    //a message_number of -1
     for (int i = num_headers_added; i < 10; i++) {
       client_header_response->headers[i].message_number = -1;
     }
@@ -698,18 +697,16 @@ static void Respond_To_Message() {
     update_index++;
     to_be_sent->timestamp.message_index = update_index;
     to_be_sent->timestamp.machine_index = my_machine_index;
+    to_be_sent->timestamp_of_email = info->message_to_delete;    
     strcpy(to_be_sent->user_name, info->user_name);
 
     //Find user that we are logged into
-    User *user = find(&users_list, (void*)info->user_name, compare_users);
-    assert(user != NULL); //for debug
+    // User *user = find(&users_list, (void*)info->user_name, compare_users);
+    // assert(user != NULL); //for debug
     
+    /*
     //set global variable back equal to zero
     num_emails_checked = 0;
-    //printf("this is user's name: %s\n", user->name);
-    //printf("this is user email list:\n");
-    //print_list(&(user->email_list), print_email);
-    //printf("this is message to delete: %d\n", info->message_to_delete);
     Email *email = find_backwards(&(user->email_list), (void*)&(info->message_to_delete), compare_email_for_find);
 
     if (email == NULL) {
@@ -721,21 +718,7 @@ static void Respond_To_Message() {
 
     TimeStamp timestamp = email->emailInfo.timestamp;
     //printf("THIS IS THE EMAIL TIMESTAMP COUNTER: %d\n\n", timestamp.counter);
-    to_be_sent->timestamp_of_email = timestamp;
-
-    
-    //copy our row of the 2d array and send with update 
-    //merge_matrix[my_machine_index][my_machine_index] = update_index;
-    //memcpy(to_be_sent->updates_array, merge_matrix[my_machine_index], sizeof(merge_matrix[my_machine_index]));
-
-    //printf("\nPrinting merge matrix: \n");
-    for (int i = 0; i < NUM_SERVERS; i++) {
-      for (int j = 0; j < NUM_SERVERS; j++) {
-        //  printf("%d ", merge_matrix[i][j]);
-      }
-      //printf("\n");
-    }
-    
+    */
     
     //Send the Update to ALL OTHER SERVERS in the same partition
     SP_multicast(Mbox, AGREED_MESS, group, 2, sizeof(Update), (char*)to_be_sent);
@@ -751,12 +734,17 @@ static void Respond_To_Message() {
     update_index++;
     to_be_sent->timestamp.message_index = update_index;
     to_be_sent->timestamp.machine_index = my_machine_index;
+    to_be_sent->timestamp_of_email = info->message_to_read;    
     strcpy(to_be_sent->user_name, info->user_name);
+
+    //Send the Update to ALL OTHER SERVERS in the same partition
+    SP_multicast(Mbox, AGREED_MESS, group, 2, sizeof(Update), (char*)to_be_sent);
 
     //Find user that we are logged into
     User *user = find(&users_list, (void*)info->user_name, compare_users);
     assert(user != NULL); //for debug
     
+    /*
     //set global variable back equal to zero
     num_emails_checked = 0;
     //printf("this is user's name: %s\n", user->name);
@@ -764,39 +752,29 @@ static void Respond_To_Message() {
     print_list(&(user->email_list), print_email);
     //printf("this is message to read: %d\n", info->message_to_read);
     Email *email = find_backwards(&(user->email_list), (void*)&(info->message_to_read), compare_email_for_find);
-
+    
     if (email == NULL) {
       //printf("Error: should not be null yet!\n");
       //CHECK IF NULL AND SEND ERROR MESSAGE BACK TO USER
 
       return;
-    }
+    } 
 
     TimeStamp timestamp = email->emailInfo.timestamp;
     //printf("THIS IS THE EMAIL TIMESTAMP COUNTER: %d\n\n", timestamp.counter);
-    to_be_sent->timestamp_of_email = timestamp;
-
-    
-    //copy our row of the 2d array and send with update 
-    //merge_matrix[my_machine_index][my_machine_index] = update_index;
-    //memcpy(to_be_sent->updates_array, merge_matrix[my_machine_index], sizeof(merge_matrix[my_machine_index]));
-        
-    //Send the Update to ALL OTHER SERVERS in the same partition
-    SP_multicast(Mbox, AGREED_MESS, group, 2, sizeof(Update), (char*)to_be_sent);
-
+    */
 
     //TODO: send the actual email body back to client
     InfoForClient *info_for_client = malloc(sizeof(InfoForClient));
     info_for_client->type = 2; // this means that an email has been sent back for the client to read
-    info_for_client->email = *email;
 
-    //printf("\nPrinting merge matrix: \n");
-    for (int i = 0; i < NUM_SERVERS; i++) {
-      for (int j = 0; j < NUM_SERVERS; j++) {
-        //  printf("%d ", merge_matrix[i][j]);
-      }
-      //printf("\n");
-    }
+    Email *dummy = malloc(sizeof(Email));
+    dummy->emailInfo.timestamp = info->message_to_read;
+  
+    Email *email_to_read = find_backwards(&(user->email_list), (void*)dummy, compare_email);
+    free(dummy);
+
+    info_for_client->email = *email_to_read;
     
     SP_multicast(Mbox, AGREED_MESS, sender, 2, sizeof(InfoForClient), (char*)info_for_client);
 
@@ -915,15 +893,6 @@ static void Respond_To_Message() {
       }
     }
 
-    /*
-    printf("\nPrinting merge matrix: \n");
-    for (int i = 0; i < NUM_SERVERS; i++) {
-      for (int j = 0; j < NUM_SERVERS; j++) {
-        printf("%d ", merge_matrix[i][j]);
-      }
-      printf("\n");
-    }
-    */
     //insert(&(array_of_updates_list[update->timestamp.machine_index]), (void*)update, compare_update);
 
     Update *existing_update = find(&(array_of_updates_list[update->timestamp.machine_index]),(void*)update, compare_update);
@@ -960,6 +929,7 @@ static void Respond_To_Message() {
       dummy->emailInfo.timestamp = update->timestamp_of_email;
     
       Email *email = find_backwards(&(temp->email_list), (void*)dummy, compare_email);
+      free(dummy);
 
       if (email == NULL) {
         printf("\n\nNEW EMAIL IS BEING CREATED!!\n\n");
@@ -1036,6 +1006,7 @@ static void Respond_To_Message() {
       dummy->emailInfo.timestamp = update->timestamp_of_email;
     
       Email *email = find_backwards(&(temp->email_list), (void*)dummy, compare_email);
+      free(dummy);
 
       if (email == NULL) {
         printf("\n\nNEW EMAIL IS BEING CREATED!!\n\n");
@@ -1226,7 +1197,6 @@ int compare_email_for_find(void* temp1, void* temp2) {
   int *the_one_we_want = (int*) temp2;
   Email *email_being_checked = (Email*) temp1;
 
-
   //printf("Email being checked: %s\n", email_being_checked->emailInfo.subject);
   //printf("This is the one we want %d\n", *the_one_we_want);
   //printf("This is num emails checked: %d\n", num_emails_checked);
@@ -1279,6 +1249,8 @@ void add_to_header(Email *email) {
 
   client_header_response->headers[num_headers_added].message_number = message_number_stamp;
   client_header_response->headers[num_headers_added].read = email->read;
+  client_header_response->headers[num_headers_added].timestamp = email->emailInfo.timestamp;
+
   strcpy(client_header_response->headers[num_headers_added].sender, email->emailInfo.from_field);
   strcpy(client_header_response->headers[num_headers_added].subject, email->emailInfo.subject);
   message_number_stamp++;
