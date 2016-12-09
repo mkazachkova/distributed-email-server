@@ -560,7 +560,7 @@ static void Respond_To_Message() {
   }
 
 
-   if (num_updates_received_from_myself % 1 == 0) {
+   if (num_updates_received_from_myself % 10 == 0) {
     //time to keep on sending. boo
      for(int i = 0; i < NUM_SERVERS; i++) {
        if(who_sends[i] == my_machine_index) { //one of the indexes i'm responsible for; keep sending
