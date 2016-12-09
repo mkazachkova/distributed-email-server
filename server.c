@@ -685,7 +685,7 @@ static void Respond_To_Message() {
 
     //send the very last few messages, initializing remaining slots on header to have 
     //a message_number of -1
-    for (int i = num_headers_added; i < 10; i++) {
+    for (int i = num_headers_added; i < MAX_HEADERS_IN_PACKET; i++) {
       client_header_response->headers[i].message_number = -1;
     }
     client_header_response->done = true;
@@ -1150,8 +1150,8 @@ void add_to_struct_to_send(void *data) {
 
 //Adds an email to a header struct
 void add_to_header(Email *email) {
-  //Sends the header struct once it has been filled with 10 emails
-  if (num_headers_added == 10) {
+  //Sends the header struct once it has been filled with MAX_HEADERS_IN_PACKET emails
+  if (num_headers_added == MAX_HEADERS_IN_PACKET) {
     //printf("Sending header!\n");
     SP_multicast(Mbox, AGREED_MESS, sender, 2, sizeof(HeaderForClient), (char*)client_header_response);
     

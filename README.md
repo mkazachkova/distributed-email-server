@@ -365,20 +365,69 @@ The names of the methods are quite self-explanatory, and are extensively used to
 
 ### Server-Side
 #### Client-Server Methods
+These are the methods that directly process messages that are from clients and send messages to all the servers in the spread group.
 
+##### "Create New User" Request
+* Cast the message into an `InfoForServer` object.
+* If the user sent in the request is nonexistent, create the user.
+* If a new user was created, create an `Update` object with type 13, populating the timestamp of the UPDATE with the `update_index` (which is always incremented by 1 beforehand), the sending server's `machine_index`, and the `user_name`. 
+* Send the `Update` to all other servers in the server's private group.
+
+##### "New Connection" Request
+* Cast the message into an `InfoForServer` object.
+* If the user sent in the request is nonexistent, create the user.
+* Send an `InfoForClient` object back to the client with the group name that the server joined, for the single client-server group with group name retrieved from the current time. Multicast this message back to the client.
+* If a new user was created, create an `Update` object with type 13, populating the timestamp of the UPDATE with the `update_index` (which is always incremented by 1 beforehand), the sending server's `machine_index`, and the `user_name`. 
+* Send the `Update` to all other servers in the server's private group.
+
+##### "List Headers" Request
+* Cast the message into an `InfoForServer` object.
+* Find the user in the `users_list` of the username of the client that sent the request.
+* In a `InfoForClient` object, send all the headers that are NOT (deleted or nonexistent) in the `email_list` associated with the user we just found, iterating backwards and stamping them with a message number and the lamport time stamp of the EMAIL. Send them in packets containing `MAX_HEADERS_IN_PACKET` headers, a value that was optimized to fill up (not overfill) a single packet.
+* Send the very last `InfoForClient` object with headers back to the client.
+
+##### "Mail Message" Request
+* Cast the message into an `InfoForServer` object.
+* In an `Update`, send the email, populating the timestamp of the UPDATE with the `update_index` (which is always incremented by 1 beforehand), the sending server's `machine_index`, and populating the timestamp of the EMAIL with the `lamport_counter` (which is always incremented by 1 beforehand) and the sending server's `machine_index`. Set the `exists`, `deleted`, and `read` fields on the email to `true`, `false`, and `false` respectively.
+* Send the `Update` to all other servers in the server's private group.
+
+##### "Read Message" Request
+* Cast the message into an `InfoForServer` object.
+* In an `Update`, send the request, populating the timestamp of the update as done above and the `timestamp_of_email` with the timestamp sent in the `InfoForServer`'s `message_to_read` field.
+* Send the `Update` to all other servers in the server's private group.
+* Find the user associated with the client who sent the message's `user_name` and find the actual email requested by the lamport time stamp as the comparator.
+* Send the found email back to the client.  
+
+##### "Delete Message" Request
+* Cast the message into an `InfoForServer` object.
+* In an `Update`, send the request, populating the timestamp of the update as done above and the `timestamp_of_email` with the timestamp sent in the `InfoForServer`'s `message_to_delete` field.
+* Send the `Update` to all other servers in the server's private group.
+
+##### "Print Membership" Request
+* Cast the message into an `InfoForServer` object.
+* Look at the `servers_in_partition` boolean array. For every server that exists, populate the `memb_identities` in an `InfoForClient` object at that index with the name of the server; otherwise populate it with the empty string.
+* Send the memberships back to the client.
 
 #### Server-Server Methods
+These are the methods that process messages from other servers in the partition that the server is in.
 
+##### "New Email" Update
+
+##### "Read Email" Update
+
+##### "Delete Email" Update
+
+##### "New User" Update
 
 #### Reconciliation
-
+[FOR MARIYA TO FILL OUT]
 
 #### Flow Control
-
+[FOR MARIYA TO FILL OUT]
 
 ## Discussion  
 
 
 ## Final Thoughts  
 
-
+## Notes
