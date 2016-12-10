@@ -41,12 +41,13 @@ We aim to write a fault-tolerant distributed mail service for users over a netwo
 ## Protocol Overview 
 
 ### Brief Summary
-We implemented a bundled server and client program to run on 5 servers. In order to reconcile servers during network partitions and merges, we utilized the anti-entropy protocol. Each server kept a "merge matrix" of what they knew that servers had from other servers. Upon the event of a merge, these "merge matrices" would be sent around. The maximum value of all merge matrices received would be copied into the server's updating merge matrix. Then, the maximum of all the elements in the new partition's column would become the new maximum value in each column for the servers in the partition. Finding the difference between the minimimum value in each column for servers in a new partition and the maximum value would be the updates that the server would have to send to other servers; who sent updates would be decided by the server who knew the most information sending the updates, using server number as tiebreaker. By this protocol we would be able to implement resiliency to partitions and merges.  
+We implemented a server and client program to run on 5 servers. In order to reconcile servers during network partitions and merges, we utilized the anti-entropy protocol. Each server kept a "merge matrix" of what they knew that servers had from other servers. Upon the event of a merge, these "merge matrices" would be sent around. The maximum value of all merge matrices received would be copied into the server's updating merge matrix. Then, the maximum of all the elements in the new partition's column would become the new maximum value in each column for the servers in the partition. Finding the difference between the minimum value in each column for servers in a new partition and the maximum value would be the updates that the server would have to send to other servers; who sent updates would be decided by the server who knew the most information sending the updates, using server number as tiebreaker. By this protocol we would be able to implement server resiliency to partitions and merges.  
+
 This high-level description will be elaborated more in the Algorithm elaboration section of the design document, particularly the reconciliation section. The section will also talk about how we integrate flow control, cascading merges, and garbage collection for updates.  
 
 ### Data Structures (Structs)
 #### TimeStamp
-Updates and email structs each contain `TimeStamp`s: this is a lamport timestamp with an additional `message_index` field to make it generalizable. This will eventually become used in protocols in order to ensure ordering of emails. The struct is declared as below:  
+Updates and email structs each contain `TimeStamp`s: this is a lamport timestamp with an additional `message_index` field to make it generalizable to both structs. The `TimeStamp` is used in protocols in order to ensure ordering of emails and updates. The struct is declared as below:  
 
 ```
 typedef struct timestamp {
@@ -87,7 +88,7 @@ typedef struct emailinfo {
 The `Email` is never sent by itself, but attached to other data structures that are sent. It contains necessary informational fields about an email as specified in the problem statement: a sender, a recipient, a subject, and a message. We have also given the email a lamport timestamp, to be used in ordering emails, as well as flags, to be used to decide how and whether to display an email to a client when emails are requested to be viewed.    
 
 #### Update
-The core message unit that is sent between servers is the `Update`. This is what is sent whenever anything is updated, such as when an email is sent, marked as read, or deleted (this does NOT include changes in grouping; ie. partitions are merges). The `update` struct is declared as below:  
+The core message unit that is sent between servers is the `Update`. This is what is sent whenever anything is updated, such as when an email is sent, marked as read, or deleted. The `Update` struct is declared as below:  
 ```
 typedef struct update {
   int         type;
@@ -173,13 +174,13 @@ typedef struct header {
 Another message unit that is sent between servers during the process of reconciliation is the `MergeMatrix`. This is what is sent whenever a server detects that there is a change in membership. The struct is declared as below:  
 ```
 typedef struct mergematrix {
-  int type;                               // 20 is for the matrix
-  int machine_index;                      // index from which it came
-  int matrix[NUM_SERVERS][NUM_SERVERS];   // the 2-dimensional 5 x 5 reconciliation matrix
+  int type;
+  int machine_index;
+  int matrix[NUM_SERVERS][NUM_SERVERS];
 } MergeMatrix;
 ```
 
-* `int type` is the type used to know that this is a `mergematrix` so that we can cast it to the correct type.
+* `int type` is the type (type 20) used to know that this is a `mergematrix` so that we can cast it to the correct type.
 * `int machine_index` refers to the index that sent the `mergematrix`.
 * `int matrix[NUM_SERVERS][NUM_SERVERS]` is the `mergematrix` itself: a NUM_SERVERS * NUM_SERVERS dimensional matrix.
 
@@ -286,7 +287,7 @@ void* get_head(List *list);
 void* get_tail(List *list);
 ```
 
-The names of the methods are quite self-explanatory as to explaining the functions of the methods. These methods are extensively used to modify lists in both the client and server program and integral to keeping the program concise, maintainable, and less prone to error.  
+The names of the methods are quite self-explanatory as to explaining the functions of the methods. These methods are extensively used to modify lists in both the client and server program and their generic structure is integral to keeping the program concise, maintainable, and less prone to error.  
 
 ## Algorithm Description  
 ### Client-Side
