@@ -108,7 +108,6 @@ int main(int argc, char *argv[]) {
   char my_machine_index_str[20];  
   sprintf(my_machine_index_str, "%d", my_machine_index + 10);
   strcat(server_own_group, my_machine_index_str);
-  printf("%s\n", server_own_group);
 
   //Spread setup (copypasted from class_user sample code)
   sprintf(Server, "user_mk_ss");
