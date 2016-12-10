@@ -69,7 +69,6 @@ static int          compare_users(void *user1, void *user2);
 static int          compare_email(void *temp, void *temp2);
 static int          compare_update(void* update1, void* update2);
 static bool         create_user_if_nonexistent(char *name);
-static void         print_email(void *email);
 static bool         send_updates_for_merge(void *update);
 static void         add_to_struct_to_send(void *data);
 static void         add_to_header(Email *email);
@@ -861,19 +860,6 @@ int compare_users(void* user1, void* user2) {
   char *user_search = (char*) user2;
 
   return strcmp(user_in_linked_list->name, user_search); 
-}
-
-
-//Prints an email (For debug)
-void print_email(void *email) {
-  Email *temp_email = (Email*) email;
-  printf("Email Timestamp- Counter: %d, machine_index: %d, message_index: %d\n",
-        temp_email->emailInfo.timestamp.counter, temp_email->emailInfo.timestamp.machine_index, 
-        temp_email->emailInfo.timestamp.message_index);
-  printf("Email State- Deleted: %d Read: %d Exists: %d\n", temp_email->deleted, temp_email->read, temp_email->exists);
-
-  printf("To: %s\nFrom: %s\nSubject: %s\n\n", 
-        temp_email->emailInfo.to_field, temp_email->emailInfo.from_field, temp_email->emailInfo.subject);
 }
 
 
