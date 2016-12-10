@@ -642,7 +642,7 @@ static int compare_header_num(void* h1, void* h2) {
 //Takes in command-line args for spread name and user
 static void Usage(int argc, char *argv[]) {
   sprintf(Client_name, "client_usero_mk_ss");
-  sprintf(Spread_name, "10160");
+  sprintf(Spread_name, "10050");
 
   while (--argc > 0) {
     argv++;
