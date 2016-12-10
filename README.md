@@ -192,13 +192,13 @@ Variables that individual clients will contain:
 
 Variables that individual servers will contain:
 #### General Core Variables
-* `List users_list;` contains [INSERT TEXT HERE]
-* `List array_of_updates_list[NUM_SERVERS];` contains [INSERT TEXT HERE]
-* `int my_machine_index;` contains [INSERT TEXT HERE]
-* `int merge_matrix[NUM_SERVERS][NUM_SERVERS];` contains [INSERT TEXT HERE]
+* `List users_list;` contains a linked list of all the users on the server.
+* `List array_of_updates_list[NUM_SERVERS];` contains an array of linked lists, where each linked lists contains the updates associated with a particular server.
+* `int my_machine_index;` contains what the server's machine index is, as taken from command-line input.
+* `int merge_matrix[NUM_SERVERS][NUM_SERVERS];` contains the server's merge matrix, used in the reconciliation process.
 * `int update_index = 0;` contains [INSERT TEXT HERE]
-* `bool servers_in_partition[NUM_SERVERS] = { false };` contains [INSERT TEXT HERE]
-* `int lamport_counter = 0;` contains [INSERT TEXT HERE]
+* `bool servers_in_partition[NUM_SERVERS] = { false };` contains which servers are in the server's partition.
+* `int lamport_counter = 0;` contains the lamport time stamp counter.
 * `int min_seen_global = -1;` contains [INSERT TEXT HERE]
 * `int global_counter = 0;` contains [INSERT TEXT HERE]
 * `int min_global = 0;` contains [INSERT TEXT HERE]
@@ -444,9 +444,11 @@ These are the methods that process messages from other servers in the partition 
 #### Flow Control
 [FOR MARIYA TO FILL OUT]
 
-## Discussion  
+## Discussion on Results
 
 
 ## Final Thoughts  
 
-## Notes
+## Additional Notes
+This document was generated using markdown and converted to .pdf using a md-to-pdf converter tool.
+
