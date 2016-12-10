@@ -204,7 +204,7 @@ Variables that individual servers will contain:
 * `List array_of_updates_list[NUM_SERVERS];` contains an array of linked lists, where each linked lists contains the updates associated with a particular server.
 * `int my_machine_index;` contains what the server's machine index is, as taken from command-line input.
 * `int merge_matrix[NUM_SERVERS][NUM_SERVERS];` contains the server's merge matrix, used in the reconciliation process.
-* `int update_index = 0;` contains [INSERT TEXT HERE]
+* `int update_index = 0;` contains the number of updates (each individual server's update counter); it is incremented by 1 every time a server sends a new update.
 * `bool servers_in_partition[NUM_SERVERS] = { false };` contains which servers are in the server's partition.
 * `int lamport_counter = 0;` contains the lamport time stamp counter.
 * `int min_global = 0;` contains the message_index that e can delete up to while deleting.  
