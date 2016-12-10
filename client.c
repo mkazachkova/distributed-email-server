@@ -185,7 +185,6 @@ static void User_command() {
     // Set curr_group_connected_to back to the empty string
     if (strcmp(curr_group_connected_to, "") != 0) { // some group was previously connected to
       SP_leave(Mbox, curr_group_connected_to);
-      printf("Disconnecting from spread group %s between single client and server\n", curr_group_connected_to);
       strcpy(curr_group_connected_to, ""); //curr_group_connected_to is blank again!
       connected_to_server = false; //since breaking connection here
     }
@@ -222,7 +221,6 @@ static void User_command() {
 
       //There is something in the mailbox to receive!    
       } else if (ret > 0) { 
-        printf("Something received during SP_poll!\n");
         InfoForClient *info = malloc(sizeof(InfoForClient));
 
         int               service_type;
@@ -247,19 +245,14 @@ static void User_command() {
         if (info->type == 4) {
           //Now we connect to whatever name the server has sent back to us
           int join = SP_join(Mbox, info->client_server_group_name);
-          printf("This is the client_server_group_name that is being joined: %s\n", info->client_server_group_name);
           strcpy(curr_group_connected_to, info->client_server_group_name);
-          printf("this is curr group connected to: %s", curr_group_connected_to);
-          printf("printing target groups\n");
-          for (int i = 0; i < num_groups; i++) {
-            printf("%s\n", target_groups[i]);
-          }
+
           connected_to_server = true;
           printf("Successfully connected to server!\n");
           assert(join == 0);
           free(info);
         } else {
-          printf("received SOMETHING but it's incorrect. Check work!\n");
+          printf("You received SOMETHING but it's incorrect. Exiting... \n");
           exit(1);
         }
 
@@ -307,7 +300,7 @@ static void User_command() {
   /////////////////////////////////// MAIL A MESSAGE TO A USER ////////////////////////////////
   case 'm': {
     if (!connected_to_server) {
-      printf("You must connect to a server before sending and email.\n");
+      printf("You must connect to a server before sending an email.\n");
       break;
     }
     
@@ -375,7 +368,7 @@ static void User_command() {
 
     //Make sure the user inputs a valid email number to delete
     if (to_be_deleted > headers_list.num_nodes || to_be_deleted <= 0) {
-      printf("Invalid email number to delete.\n");
+      printf("You input an invalid email number to delete.\n");
       break;
     }
 
@@ -414,7 +407,7 @@ static void User_command() {
 
     //Make sure the user inputs a valid email number to read
     if (to_be_read > headers_list.num_nodes || to_be_read <= 0) {
-      printf("Invalid email number to read.\n");
+      printf("You input an invalid email number to read.\n");
       break;
     }
 
@@ -453,7 +446,7 @@ static void User_command() {
   }
     
   ///////////////////////////////////// EXIT THE PROGRAM ///////////////////////////////////
-  case 'q': {
+  case 'q': {    
     //TODO: send message to server saying that you're disconnecting; don't wait for a response
     //server will receive this message
     //OR
@@ -464,13 +457,13 @@ static void User_command() {
   }
 
   case 's': {
-    printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
+    printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
     break;
   }
       
   //////////////////////////////////////// DEFAULT CASE ////////////////////////////////////
   default: {
-    printf("\nYou input an undefined commnand. Printing menu...\n");
+    printf("\nYou input an undefined command. Printing menu...\n");
     Print_menu();
     break;
   }
@@ -498,7 +491,9 @@ static void Read_message() {
   char *tmp_buf = malloc(MAX_PACKET_LEN);
   int ret = SP_receive(Mbox, &service_type, sender, 100, &num_groups, target_groups,
                    &mess_type, &endian_mismatch, MAX_PACKET_LEN, (char*)tmp_buf);
-  printf("\nATTN: MESSAGE RECEIVED W/ SERVICE TYPE: %d FROM %s SIZE %d\n", service_type, sender, ret);
+
+  //For debug
+  // printf("\nATTN: MESSAGE RECEIVED W/ SERVICE TYPE: %d FROM %s SIZE %d\n", service_type, sender, ret);
 
   if (Is_transition_mess(service_type)) {
     free(tmp_buf);
@@ -514,7 +509,8 @@ static void Read_message() {
     SP_leave(Mbox, curr_group_connected_to);
     strcpy(curr_group_connected_to, "");
 
-    connected_to_server = false; //since we have been disconnected 
+    //Set to false since we have been disconnected 
+    connected_to_server = false; 
     
     free(tmp_buf);
     printf("User> ");
@@ -567,6 +563,7 @@ static void Read_message() {
 
       for (int i = 0; i < MAX_HEADERS_IN_PACKET; i++) {
         if (info_header_t->headers[i].message_number != -1) {
+          //print the header on the screen for the client
           print_header(&(info_header_t->headers[i]));
 
           //add header to persistent headers linked list
@@ -588,7 +585,7 @@ static void Read_message() {
     if (info->email.deleted) {
       printf("You cannot read this message: It has already been deleted!\n");
     } else {      
-      printf("****************************************\nTO: %s\nFROM: %s\nSUBJECT: %s\n\nBODY: %s\n****************************************\n",
+      printf("****************************************\nTO: %s\nFROM: %s\nSUBJECT: %s\n\nBODY: %s****************************************\n",
              info->email.emailInfo.to_field, info->email.emailInfo.from_field, 
              info->email.emailInfo.subject, info->email.emailInfo.message);
     }
