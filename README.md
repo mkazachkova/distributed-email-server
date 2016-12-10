@@ -446,8 +446,20 @@ These are the methods that process messages from other servers in the partition 
 * Look for the update. If it already exists, return.
 * Otherwise, inser the `Update`.
 
-#### Reconciliation
-[FOR MARIYA TO FILL OUT]
+#### Reconciliation (Using Anti-Entropy)
+Our reconciliation process starts when we receive a Caused_By_Network message. This message means that a message has been sent under the instruction of spmonitor (so memberships have changed, meaning it is time to try reconciling). The first thing we do is check if the message was caused by a Server-Client group being broken up due to the partition. If this is the case, the server leaves the Server-Client group and we break.  
+
+If the message was not dealing with a Server-Client group, the first thing we do is set everything in our `servers in partition` array to false. The next step we do deals with taking care of cascading merges, so it will be discussed in the section below. We now look at the `target_groups` array (which was populated when we did SP_receive to get the network message) to see which servers are in our partition (we set the locations in our `servers_in_array` array corresponding to these servers to true). Now we know which servers are in our new partition. 
+
+Next, we take our local copy of our merge matrix and copy it into a MergeMatrix struct. We set the type on this struct to 20 (which represents a merge matrix) and set the machine index field to our own machine index. Then, we send out this MergeMatrix struct. 
+
+Next, we wait to receive `number_of_groups` matrices (which is set to the number of groups received during SP_receive). For each one of these matrices we process the received merge_matrix by doing two things: for each cell we take the minimum of the cell in our merge matrix and of the one we just received and set the corresponding cell in our `min_array` to that value; we also that the maximum of the cell in our matrix and of the matrix received and set the current cell being processeed to that value. 
+
+We are now able to start figuring out who will send the updates. We loop through each column in our (now updated) merge matrix and figure out which of the processes in our partition has the maximum value for that column (this is the process responsible for sending the updates associated with the particular process that corresponds tho that column). We then set that location in our `who_sends` array to the value of the machine responsible for doing the sending.  
+
+Now we come to the actual sending part of the reconciliation process. In the most basic sense, we loop through the `who_sends` array and if the value stored in there matches `my_machine index` then that specicic proccess moves on to send all of the updates from the minimum value for that column in the `min_array` up until the most recent updated it received. The actual details of this sending will be discussed in depth in the Flow Control section below.
+
+
 
 #### Cascading Merges
 [FOR MARIYA TO FILL OUT]
