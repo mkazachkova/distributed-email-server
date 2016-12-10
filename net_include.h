@@ -33,7 +33,7 @@ December 9, 2016
 #define MAX_HEADERS_IN_PACKET  10
 #define NUM_SERVERS            5
 
-#define NUM_FOR_DELETE_UPDATES 5
+#define NUM_FOR_DELETE_UPDATES 500
 
 // **************** DATA STRUCTURES **************** //
 
