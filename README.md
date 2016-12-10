@@ -207,26 +207,24 @@ Variables that individual servers will contain:
 * `int update_index = 0;` contains [INSERT TEXT HERE]
 * `bool servers_in_partition[NUM_SERVERS] = { false };` contains which servers are in the server's partition.
 * `int lamport_counter = 0;` contains the lamport time stamp counter.
-* `int min_seen_global = -1;` contains [INSERT TEXT HERE]
-* `int global_counter = 0;` contains [INSERT TEXT HERE]
-* `int min_global = 0;` contains [INSERT TEXT HERE]
-* `int num_updates_received = 0;` contains [INSERT TEXT HERE]
-* `char sender[MAX_GROUP_NAME];` contains [INSERT TEXT HERE]
+* `int min_global = 0;` contains the message_index that e can delete up to while deleting.  
+* `int num_updates_received = 0;` contains the number of updates that a process has received in order to check when to check if can delete  
+* `char sender[MAX_GROUP_NAME];` contains the name of who sent the message; populated during SP_receive.  
 
 #### Global Variables used for Sending Headers to Clients
-* `int message_number_stamp = 1;` contains [INSERT TEXT HERE]
-* `int num_headers_added;` contains [INSERT TEXT HERE]
-* `HeaderForClient *client_header_response;` contains [INSERT TEXT HERE]
+* `int message_number_stamp = 1;` contains  number used and incremented when displaying emails to the user.    
+* `int num_headers_added;` contains the number of Header structs to have been added to a HeaderForClient struct.  
+* `HeaderForClient *client_header_response;` contains a global HeaderForClient struct that will be populated when the client as to list his or her inbox.  
 
-#### Fucking Variables for Fucking Flow Control
-* `int min_update_global[NUM_SERVERS] = { -1 };` contains [INSERT TEXT HERE] 
-* `int max_update_global[NUM_SERVERS] = { -1 };` contains [INSERT TEXT HERE]
-* `int num_updates_sent_so_far[NUM_SERVERS] = { 0 };` contains [INSERT TEXT HERE]
-* `bool done_sending_for_merge[NUM_SERVERS] = { true };` contains [INSERT TEXT HERE]
-* `int current_i = -1;` contains [INSERT TEXT HERE]
-* `int num_updates_received_from_myself = 0;` contains [INSERT TEXT HERE]
-* `int who_sends[NUM_SERVERS] = { -1 };` contains [INSERT TEXT HERE]
-* `int num_sent_in_each_round = 0;` contains [INSERT TEXT HERE]
+#### Variables for Flow Control
+* `int min_update_global[NUM_SERVERS] = { -1 };` contains the minimum value seen in each column (representing where we need to start sending from during reconciliation).     
+* `int max_update_global[NUM_SERVERS] = { -1 };` contains the message index of thet process's last update for a particular index (representing which update to send up until during reconciliation).   
+* `int num_updates_sent_so_far[NUM_SERVERS] = { 0 };` contains a number representing how many updates a process has sent so far from each of its linked lists of updates (one for every process).   
+* `bool done_sending_for_merge[NUM_SERVERS] = { true };` contains whether or not the process has completed sending all of the updates that it needed to resend during reconciliation.  
+* `int current_i = -1;` contains a number so that a particular index can be used outside of the scope of the main method.   
+* `int num_updates_received_from_myself = 0;` contains the number of updates that a processes has received that that same process had resent during reconciliation.  
+* `int who_sends[NUM_SERVERS] = { -1 };` contains a number representing which process is responsible for sending the updates for the process associated with that particular index.   
+* `int num_sent_in_each_round = 0;` contains the number of total updates that a process has resent during each round of sending while reconciling (used to know how many updates must be received before sending again).   
 
 
 ## System Design  
@@ -478,6 +476,10 @@ Because we implemented our storage of updates using generic linked lists we need
 * Once your counter of the number of updates that you received that were the ones that you resent is equivalent to the number of updates that you have sent total (in the previous round of sending) the process starts over again starting from the "begin to send" point above (this is because we don't want to reset our minimum and maximum values). Variables such as the one representing total updates sent from lists, total updates sent from each particular list, and number of resent updates you have received from yourself should all be set back to 0    
 
 This flow control works in that it allows processes to have a break to process messages instead of just sending all of their messages at one time. Additionally, it is important to note that this resending of udpdates is initially triggeed by a merge/partition occurring (thus the variables discussed in the second bullet point above are set during this time). Essentially, resending starts in the reconciliation process but persists through the rest of the program until all of the updates that needed to be sent have been sent.
+
+
+## Deleting Messages
+We currently check if we can delete anything every 500 (new) updates that we receive (we choose this number because we decided that give we can have infinite clients and infinite emails per client we needed a fairly large number). We increment a counter (`num_updates_received`) every time we receive a new update. Once this number reaches our threshold for deleting updates, we loop through each column in our local merge matrix to find the minimum value in each column. We know that this is the message index that all processes have received up to from a particular process, and thus we are safe to delete everything up to and including that message index in the corresponding column in our `array_of_updates_list`. We do this by simply calling our `remove_from_beginning` function whle the message index on the update we are currently looking at is less than or equal to the message index that we want to delete up to and including. Also note that before we start deleting we must check to make sure that all values in our `done_sending_for_merge` array true, meaning that we have sent everything we needed to send for the last reconciliation (because it would be unfortunate to delete updates that you still want to send).    
 
 
 ## Discussion on Results
