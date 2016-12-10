@@ -613,7 +613,7 @@ static void Read_message() {
 
 static void print_header(Header *header) {
   printf("***************** MESSAGE NUMBER: %d *******************\n", header->message_number);
-  printf("From: %s\nSubject: %s\nRead: %d\n", header->sender, header->subject, header->read);
+  printf("From: %s\nSubject: %s\nRead Status: %s\n", header->sender, header->subject, header->read ? "read" : "unread");
   printf("--------------------------------------------------------\n");
 }
 
