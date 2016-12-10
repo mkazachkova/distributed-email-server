@@ -291,6 +291,8 @@ The names of the methods are quite self-explanatory as to explaining the functio
 
 ## Algorithm Description  
 ### Client-Side
+We use event-driven programming on both the client and server-side. We wrote a method that receives and parses input (`Read_message`). We also have a method that takes in user input (`User_command`). Both of these are `E_attach`ed and then `E_handle_event`s-ed; that is, triggered when either something is received or the user types in something. The User-Input Operations section talks about how clients handle user input, and the Information-Receiving Operations section talks about how clients handle messages received.
+
 #### User-Input Operations
 ##### Login as user: `u <username>`
 * Retrieve the user name input into the command line.
@@ -372,6 +374,8 @@ The names of the methods are quite self-explanatory as to explaining the functio
 * Look through the `memb_identities` array of "strings" (char arrays). If it is not empty string, print the membership.
 
 ### Server-Side
+We use event-driven programming on the server-side. We only have one method that is `E_attach`ed and then `E_handle_event`s-ed that parses messages received, as there is no user input on the server-side.  
+
 #### Client-Server Methods
 These are the methods that directly process messages that are from clients and send messages to all the servers in the spread group.
 
