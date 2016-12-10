@@ -381,8 +381,10 @@ static void Respond_To_Message() {
       if (who_sends[i] == my_machine_index) {        
         //Find the min for the process we are sending for and send from there until the end
         for (int j = 0; j < NUM_SERVERS; j++) {
-          if (min_array[j][i] < min_seen) {
-            min_seen = min_array[j][i];
+          if (servers_in_partition[j]) {
+            if (min_array[j][i] < min_seen) {
+              min_seen = min_array[j][i];
+            }
           }
         }
         min_update_global[i] = min_seen; //where we start from
