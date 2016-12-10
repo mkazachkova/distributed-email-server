@@ -294,6 +294,7 @@ static void User_command() {
 
     printf("User Name: %s\n", curr_user);
     printf("Responding Server: %d\n", curr_server + 1);
+    can_print_user = false;
     break;
   }
       
@@ -471,8 +472,9 @@ static void User_command() {
 
   if (can_print_user) {
     printf("\nUser> ");
-    fflush(stdout);
-  }
+   }
+  fflush(stdout);
+  can_print_user = true;
 }
 
 
@@ -497,13 +499,12 @@ static void Read_message() {
 
   if (Is_transition_mess(service_type)) {
     free(tmp_buf);
-    printf("User> ");
     fflush(stdout);
     return;
   }
 
   if (Is_caused_network_mess(service_type)) {
-    printf("**********You have been disconnected from your server. Please try connecting to another one**********.\n");
+    printf("\n**********You have been disconnected from your server. Please try connecting to another one**********.\n");
 
     //Make curr_group_connected_to back to empty string
     SP_leave(Mbox, curr_group_connected_to);
@@ -511,7 +512,6 @@ static void Read_message() {
 
     //Set to false since we have been disconnected 
     connected_to_server = false; 
-    
     free(tmp_buf);
     printf("User> ");
     fflush(stdout);
@@ -520,14 +520,12 @@ static void Read_message() {
   
   if (Is_caused_join_mess(service_type)) {
     free(tmp_buf);
-    printf("User> ");
     fflush(stdout);
     return;
   }
 
   if (Is_caused_leave_mess(service_type)) {
     free(tmp_buf);
-    printf("User> ");
     fflush(stdout);
     return;
   }
