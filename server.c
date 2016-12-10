@@ -69,9 +69,7 @@ static int          compare_users(void *user1, void *user2);
 static int          compare_email(void *temp, void *temp2);
 static int          compare_update(void* update1, void* update2);
 static bool         create_user_if_nonexistent(char *name);
-static void         print_user(void *user);
 static void         print_email(void *email);
-static void         print_update(void *update);
 static bool         send_updates_for_merge(void *update);
 static void         add_to_struct_to_send(void *data);
 static void         add_to_header(Email *email);
@@ -857,13 +855,6 @@ bool create_user_if_nonexistent(char name[MAX_NAME_LEN]) {
 /////////////////////////////////////////////////////////////////////////////////////////////
 
 
-//Prints a user and their associated list of emails (For debugging)
-void print_user(void *user) {
-  User *temp = (User*) user;
-  print_list(&(temp->email_list), print_email);
-}
-
-
 //Returns if two users have the same name
 int compare_users(void* user1, void* user2) {
   User *user_in_linked_list = (User*) user1;
@@ -906,14 +897,6 @@ int compare_email(void* temp1, void* temp2) {
     }
   }
 }
-
-
-//Prints updates (for debugging)
-void print_update(void* temp) {
-  Update *update = (Update*) temp;
-  printf("This is type: %d\nThis is message index: %d\n", update->type, update->timestamp.message_index);
-}
-
 
 //Compares updates by message index
 int compare_update(void* update1, void* update2) {
