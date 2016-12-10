@@ -489,7 +489,7 @@ static void Read_message() {
           service_type = 0;
 
   char *tmp_buf = malloc(MAX_PACKET_LEN);
-  int ret = SP_receive(Mbox, &service_type, sender, 100, &num_groups, target_groups,
+  /*int ret = */SP_receive(Mbox, &service_type, sender, 100, &num_groups, target_groups,
                    &mess_type, &endian_mismatch, MAX_PACKET_LEN, (char*)tmp_buf);
 
   //For debug
