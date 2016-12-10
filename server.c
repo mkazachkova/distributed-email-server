@@ -180,7 +180,6 @@ static void Respond_To_Message() {
 
   //If transition message, do nothing
   if (Is_transition_mess(service_type)) {
-    //  printf("Transition message received!\n");
     return;
   }
 
@@ -230,25 +229,18 @@ static void Respond_To_Message() {
   if (Is_caused_network_mess(service_type)) {     
     //    num_matrices_received = 0;
 
-
     int number_of_groups = num_groups;
-    //printf("A change in membership has occurred!\n");
 
     //If server gets a leave message from a single client-server spread group, LEAVE THAT GROUP ALSO.
-    //printf("this is sender: %s", sender);
     char first_char = sender[0];
-    //printf("this is char first char %d\n", first_char);
 
     //If number received, then a NON-server group was partitioned
     if (first_char >= '0' && first_char <= '9') {
       printf("Received network message from non-server.\n");
-      //printf("this is sender of non-server thing: %s\n", sender);
-      //printf("this is target_groups: %s\n", target_groups[0]);
       SP_leave(Mbox, sender);
-      printf("Server has received that the client has been disconnected from the client-server group due to partition. Server has also disconnected\n");
+
       //this means client has LEFT the group that ONLY you two are in. Do NOT do reconciliation process!!!
-      //I don''t think it means it joined ^^^ I think it means that it left...when it joins not a network message, right?
-      //yea you're right lol i must have copypasted that from somewhere :P (made fixes in comment)
+      printf("Server has received that the client has been disconnected from the client-server group due to partition. Server has also disconnected\n");
       return; 
 
     }
@@ -293,15 +285,6 @@ static void Respond_To_Message() {
     for (int i = 0; i < NUM_SERVERS; i++) {
       memcpy(merge->matrix[i], merge_matrix[i], sizeof(merge_matrix[i]));
     }
-
-    //Print merge matrix sent (for debug)
-    //printf("\n\n\n/******** MERGE MATRIX BEFORE RECONCILIATION BEGUN: ********/\n\n\n");    
-    /*for (int i = 0; i < NUM_SERVERS; i++) {
-      for (int j = 0; j < NUM_SERVERS; j++) {
-        printf("%d ", merge->matrix[i][j]);
-      }
-      printf("\n");
-    }*/
 
     //send 2d MergeMatrix array to everyone else
     SP_multicast(Mbox, AGREED_MESS, group, 2, sizeof(MergeMatrix), (char*)merge);
@@ -379,12 +362,6 @@ static void Respond_To_Message() {
     }
 
 
-    
-    //For debug: print servers in our new partition
-    //for (int i = 0; i < NUM_SERVERS; i++) {
-    //printf("%d ", servers_in_partition[i]);
-    //}
-
     //Find which server has the maximum
     for (int i = 0; i < NUM_SERVERS; i++) {
       for (int j = 0; j < NUM_SERVERS; j++) {
@@ -415,12 +392,10 @@ static void Respond_To_Message() {
       knows a correct representation of what updates other processes have
      */
 
-
     
     //For debug: Print the who sends array to see who is sending what updates
     printf("printing who sends array!\n");
     for (int i = 0; i < NUM_SERVERS; i++) {
-      //assert(who_sends[i] >= 0);
       printf("%d ", who_sends[i]);
     }
 
@@ -500,7 +475,6 @@ static void Respond_To_Message() {
       printf("\n");
     }
 
-
     return;
   }
 
@@ -548,7 +522,6 @@ static void Respond_To_Message() {
        can_delete = false;
      }
    }
-
    
   
   if (num_updates_received >= NUM_FOR_DELETE_UPDATES && can_delete) {
@@ -596,6 +569,7 @@ static void Respond_To_Message() {
       SP_multicast(Mbox, AGREED_MESS, group, 2, sizeof(Update), (char*)new_user_update);
       free(new_user_update);
     }
+
 
   } else if (*type == 2) { // We received a connection request with a potentially new user name attached to the request
 
@@ -661,6 +635,7 @@ static void Respond_To_Message() {
     free(client_header_response);
     client_header_response = NULL;
   
+
   } else if (*type == 4) { // Client put in request to server to mail message to another user
 
     //NOTE: We are NOT directly putting the email in our own personal email list (in our Users linked list)
@@ -708,6 +683,7 @@ static void Respond_To_Message() {
     
     //Send the Update to ALL OTHER SERVERS in the same partition
     SP_multicast(Mbox, AGREED_MESS, group, 2, sizeof(Update), (char*)to_be_sent);
+
 
   } else if (*type == 6) { //Server received a "READ MESSAGE" message from the client
 
@@ -825,6 +801,7 @@ static void Respond_To_Message() {
       insert(&(temp->email_list),(void*) &(update->email), compare_email);
     }
 
+
   } else if (*type == 11) { //server received a READ EMAIL update from another server
     //Cast into Update type
     Update *update = (Update*) tmp_buf;
@@ -888,6 +865,7 @@ static void Respond_To_Message() {
       print_list(&(temp->email_list), print_email);
     }
 
+
   } else if (*type == 12) { //server received a DELETE EMAIL update from another server
     //Cast into Update type
     Update *update = (Update*) tmp_buf;
@@ -922,8 +900,6 @@ static void Respond_To_Message() {
       User *temp = (User*) find(&users_list, (void*)update->user_name, compare_users);
       assert(temp != NULL);
 
-      printf("timestamp of email (just counter and machine index): %d %d\n", update->timestamp_of_email.counter, update->timestamp_of_email.machine_index);
-
       Email *dummy = malloc(sizeof(Email));
       dummy->emailInfo.timestamp = update->timestamp_of_email;
     
@@ -946,9 +922,9 @@ static void Respond_To_Message() {
     
       printf("inserted into user's email. Now printing user's email inbox: \n");
       print_list(&(temp->email_list), print_email);
-
     }
     
+
   } else if (*type == 13) { //server received a NEW USER update from another server
 
     Update *update = (Update*) tmp_buf;
@@ -1111,7 +1087,6 @@ void add_to_struct_to_send(void *data) {
 void add_to_header(Email *email) {
   //Sends the header struct once it has been filled with MAX_HEADERS_IN_PACKET emails
   if (num_headers_added == MAX_HEADERS_IN_PACKET) {
-    //printf("Sending header!\n");
     SP_multicast(Mbox, AGREED_MESS, sender, 2, sizeof(HeaderForClient), (char*)client_header_response);
     
     num_headers_added = 0;
@@ -1158,7 +1133,6 @@ bool send_updates_for_merge(void* temp) {
 
 bool can_delete_update(void* temp) {
   Update *update = (Update*) temp;
-  //printf("entered can delete update!\nThis is message index on timestamp: %d\nThis is min_global: %d\n", update->timestamp.message_index, min_global);
   if (update->timestamp.message_index <= min_global) {
     return true; //this means we can delete since the index on the update is less than what everyone has
   }
