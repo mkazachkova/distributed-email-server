@@ -51,35 +51,35 @@ char                sender[MAX_GROUP_NAME];
 
 
 
-//fucking variables for fucking flow control
-int min_update_global[NUM_SERVERS] = { -1 };
-int max_update_global[NUM_SERVERS] = { -1 };
-int num_updates_sent_so_far[NUM_SERVERS] = { 0 };
-bool done_sending_for_merge[NUM_SERVERS] = { true };
-int current_i = -1; //this one expecially makes me think this flow control idea is dumb
-int num_updates_received_from_myself = 0;
-int who_sends[NUM_SERVERS] = { -1 };
-int num_sent_in_each_round = 0;
+//variables for flow control
+int                 min_update_global[NUM_SERVERS] = { -1 };
+int                 max_update_global[NUM_SERVERS] = { -1 };
+int                 num_updates_sent_so_far[NUM_SERVERS] = { 0 };
+bool                done_sending_for_merge[NUM_SERVERS] = { true };
+int                 current_i = -1; //this one expecially makes me think this flow control idea is dumb
+int                 num_updates_received_from_myself = 0;
+int                 who_sends[NUM_SERVERS] = { -1 };
+int                 num_sent_in_each_round = 0;
 
 
 
 //Our own methods 
-static void   Respond_To_Message();
-static void   Bye();
-static int    compare_users(void *user1, void *user2);
-static int    compare_email(void *temp, void *temp2);
-static int    compare_update(void* update1, void* update2);
-//static int    compare_email_for_find(void* email1, void* email2);
-static bool   create_user_if_nonexistent(char *name);
-static void   print_user(void *user);
-static void   print_email(void *email);
-static void   print_update(void *update);
-static bool   send_updates_for_merge(void *update);
-static void   add_to_struct_to_send(void *data);
-static void   add_to_header(Email *email);
-static bool   can_delete_update(void* update);
-static int    max(int one, int two);
-static int    min(int one, int two);
+static void         Respond_To_Message();
+static void         Bye();
+static int          compare_users(void *user1, void *user2);
+static int          compare_email(void *temp, void *temp2);
+static int          compare_update(void* update1, void* update2);
+static bool         create_user_if_nonexistent(char *name);
+static void         print_user(void *user);
+static void         print_email(void *email);
+static void         print_update(void *update);
+static bool         send_updates_for_merge(void *update);
+static void         add_to_struct_to_send(void *data);
+static void         add_to_header(Email *email);
+static bool         can_delete_update(void* update);
+static int          max(int one, int two);
+static int          min(int one, int two);
+
 
 
 // **************************** MAIN METHOD **************************** //
@@ -167,14 +167,6 @@ static void Respond_To_Message() {
   int16 mess_type;
   int   endian_mismatch;
 
-  //IDEA: if we receive an update then we're still going to end up doing some of the things in
-  //the large if else block thing, so maybe we should check if it's an update and then change
-  //type to that value and then just make sure that each if else statement takes care of the
-  //case where the update arrives before the user or email is actually created
-
-  //maybe we create a separate method for creating a user when we get an email, read, or
-  //delete for a user that has not been created
-  
   
   // Putting whatever was received into tmp_buf, which will be cast into whatever type
   // it is by looking at the first digit!
@@ -194,28 +186,19 @@ static void Respond_To_Message() {
 
   //Parsing the server entering message (Should only be executed at the beginning of the program)
   if (Is_caused_join_mess(service_type)) {
-    // printf("A join message was received. Here are the contents of target_groups:\n");
-    //for (int i = 0; i < num_groups; i++) {
-    //printf("%s\n", target_groups[i]);
-    //}   
 
-    //printf("this is sender: %s", sender);
     char first_char = sender[0];
-    //printf("this is the first first char. of sender: %d\n", first_char);
 
     //If number received, then a NON-server group was joined by a client.
     if (first_char >= '0' && first_char <= '9') {
-      //printf("Received join message from non-server.\n");
       return; //this means client has joined the group you've already joined. Do nothing
     }
     
     //Otherwise, it is a server group.
-    //printf("Received join message from server.\n");
 
     //Change servers_in_partition array to reflect current servers in array
     for (int i = 0; i < num_groups; i++) {
       int num = atoi(&(target_groups[i][strlen(target_groups[i]) - 1]));
-      //printf("Adding server with name %s into index %d...\n", target_groups[i], num);
       servers_in_partition[num] = true;
       num_servers_in_partition++;
     }
@@ -230,13 +213,10 @@ static void Respond_To_Message() {
 
   } else if (Is_caused_leave_mess(service_type) || Is_caused_disconnect_mess(service_type)) {
     //If server gets a leave message from a single client-server spread group, LEAVE THAT GROUP ALSO.
-    //printf("this is sender: %s", sender);
     char first_char = sender[0];
-    //printf("this is char first char %d\n", first_char);
 
     //Received leave message from non-client server
     if (first_char >= '0' && first_char <= '9') {
-      //printf("Received %s message from non-server\n", Is_caused_disconnect_mess(service_type) ? "disconnect" : "leave");
       SP_leave(Mbox, sender);
       return; //this means client has left group between client and server; also leave client group
     }
@@ -368,17 +348,6 @@ static void Respond_To_Message() {
       }
       
       num_matrices_received++;
-
-      //printf("*************this is number groups inside of the for loop: %d\n", num_groups);
-
-      
-      printf("\n\nMERGE MATRIX RECEIVED from server: %d\n", merge->machine_index);
-      //for (int i = 0; i < NUM_SERVERS; i++) {
-      //for (int j = 0; j < NUM_SERVERS; j++) {
-      //  printf("%d ", merge->matrix[i][j]);
-      //}
-      //printf("\n");
-      //}
       
       //Process MergeMatrix
       for (int i = 0; i < NUM_SERVERS; i++) {
@@ -445,7 +414,6 @@ static void Respond_To_Message() {
       number that we have up to for each index in our updates array. That way when we reconcile each process
       knows a correct representation of what updates other processes have
      */
-
 
 
     
@@ -813,7 +781,7 @@ static void Respond_To_Message() {
     //update our own lamport counter
     lamport_counter = max(lamport_counter, update->email.emailInfo.timestamp.counter);
 
-    //TODO:updates_array needs to be taken into account; update our 2d array
+    // Update our 2d merge_matrix array
     for (int i = 0; i < NUM_SERVERS; i++) {
       if (servers_in_partition[i]) {
         merge_matrix[i][update->timestamp.machine_index] = update->timestamp.message_index;
@@ -854,22 +822,14 @@ static void Respond_To_Message() {
       User *temp = find(&users_list, (void*)update->email.emailInfo.to_field, compare_users);
       assert(temp != NULL);
 
-
-      //printf("\nTHIS IS THE LAMPORT COUNTER THAT WE ARE GOING TO BE INSERTING: \n");
-      //printf("This is counter: %d and message index: %d and machine index: %d\n",
-      //     update->email.emailInfo.timestamp.counter, update->email.emailInfo.timestamp.message_index, update->email.emailInfo.timestamp.machine_index);
-
       insert(&(temp->email_list),(void*) &(update->email), compare_email);
-      //printf("inserted into user's email. Now printing user's email inbox: \n");
-      //print_list(&(temp->email_list), print_email);
     }
 
   } else if (*type == 11) { //server received a READ EMAIL update from another server
     //Cast into Update type
     Update *update = (Update*) tmp_buf;
-    //printf("we have received an update for a new email!\n");
 
-    //TODO: updates_array needs to be taken into account; update our 2d array
+    //Update our 2d merge_matrix array
     for (int i = 0; i < NUM_SERVERS; i++) {
       if (servers_in_partition[i]) {
         merge_matrix[i][update->timestamp.machine_index] = update->timestamp.message_index;
@@ -902,7 +862,6 @@ static void Respond_To_Message() {
       
       User *temp = (User*) find(&users_list, (void*)update->user_name, compare_users);
       assert(temp != NULL);
-      //printf("User found! Here's their name: %s\n", temp->name);
 
       printf("timestamp of email (just counter and machine index): %d %d\n", update->timestamp_of_email.counter, update->timestamp_of_email.machine_index);
 
@@ -933,7 +892,7 @@ static void Respond_To_Message() {
     //Cast into Update type
     Update *update = (Update*) tmp_buf;
 
-    //TODO: updates_array needs to be taken into account; update our 2d array
+    // Update our 2d merge_matrix array
     for (int i = 0; i < NUM_SERVERS; i++) {
       if (servers_in_partition[i]) {
         merge_matrix[i][update->timestamp.machine_index] = update->timestamp.message_index;
@@ -998,7 +957,7 @@ static void Respond_To_Message() {
     //consider if need to take max above or not; for now we say no
     // merge_matrix[my_machine_index][update->timestamp.machine_index] = update->timestamp.counter;
 
-    //TODO:updates_array needs to be taken into account; update our 2d array
+    // update our 2d merge_matrix array
     for (int i = 0; i < NUM_SERVERS; i++) {
       if (servers_in_partition[i]) {
         merge_matrix[i][update->timestamp.machine_index] = update->timestamp.message_index;

@@ -79,8 +79,6 @@ typedef struct update {
   char        user_name[MAX_NAME_LEN];    // used for new user created
   TimeStamp   timestamp_of_email;         // used for email read or email deleted
 
-  //TODO: We don't need this any more. remove it later?  
-  int         updates_array[NUM_SERVERS]; // one-dimensional array containing server's current "view" of updates received
   int         index_of_machine_resending_update; //will need to inialize to -1 for all updates when we originally send them 
 } Update;
 
@@ -119,6 +117,8 @@ typedef struct info_for_server {
 } InfoForServer;
 
 
+// Header struct
+// * sent from in arrays on HeaderForClient objects
 typedef struct header {
   int       message_number;                 
   char      sender[MAX_NAME_LEN];
@@ -128,12 +128,17 @@ typedef struct header {
 } Header;
 
 
+// HeaderForClient struct
+// * sent from servers to clients only
 typedef struct header_for_client {
-  int    type;                                       // 1 is list header
-  Header headers[MAX_HEADERS_IN_PACKET];             // used for sending headers
-  bool   done; //might be used for telling the client whether it needs to receive another one of these 
+  int    type;                             // 1 is list header
+  Header headers[MAX_HEADERS_IN_PACKET];   // used for sending headers
+  bool   done;                             // might be used for telling the client whether it needs to receive another one of these 
 } HeaderForClient;
 
+
+// InfoForClient struct
+// * sent from servers to clients only
 typedef struct info_for_client {
   int    type;                                       
                                                      // 2 is specific email body to send
