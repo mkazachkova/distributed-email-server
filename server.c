@@ -56,11 +56,10 @@ int                 min_update_global[NUM_SERVERS] = { -1 };
 int                 max_update_global[NUM_SERVERS] = { -1 };
 int                 num_updates_sent_so_far[NUM_SERVERS] = { 0 };
 bool                done_sending_for_merge[NUM_SERVERS] = { true };
-int                 current_i = -1; //this one expecially makes me think this flow control idea is dumb
+int                 current_i = -1;
 int                 num_updates_received_from_myself = 0;
 int                 who_sends[NUM_SERVERS] = { -1 };
 int                 num_sent_in_each_round = 0;
-
 
 
 //Our own methods 
@@ -79,7 +78,6 @@ static void         add_to_header(Email *email);
 static bool         can_delete_update(void* update);
 static int          max(int one, int two);
 static int          min(int one, int two);
-
 
 
 // **************************** MAIN METHOD **************************** //
@@ -202,12 +200,6 @@ static void Respond_To_Message() {
       num_servers_in_partition++;
     }
 
-    //Print the servers_in_partition array    
-    printf("printing boolean servers_in_partition array: \n");
-    for(int i = 0; i < NUM_SERVERS; i++) {
-      printf("%d ", servers_in_partition[i]);
-    }
-    printf("\n"); 
     return;
 
   } else if (Is_caused_leave_mess(service_type) || Is_caused_disconnect_mess(service_type)) {
@@ -236,21 +228,10 @@ static void Respond_To_Message() {
 
     //If number received, then a NON-server group was partitioned
     if (first_char >= '0' && first_char <= '9') {
-      printf("Received network message from non-server.\n");
       SP_leave(Mbox, sender);
-
-      //this means client has LEFT the group that ONLY you two are in. Do NOT do reconciliation process!!!
-      printf("Server has received that the client has been disconnected from the client-server group due to partition. Server has also disconnected\n");
       return; 
-
     }
-
-
-    //printf("\nTHIS IS NUM GROUPS after receiving network message %d\n", num_groups);
-    //Should we leave the group that the client and server are in in the above process ^^
-    //so that the group isn't rejoined when the partition no longer persists
     
-    printf("Entering reconciliation process\n");
     //Set all servers in partition to false
     for (int i = 0; i < NUM_SERVERS; i++) {
       servers_in_partition[i] = false;
@@ -318,15 +299,6 @@ static void Respond_To_Message() {
       
       //If number received, then a NON-server group was partitioned
       if (first_char >= '0' && first_char <= '9') {
-        //printf("message received from nonserver during merge matrix. This is service type: %d", service_type);
-        //printf("Received network message from non-server.\n");
-        //printf("this is sender of non-server thing: %s\n", sender);
-        //printf("this is target_groups: %s\n", target_groups[0]);
-        // SP_leave(Mbox, sender);
-        //printf("Server has received that the client has been disconnected from the client-server group due to partition. Server has also disconnected\n");
-        //this means client has LEFT the group that ONLY you two are in. Do NOT do reconciliation process!!!
-        //I don''t think it means it joined ^^^ I think it means that it left...when it joins not a network message, right?
-        //yea you're right lol i must have copypasted that from somewhere :P (made fixes in comment)
         continue; 
       }
       
@@ -352,9 +324,7 @@ static void Respond_To_Message() {
 
     //now both (current merge_matrix and min_array) arrays loaded
     //it's time to figure out which machine needs to send updates
-    //int who_sends[NUM_SERVERS] = { -1 }; //array of who must send updates
     int max_seen = 0;
-    printf("This is servers in partition array: \n");
 
     //resetting since now global
     for (int i = 0; i < NUM_SERVERS; i++) {
@@ -389,19 +359,11 @@ static void Respond_To_Message() {
       there is a chance that each process won't get all of the updates that it says it has....
       what if...before we start the reconcililng thing we change our row in the merge matrix with the 
       number that we have up to for each index in our updates array. That way when we reconcile each process
-      knows a correct representation of what updates other processes have
+      knows a correct representation of what updates other processes have.
      */
 
-    
-    //For debug: Print the who sends array to see who is sending what updates
-    printf("printing who sends array!\n");
-    for (int i = 0; i < NUM_SERVERS; i++) {
-      printf("%d ", who_sends[i]);
-    }
 
-    printf("\n");
-
-    //reset. Not sure if needed
+    //reset.
     for (int i = 0; i < NUM_SERVERS; i++) {
       done_sending_for_merge[i] = true;
       min_update_global[i] = 0;
@@ -431,7 +393,7 @@ static void Respond_To_Message() {
         }
         max_update_global[i] = last->timestamp.message_index; //where we end
         done_sending_for_merge[i] = false; //so that we know we are still sending
-        current_i = i; //so that we know which index to use when using our NUMEROUS global arrays (fuck this, again)
+        current_i = i; //so that we know which index to use when using our NUMEROUS global arrays
         
         //Set the min_seen_global variable to the minimum we have seen 
         //(global only set here for safety)
@@ -442,37 +404,6 @@ static void Respond_To_Message() {
         done_sending_for_merge[i] = done; 
       }
 
-    }
-
-    /*
-    
-    //delete things in updates array that we no longer need
-    int min = INT_MAX;
-    bool can_move_forward = true;
-    for (int i = 0; i < NUM_SERVERS; i++) {
-      for (int j = 0; j < NUM_SERVERS; j++) {
-        if (merge_matrix[j][i] < min) {
-          min = merge_matrix[j][i];
-        }
-      }
-      min_global = min;
-      //for index i in updates array delete up until and including the update with the min value
-      can_move_forward = true;
-      while(can_move_forward) {
-        can_move_forward = remove_from_beginning(&(array_of_updates_list[i]), can_delete_update);
-      }
-    }
-
-    */
-
-    
-    //Print merge matrix sent (for debug)
-    printf("\n\n\n/******** MERGE MATRIX AFTER RECONCILIATION COMPLETED: ********/\n\n\n");
-    for (int i = 0; i < NUM_SERVERS; i++) {
-      for (int j = 0; j < NUM_SERVERS; j++) {
-        printf("%d ", merge_matrix[i][j]);
-      }
-      printf("\n");
     }
 
     return;
@@ -491,7 +422,6 @@ static void Respond_To_Message() {
     }
 
     if (temp->index_of_machine_resending_update == my_machine_index) { //have received an update from ourselves that we resent
-      printf("\n\nHAVE RECEIVED AN UPDATE THAT WE RESENT!!!!!\\n\n");
       num_updates_received_from_myself++;
     }
   }
@@ -506,8 +436,6 @@ static void Respond_To_Message() {
          if (!done_sending_for_merge[i]) { //means we have more to send for this machine
            current_i = i; //set our global variable
            num_updates_sent_so_far[i] = 0; //set this back to zero since it will be incrmemented in interator method
-           //bool more_to_send  = forward_iterator(&(array_of_updates_list[i]), send_updates_for_merge);
-           //done_sending_for_merge[i] = !more_to_send;
            bool done  = forward_iterator(&(array_of_updates_list[i]), send_updates_for_merge);
            done_sending_for_merge[i] = done;
          }
@@ -706,7 +634,7 @@ static void Respond_To_Message() {
     User *user = find(&users_list, (void*)info->user_name, compare_users);
     assert(user != NULL); //for debug
 
-    //TODO: send the actual email body back to client
+    //Send the actual email body back to client
     InfoForClient *info_for_client = malloc(sizeof(InfoForClient));
     info_for_client->type = 2; // this means that an email has been sent back for the client to read
 
@@ -764,26 +692,18 @@ static void Respond_To_Message() {
       }
     }
 
-    //insert(&(array_of_updates_list[update->timestamp.machine_index]), (void*)update, compare_update);
-
     //this logic is used in the chance that we receive an update for an email that we already have; we ignore it!
     Update *existing_update = find(&(array_of_updates_list[update->timestamp.machine_index]),(void*)update, compare_update);
-    //User *user = find(&(users_list), update->user_name, compare_users);
-    //if (user == NULL) {
-    //create_user_if_nonexistent(update->user_name);
-    //}
 
     User *user_found = find(&(users_list), update->email.emailInfo.to_field, compare_users);
     assert(user_found != NULL); //should never be null because we just created it if it's null
     Email *temp = find(&(user_found->email_list), (void*)&(update->email), compare_email);
     if (temp != NULL) {
-      //printf("Have received an update for an email that we already have! IGNORING!!!!!");
       //email exists so don't want to process it
       return;
     }
     
     if (existing_update != NULL) {
-      //printf("Update already exists! Should only show up in a merge!!\n");
       return;
     } else {
       //update is new! We want to insert it into our array!!!!
@@ -828,19 +748,12 @@ static void Respond_To_Message() {
         printf("This is the linked list for index %d: \n", i);
         print_list(&(array_of_updates_list[i]), print_update);
       }
-    
-      /**
-         How is the above code working (printing the subject)? Are we sending the whole email? Aren't we just sending the timestamp?
-       **/
 
-      /*CODE NOT TESTED YET*/
       create_user_if_nonexistent(update->user_name);
       //ideally this will create the new user if it has not been made yet
       
       User *temp = (User*) find(&users_list, (void*)update->user_name, compare_users);
       assert(temp != NULL);
-
-      printf("timestamp of email (just counter and machine index): %d %d\n", update->timestamp_of_email.counter, update->timestamp_of_email.machine_index);
 
       Email *dummy = malloc(sizeof(Email));
       dummy->emailInfo.timestamp = update->timestamp_of_email;
@@ -849,7 +762,6 @@ static void Respond_To_Message() {
       free(dummy);
 
       if (email == NULL) {
-        printf("\n\nNEW EMAIL IS BEING CREATED!!\n\n");
         Email *new_email = malloc(sizeof(Email));
         new_email->emailInfo.timestamp = update->timestamp_of_email;
         new_email->read = true;
@@ -860,9 +772,6 @@ static void Respond_To_Message() {
       } else {
         email->read = true;
       }
-    
-      printf("inserted into user's email. Now printing user's email inbox: \n");
-      print_list(&(temp->email_list), print_email);
     }
 
 
@@ -907,7 +816,6 @@ static void Respond_To_Message() {
       free(dummy);
 
       if (email == NULL) {
-        printf("\n\nNEW EMAIL IS BEING CREATED!!\n\n");
         Email *new_email = malloc(sizeof(Email));
         new_email->emailInfo.timestamp = update->timestamp_of_email;
 
@@ -919,9 +827,6 @@ static void Respond_To_Message() {
       } else {
         email->deleted = true;
       }
-    
-      printf("inserted into user's email. Now printing user's email inbox: \n");
-      print_list(&(temp->email_list), print_email);
     }
     
 
@@ -929,9 +834,6 @@ static void Respond_To_Message() {
 
     Update *update = (Update*) tmp_buf;
     create_user_if_nonexistent(update->user_name);
-
-    //consider if need to take max above or not; for now we say no
-    // merge_matrix[my_machine_index][update->timestamp.machine_index] = update->timestamp.counter;
 
     // update our 2d merge_matrix array
     for (int i = 0; i < NUM_SERVERS; i++) {
@@ -943,7 +845,6 @@ static void Respond_To_Message() {
     //can't just insert it; want to check if we have the update already
     Update *existing_update = find(&(array_of_updates_list[update->timestamp.machine_index]),(void*)update, compare_update);
     if (existing_update != NULL) {
-      //printf("Update already exists! Should only show up in a merge!!\n");
       return;
     } else {
       //update is new! We want to insert it into our array!!!!
@@ -971,10 +872,8 @@ bool create_user_if_nonexistent(char name[MAX_NAME_LEN]) {
     //create new user
     User *user_to_insert = malloc(sizeof(User));
     strcpy(user_to_insert->name, name);
-    //printf("before creating email list for user\n");
     create_list(&(user_to_insert->email_list), sizeof(Email));
     add_to_end(&users_list, user_to_insert);
-    //printf("new user created!\n");
     return true;
   }
 
@@ -1032,7 +931,6 @@ int compare_email(void* temp1, void* temp2) {
     } else if(one->emailInfo.timestamp.machine_index > two->emailInfo.timestamp.machine_index) {
       return 1;
     } else {
-      printf("Two equal emails have been found!\n");
       return 0;
     }
   }
@@ -1056,7 +954,6 @@ int compare_update(void* update1, void* update2) {
   } else if (one->timestamp.message_index > two->timestamp.message_index) {
     return 1;
   } else {
-    printf("Error: this should not happen: have two updates with same message index from same machine\n");
     return 0;
   }
 }
