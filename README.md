@@ -41,12 +41,13 @@ We aim to write a fault-tolerant distributed mail service for users over a netwo
 ## Protocol Overview 
 
 ### Brief Summary
-We implemented a bundled server and client program to run on 5 servers. In order to reconcile servers during network partitions and merges, we utilized the anti-entropy protocol. Each server kept a "merge matrix" of what they knew that servers had from other servers. Upon the event of a merge, these "merge matrices" would be sent around. The maximum value of all merge matrices received would be copied into the server's updating merge matrix. Then, the maximum of all the elements in the new partition's column would become the new maximum value in each column for the servers in the partition. Finding the difference between the minimimum value in each column for servers in a new partition and the maximum value would be the updates that the server would have to send to other servers; who sent updates would be decided by the server who knew the most information sending the updates, using server number as tiebreaker. By this protocol we would be able to implement resiliency to partitions and merges.  
+We implemented a server and client program to run on 5 servers. In order to reconcile servers during network partitions and merges, we utilized the anti-entropy protocol. Each server kept a "merge matrix" of what they knew that servers had from other servers. Upon the event of a merge, these "merge matrices" would be sent around. The maximum value of all merge matrices received would be copied into the server's updating merge matrix. Then, the maximum of all the elements in the new partition's column would become the new maximum value in each column for the servers in the partition. Finding the difference between the minimum value in each column for servers in a new partition and the maximum value would be the updates that the server would have to send to other servers; who sent updates would be decided by the server who knew the most information sending the updates, using server number as tiebreaker. By this protocol we would be able to implement server resiliency to partitions and merges.  
+
 This high-level description will be elaborated more in the Algorithm elaboration section of the design document, particularly the reconciliation section. The section will also talk about how we integrate flow control, cascading merges, and garbage collection for updates.  
 
 ### Data Structures (Structs)
 #### TimeStamp
-Updates and email structs each contain `TimeStamp`s: this is a lamport timestamp with an additional `message_index` field to make it generalizable. This will eventually become used in protocols in order to ensure ordering of emails. The struct is declared as below:  
+Updates and email structs each contain `TimeStamp`s: this is a lamport timestamp with an additional `message_index` field to make it generalizable to both structs. The `TimeStamp` is used in protocols in order to ensure ordering of emails and updates. The struct is declared as below:  
 
 ```
 typedef struct timestamp {
@@ -87,7 +88,7 @@ typedef struct emailinfo {
 The `Email` is never sent by itself, but attached to other data structures that are sent. It contains necessary informational fields about an email as specified in the problem statement: a sender, a recipient, a subject, and a message. We have also given the email a lamport timestamp, to be used in ordering emails, as well as flags, to be used to decide how and whether to display an email to a client when emails are requested to be viewed.    
 
 #### Update
-The core message unit that is sent between servers is the `Update`. This is what is sent whenever anything is updated, such as when an email is sent, marked as read, or deleted (this does NOT include changes in grouping; ie. partitions are merges). The `update` struct is declared as below:  
+The core message unit that is sent between servers is the `Update`. This is what is sent whenever anything is updated, such as when an email is sent, marked as read, or deleted. The `Update` struct is declared as below:  
 ```
 typedef struct update {
   int         type;
@@ -173,13 +174,13 @@ typedef struct header {
 Another message unit that is sent between servers during the process of reconciliation is the `MergeMatrix`. This is what is sent whenever a server detects that there is a change in membership. The struct is declared as below:  
 ```
 typedef struct mergematrix {
-  int type;                               // 20 is for the matrix
-  int machine_index;                      // index from which it came
-  int matrix[NUM_SERVERS][NUM_SERVERS];   // the 2-dimensional 5 x 5 reconciliation matrix
+  int type;
+  int machine_index;
+  int matrix[NUM_SERVERS][NUM_SERVERS];
 } MergeMatrix;
 ```
 
-* `int type` is the type used to know that this is a `mergematrix` so that we can cast it to the correct type.
+* `int type` is the type (type 20) used to know that this is a `mergematrix` so that we can cast it to the correct type.
 * `int machine_index` refers to the index that sent the `mergematrix`.
 * `int matrix[NUM_SERVERS][NUM_SERVERS]` is the `mergematrix` itself: a NUM_SERVERS * NUM_SERVERS dimensional matrix.
 
@@ -286,7 +287,7 @@ void* get_head(List *list);
 void* get_tail(List *list);
 ```
 
-The names of the methods are quite self-explanatory as to explaining the functions of the methods. These methods are extensively used to modify lists in both the client and server program and integral to keeping the program concise, maintainable, and less prone to error.  
+The names of the methods are quite self-explanatory as to explaining the functions of the methods. These methods are extensively used to modify lists in both the client and server program and their generic structure is integral to keeping the program concise, maintainable, and less prone to error.  
 
 ## Algorithm Description  
 ### Client-Side
@@ -445,14 +446,39 @@ These are the methods that process messages from other servers in the partition 
 * Look for the update. If it already exists, return.
 * Otherwise, inser the `Update`.
 
-#### Reconciliation
-[FOR MARIYA TO FILL OUT]
+#### Reconciliation (Using Anti-Entropy)
+Our reconciliation process starts when we receive a Caused_By_Network message. This message means that a message has been sent under the instruction of spmonitor (so memberships have changed, meaning it is time to try reconciling). The first thing we do is check if the message was caused by a Server-Client group being broken up due to the partition. If this is the case, the server leaves the Server-Client group and we break.  
 
-#### Cascading Merges
-[FOR MARIYA TO FILL OUT]
+If the message was not dealing with a Server-Client group, the first thing we do is set everything in our `servers in partition` array to false. The next step we do deals with taking care of cascading merges, so it will be discussed in the section below. We now look at the `target_groups` array (which was populated when we did SP_receive to get the network message) to see which servers are in our partition (we set the locations in our `servers_in_array` array corresponding to these servers to true). Now we know which servers are in our new partition. 
 
-#### Flow Control
-[FOR MARIYA TO FILL OUT]
+Next, we take our local copy of our merge matrix and copy it into a MergeMatrix struct. We set the type on this struct to 20 (which represents a merge matrix) and set the machine index field to our own machine index. Then, we send out this MergeMatrix struct. 
+
+Next, we wait to receive `number_of_groups` matrices (which is set to the number of groups received during SP_receive). For each one of these matrices we process the received merge_matrix by doing two things: for each cell we take the minimum of the cell in our merge matrix and of the one we just received and set the corresponding cell in our `min_array` to that value; we also that the maximum of the cell in our matrix and of the matrix received and set the current cell being processeed to that value. 
+
+We are now able to start figuring out who will send the updates. We loop through each column in our (now updated) merge matrix and figure out which of the processes in our partition has the maximum value for that column (this is the process responsible for sending the updates associated with the particular process that corresponds tho that column). We then set that location in our `who_sends` array to the value of the machine responsible for doing the sending.  
+
+Now we come to the actual sending part of the reconciliation process. In the most basic sense, we loop through the `who_sends` array and if the value stored in there matches `my_machine index` then that specicic proccess moves on to send all of the updates from the minimum value for that column in the `min_array` up until the most recent updated it received. The actual details of this sending will be discussed in depth in the Flow Control section below.
+
+
+#### Cascading Merges  
+As described in class, a cascading merge is when a merge/parititon occur while processes are trying to reconcile. While this is very difficult to test (also stated in class), we included logic for it in our code that we believe should take of the issue. Prior to starting to reconcile a process must update its corresponding row in its own merge matrix (this is prior to sending the merge matrices out to everyone in the partition). A process does this by looping through its row in the merge matrix and setting each cell to the message index of the last update in each index of its `array_of_updates_list`. This means that when the merge matrix is sent out to the other processes in the parition, each process will know exactly up to which update the other processes has. Thus, when it comes time for updates to be resent each process has an accurate view of what other processes in its partition both have and do not have, meaing that the right updates can be sent out even if a merge/partition occurs while reconciliation is occurring.  
+
+#### Flow Control  
+Flow control is needed when servers are resending updates during the reconciliation process (the could have millions of messages to resend). Under Tom's advising we decided to do flow control in a way that was similar to the way flow control was done in assignment three. The basis of this flow control involves sending x messages and then waiting to receive x messages before sending another x messages. However, the flow control here becomes significantly more complicated because a single process could be responsible for sending updates from more than one process (meaning process a might ne to send a's, c's, and d's updates).
+
+Because we implemented our storage of updates using generic linked lists we needed to store numerous global variables in order to make the flow control work. For each list of updates in the `array_of_updates_list` we needed to store a starting point (the min for the corresponding column in `min_array`), an ending point (the message index of the last update in the list corresponding with that column), a number representing now many updates have been sent from that particular linked list, and a boolean value declaring whether we are done sending for that linked list or not. Our algorithm works as follows: 
+
+* For each index that a particular process is responsible for sending for:  
+* Find the minimum and the maximum value. Store both of these in the coreesponding global arrays (see variables section above) 
+* Begin to send. Before you send an update stamp your machine index in the `index_of_machine_resending_update` field. Once you send an update increment a counter representing how many updates you have sent from that particular list. Also increment a counter indicating how many updates you have sent total (from all linked lists) in that round of sending. Furthermore, increment the variable indicating the update where you start sending from (this will help us know when to stop sending)  
+* If the number you are starting from equals the number that you are ending at then this means that you are done sending   The boolean representing whether sending is still occurring for that particular linked list will be set to false  
+* If you hit that you have sent 10 updates from that particular linked list prior to hitting the above condition then break   out of the sending section and set the boolean representing whether you are still sending for that linked list to true   
+* In each round of sending do the above for each index in the who_sends array  
+* After a round of sending now we process updates. As you are processesing updates check the `index_of_machine_resending_update` field. If this number corresponds to your machine index the increment a counter the represents the number of resent updates you have received from yourself  
+* Once your counter of the number of updates that you received that were the ones that you resent is equivalent to the number of updates that you have sent total (in the previous round of sending) the process starts over again starting from the "begin to send" point above (this is because we don't want to reset our minimum and maximum values). Variables such as the one representing total updates sent from lists, total updates sent from each particular list, and number of resent updates you have received from yourself should all be set back to 0    
+
+This flow control works in that it allows processes to have a break to process messages instead of just sending all of their messages at one time. Additionally, it is important to note that this resending of udpdates is initially triggeed by a merge/partition occurring (thus the variables discussed in the second bullet point above are set during this time). Essentially, resending starts in the reconciliation process but persists through the rest of the program until all of the updates that needed to be sent have been sent.
+
 
 ## Discussion on Results
 * Our mail server appears to work without error. They are resilient to network partitions and merges, and we have exhaustively tested it on many cases and combinations of merges/partitions/reads/deletions and believe them to work correctly. 
