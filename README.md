@@ -2,7 +2,7 @@
 EN 600.337: Distributed Systems  
 Sarah Sukardi (smsukardi@jhu.edu)  
 Mariya Kazachkova (mkazach1@jhu.edu)  
-December 9, 2016  
+December 10, 2016  
 
 ## Premise  
 We aim to write a fault-tolerant distributed mail service for users over a network of computers that is resilient to network partitions and merges. It provides a client with the ability to connect ot a server, send emails to users, list headers of received mail, read messages, delete messages, and print membership of servers in the server's current network component. 
@@ -32,8 +32,11 @@ We aim to write a fault-tolerant distributed mail service for users over a netwo
   * NOTE: This must be done on all 5 machines (ugrad 10-14) before running any clients or servers!
 * To run the server, type in `./server [1 - 5]`. 
   * No more input is necessary, but it is vital that all the servers are set up and run before clients begin connecting to it. These mail servers processes are meant to be daemons that run forever.
-* To run the client, type in `./client`.
+  * Make sure that all the servers run are given UNIQUE names. We suggest running server 1 on ugrad10, server 2 on ugrad11, etc up to server 5 on ugrad14.
+* To run the client, type in `./client` on any of the machines running Spread.
   * A menu will pop up with options to send, read, and delete mail, as well as join other servers and print membership.
+* To run the partition/merge simulator, type in `./spmonitor`.
+  * A menu will pop up with options to create network partitions.
 
 ## Protocol Overview 
 
@@ -257,7 +260,7 @@ typedef struct {
 } List;
 ```
 
-The use of the wrapper to contain the list is especially nice, since it keeps the linked list self-contained and abstracted away.
+The use of the wrapper to represent the list in our main code is especially nice, since it keeps the linked list self-contained and abstracted away.  
 
 The generic linked list contains function pointers which "outsource" comparisons, printing, etc. to specific node types. There are also several unit tests we wrote to make sure the linked list worked; these can be run by typing in `make test`. The methods that this generic linked list has are listed below:
 
@@ -283,7 +286,7 @@ void* get_head(List *list);
 void* get_tail(List *list);
 ```
 
-The names of the methods are quite self-explanatory, and are extensively used to modify lists in both the client and server program.
+The names of the methods are quite self-explanatory as to explaining the functions of the methods. These methods are extensively used to modify lists in both the client and server program and integral to keeping the program concise, maintainable, and less prone to error.  
 
 ## Algorithm Description  
 ### Client-Side
