@@ -35,7 +35,11 @@ We aim to write a fault-tolerant distributed mail service for users over a netwo
 * To run the client, type in `./client`.
   * A menu will pop up with options to send, read, and delete mail, as well as join other servers and print membership.
 
-## Protocol Overview  
+## Protocol Overview 
+
+### Brief Summary
+We implemented a bundled server and client program to run on 5 servers. In order to reconcile servers during network partitions and merges, we utilized the anti-entropy protocol. Each server kept a "merge matrix" of what they knew that servers had from other servers. Upon the event of a merge, these "merge matrices" would be sent around. The maximum value of all merge matrices received would be copied into the server's updating merge matrix. Then, the maximum of all the elements in the new partition's column would become the new maximum value in each column for the servers in the partition. Finding the difference between the minimimum value in each column for servers in a new partition and the maximum value would be the updates that the server would have to send to other servers; who sent updates would be decided by the server who knew the most information sending the updates, using server number as tiebreaker. By this protocol we would be able to implement resiliency to partitions and merges.  
+This high-level description will be elaborated more in the Algorithm elaboration section of the design document, particularly the reconciliation section. The section will also talk about how we integrate flow control, cascading merges, and garbage collection for updates.  
 
 ### Data Structures (Structs)
 #### TimeStamp
@@ -441,11 +445,14 @@ These are the methods that process messages from other servers in the partition 
 #### Reconciliation
 [FOR MARIYA TO FILL OUT]
 
+#### Cascading Merges
+[FOR MARIYA TO FILL OUT]
+
 #### Flow Control
 [FOR MARIYA TO FILL OUT]
 
 ## Discussion on Results
-
+* Our mail server appears to work without error. It is resilient to network partitions and merges, and we have exhaustively tested it on many cases and combinations of merges/partitions/reads/deletions, and believe it to work correctly.
 
 ## Final Thoughts  
 
