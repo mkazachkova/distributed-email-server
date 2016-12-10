@@ -52,9 +52,9 @@ typedef struct timestamp {
   int         message_index;
 } TimeStamp;
 ```
-* `int counter` is [INSERT TEXT HERE]
-* `int machine_index` is [INSERT TEXT HERE]
-* `int message_index` is [INSERT TEXT HERE]
+* `int counter` is the lamport time stamp counter; it is incremented every time an email is sent. This is used to order emails.
+* `int machine_index` is the machine index from which the email originated. It is the second part of the lamport time stamp. It is used in conjunction with `counter` to order emails.
+* `int message_index` is the index of the message, used for ordering updates. It is incremented every time an update is sent.
 
 #### Email
 The most basic data structure we utilize is the `Email`. The struct (and another struct that it itself contains) is declared as below:  
@@ -452,7 +452,11 @@ These are the methods that process messages from other servers in the partition 
 [FOR MARIYA TO FILL OUT]
 
 ## Discussion on Results
-* Our mail server appears to work without error. It is resilient to network partitions and merges, and we have exhaustively tested it on many cases and combinations of merges/partitions/reads/deletions, and believe it to work correctly.
+* Our mail server appears to work without error. They are resilient to network partitions and merges, and we have exhaustively tested it on many cases and combinations of merges/partitions/reads/deletions and believe them to work correctly. 
+* We believe that we send as few messages as possible within our program. We do this by:
+  * Having only a single server, the one that knows the most information, multicast necessary updates to other servers, and having that server send as few updates as possible (ie. starting at the update for the server who knows the least amount of information)
+  * Implementing flow control when reconciling to prevent the Spread buffer from being exceeded and messages from being dropped
+  * Bundling headers sent to send multiple headers on a single packet when sending headers to the client
 
 ## Final Thoughts  
 
