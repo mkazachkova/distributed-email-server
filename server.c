@@ -947,10 +947,8 @@ void add_to_header(Email *email) {
 //Send updates for a merge only if the message_index is strictly greater than min_seen_global
 bool send_updates_for_merge(void* temp) {
   Update *might_be_sent = (Update*) temp;
-  printf("^^^^^^^^^^^^^^^^^^^^^^\nHave entered send_update_for_merge\nThis is curr message index: %d\nThis is min update global: %d\nThis is updates sent so far: %d\nThis is what we want to send up to: %d\n",
-         might_be_sent->timestamp.message_index, min_update_global[current_i], num_updates_sent_so_far[current_i], max_update_global[current_i]);
+
   if ((might_be_sent->timestamp.message_index > min_update_global[current_i]) && (num_updates_sent_so_far[current_i] <= 10)) {
-    //TODO: need to set that the machine's index onto the update in a new field
     num_sent_in_each_round++;
     might_be_sent->index_of_machine_resending_update = my_machine_index;
     SP_multicast(Mbox, AGREED_MESS, group, 2, sizeof(Update), (char*)might_be_sent);
