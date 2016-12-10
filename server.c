@@ -801,7 +801,7 @@ static void Respond_To_Message() {
 
 
   // **************************** parse messages from server **************************** //
-  // If *type is of type 10-13, we have RECEIVED A MESSAGE FROM THE CLIENT.
+  // If *type is of type 10-13, we have RECEIVED A MESSAGE FROM A SERVER.
 
   } else if (*type == 10) { //server received a NEW EMAIL update from another server
     //Cast into Update type

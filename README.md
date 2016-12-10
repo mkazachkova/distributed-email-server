@@ -412,12 +412,31 @@ These are the methods that directly process messages that are from clients and s
 These are the methods that process messages from other servers in the partition that the server is in.
 
 ##### "New Email" Update
+* Cast the message into an `Update` object.
+* Create the user if it does not exist from the `Update`'s `email`'s `to_field`.
+* Update our own lamport counter to be the max of our existing `lamport_counter` and the `lamport_counter` of the email we just received.
+* Update the server's own `merge_matrix` with the `message_index` of the message just received (the column of every server in the current server's partition).
+* Look for if the update already exists: if it does, ignore it and return.
+* Look for the user in the `to_field` of the email from the `Update`.
+* Look for the email for the user that we found. If the email already exists, return.
+* If the email does not exist, insert the received `Update` into the Updates linked list for the update associated with our server and insert the received `Email` into the email linked list in teh user that was found previously.
 
 ##### "Read Email" Update
+* Cast the message into an `Update` object.
+* Update the merge matrix as described in the "New Email" Update.
+* Look for the update. If it already exists, return. 
+* Otherwise, insert the `Update`. Then create the user in the `user_name` field if it doesn't exist yet. Then look for the email in that user. If it doesn't exist, insert the `new_email` field with the `read` flag set to true in that user's email linked list.
+
 
 ##### "Delete Email" Update
+* "Delete Email" proceeds similarly as "Read Email", but setting the `deleted` flag to true rather than the `read` flag.
 
 ##### "New User" Update
+* Cast the message into an `Update` object.
+* Create the user from the update's `user_name` field if it doesn't exist yet.
+* Update the merge matrix as described previously.
+* Look for the update. If it already exists, return.
+* Otherwise, inser the `Update`.
 
 #### Reconciliation
 [FOR MARIYA TO FILL OUT]
