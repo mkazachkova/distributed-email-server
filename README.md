@@ -460,9 +460,8 @@ We are now able to start figuring out who will send the updates. We loop through
 Now we come to the actual sending part of the reconciliation process. In the most basic sense, we loop through the `who_sends` array and if the value stored in there matches `my_machine index` then that specicic proccess moves on to send all of the updates from the minimum value for that column in the `min_array` up until the most recent updated it received. The actual details of this sending will be discussed in depth in the Flow Control section below.
 
 
-
-#### Cascading Merges
-[FOR MARIYA TO FILL OUT]
+#### Cascading Merges  
+As described in class, a cascading merge is when a merge/parititon occur while processes are trying to reconcile. While this is very difficult to test (also stated in class), we included logic for it in our code that we believe should take of the issue. Prior to starting to reconcile a process must update its corresponding row in its own merge matrix (this is prior to sending the merge matrices out to everyone in the partition). A process does this by looping through its row in the merge matrix and setting each cell to the message index of the last update in each index of its `array_of_updates_list`. This means that when the merge matrix is sent out to the other processes in the parition, each process will know exactly up to which update the other processes has. Thus, when it comes time for updates to be resent each process has an accurate view of what other processes in its partition both have and do not have, meaing that the right updates can be sent out even if a merge/partition occurs while reconciliation is occurring.  
 
 #### Flow Control
 [FOR MARIYA TO FILL OUT]
