@@ -172,8 +172,6 @@ static void Respond_To_Message() {
   ret = SP_receive(Mbox, &service_type, sender, 100, &num_groups, target_groups,
                       &mess_type, &endian_mismatch, MAX_PACKET_LEN, (char*)tmp_buf);
 
-  printf("\nATTN: MESSAGE RECEIVED WITH SERVICE TYPE: %d From Sender: %s\n", service_type, sender);
-
   // **************************** PARSE MEMBERSHIP MESSAGES **************************** //
 
   //If transition message, do nothing
@@ -295,7 +293,6 @@ static void Respond_To_Message() {
 
       
       char first_char = sender[0];
-      //printf("this is char first char %d\n", first_char);
       
       //If number received, then a NON-server group was partitioned
       if (first_char >= '0' && first_char <= '9') {
@@ -680,9 +677,7 @@ static void Respond_To_Message() {
   } else if (*type == 10) { //server received a NEW EMAIL update from another server
     //Cast into Update type
     Update *update = (Update*) tmp_buf;
-    //printf("we have received an update for a new email!\n");
     create_user_if_nonexistent(update->email.emailInfo.to_field); //create new user if new user doesn't exist yet
-    print_list(&users_list, print_user);
 
     //update our own lamport counter
     lamport_counter = max(lamport_counter, update->email.emailInfo.timestamp.counter);
@@ -710,12 +705,6 @@ static void Respond_To_Message() {
     } else {
       //update is new! We want to insert it into our array!!!!
       insert(&(array_of_updates_list[update->timestamp.machine_index]), (void*)update, compare_update);
-      
-      printf("Printing array of updates list: \n");
-      for (int i = 0; i < NUM_SERVERS; i++) {
-        printf("This is the linked list for index %d: \n", i);
-        print_list(&(array_of_updates_list[i]), print_update);
-      }
     
       User *temp = find(&users_list, (void*)update->email.emailInfo.to_field, compare_users);
       assert(temp != NULL);
@@ -739,17 +728,10 @@ static void Respond_To_Message() {
 
     Update *existing_update = find(&(array_of_updates_list[update->timestamp.machine_index]),(void*)update, compare_update);
     if (existing_update != NULL) {
-      //printf("Update already exists! Should only show up in a merge!!\n");
       return;
     } else {
       //update is new! We want to insert it into our array!!!!
       insert(&(array_of_updates_list[update->timestamp.machine_index]), (void*)update, compare_update);
-    
-      printf("Printing array of updates list: \n");
-      for (int i = 0; i < NUM_SERVERS; i++) {
-        printf("This is the linked list for index %d: \n", i);
-        print_list(&(array_of_updates_list[i]), print_update);
-      }
 
       create_user_if_nonexistent(update->user_name);
       //ideally this will create the new user if it has not been made yet
@@ -796,14 +778,7 @@ static void Respond_To_Message() {
     } else {      
       //update is new! We want to insert it into our array and process!!!!
       insert(&(array_of_updates_list[update->timestamp.machine_index]), (void*)update, compare_update);
-    
-      printf("Printing array of updates list: \n");
-      for (int i = 0; i < NUM_SERVERS; i++) {
-        printf("This is the linked list for index %d: \n", i);
-        print_list(&(array_of_updates_list[i]), print_update);
-      }
       
-      /*CODE NOT TESTED YET*/
       create_user_if_nonexistent(update->user_name);
       //ideally this will create the new user if it has not been made yet
 
@@ -851,12 +826,6 @@ static void Respond_To_Message() {
     } else {
       //update is new! We want to insert it into our array!!!!
       insert(&(array_of_updates_list[update->timestamp.machine_index]), (void*)update, compare_update);
-      
-      printf("Printing array of updates list: \n");
-      for (int i = 0; i < NUM_SERVERS; i++) {
-        printf("This is the linked list for index %d: \n", i);
-        print_list(&(array_of_updates_list[i]), print_update);
-      }
     }
   } else { //unknown type!
     printf("Unknown type received! Exiting program...\n");
