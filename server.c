@@ -67,6 +67,7 @@ static void         Respond_To_Message();
 static void         Bye();
 static int          compare_users(void *user1, void *user2);
 static int          compare_email(void *temp, void *temp2);
+static int          compare_email_2(void *temp, void *temp2);
 static int          compare_update(void* update1, void* update2);
 static bool         create_user_if_nonexistent(char *name);
 static bool         send_updates_for_merge(void *update);
@@ -690,7 +691,17 @@ static void Respond_To_Message() {
 
     User *user_found = find(&(users_list), update->email.emailInfo.to_field, compare_users);
     assert(user_found != NULL); //should never be null because we just created it if it's null
-    Email *temp = find(&(user_found->email_list), (void*)&(update->email), compare_email);
+
+
+
+
+    Email *temp = find(&(user_found->email_list), (void*)&(update->email), compare_email_2);
+
+
+
+
+
+
     if (temp != NULL) {
       //email exists so don't want to process it
       return;
@@ -882,6 +893,39 @@ int compare_email(void* temp1, void* temp2) {
     }
   }
 }
+
+
+
+
+//Compares emails first by counter, and then by machine index as tiebreaker
+int compare_email_2(void* temp1, void* temp2) {
+  Email *one = (Email*) temp1;
+  Email *two = (Email*) temp2;
+  
+  if (one->emailInfo.timestamp.counter < two->emailInfo.timestamp.counter) {
+    return -1;
+  } else if (one->emailInfo.timestamp.counter > two->emailInfo.timestamp.counter) {
+    return 1;
+  } else {
+    //they are equal; use machine index for tie breaker
+    if (one->emailInfo.timestamp.machine_index < two->emailInfo.timestamp.machine_index) {
+      return -1;
+    } else if(one->emailInfo.timestamp.machine_index > two->emailInfo.timestamp.machine_index) {
+      return 1;
+    } else {
+      if (!(one->exists)) {
+        one->emailInfo = two->emailInfo;
+        one->exists = true; //will be shown to user
+      }
+      return 0;
+    }
+  }
+}
+
+
+
+
+
 
 //Compares updates by message index
 int compare_update(void* update1, void* update2) {
