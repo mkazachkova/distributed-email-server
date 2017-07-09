@@ -283,7 +283,7 @@ void print_list(List *list, void (*fptr)(void *));
 void print_list_backwards(List *list, void (*fptr)(void *));
 void* get_head(List *list);
 void* get_tail(List *list);
-```
+````
 
 The names of the methods are quite self-explanatory as to explaining the functions of the methods. These methods are extensively used to modify lists in both the client and server program and their generic structure is integral to keeping the program concise, maintainable, and less prone to error.  
 
